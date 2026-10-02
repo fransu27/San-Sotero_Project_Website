@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    /* Serif face used by the welcome page headings; loaded in app.blade.php */
+    --font-serif: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * PALETTE (from Colors.png)
+ *   Crimson D7263D  -> destructive, "Pending", ledger margin rule
+ *   Navy    02182B  -> text, primary buttons, dark-mode background
+ *   Blue    0197F6  -> accent, focus ring, "In Progress"
+ *   Teal    448FA3  -> "Resolved", chart/success
+ *   Sky     68C5DB  -> dark-mode ring, soft highlights
+ * Paper/card neutrals are light tints of the sky blue so the page stays on-palette.
+ * --radius is small (4px) to match the ledger look of the welcome page.
+ */
+:root {
+    --background: color-mix(in srgb, #68c5db 22%, white);
+    --foreground: #02182b;
+    --card: #ffffff;
+    --card-foreground: #02182b;
+    --popover: #ffffff;
+    --popover-foreground: #02182b;
+    --primary: #d7263d;
+    --primary-foreground: #ffffff;
+    --secondary: color-mix(in srgb, #68c5db 30%, white);
+    --secondary-foreground: #02182b;
+    --muted: color-mix(in srgb, #68c5db 30%, white);
+    --muted-foreground: color-mix(in srgb, #02182b 70%, white);
+    --accent: color-mix(in srgb, #68c5db 45%, white);
+    --accent-foreground: #02182b;
+    --destructive: #d7263d;
+    --destructive-foreground: #d7263d;
+    --border: color-mix(in srgb, #448fa3 35%, white);
+    --input: color-mix(in srgb, #448fa3 55%, white);
+    --ring: #0197f6;
+    --chart-1: #d7263d;
+    --chart-2: #0197f6;
+    --chart-3: #448fa3;
+    --chart-4: #68c5db;
+    --chart-5: #02182b;
+    --radius: 0.25rem;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #02182b;
+    --sidebar-primary: #0197f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: color-mix(in srgb, #68c5db 45%, white);
+    --sidebar-accent-foreground: #02182b;
+    --sidebar-border: color-mix(in srgb, #448fa3 35%, white);
+    --sidebar-ring: #0197f6;
+}
+
+.dark {
+    --background: #02182b;
+    --foreground: #e6f4f9;
+    --card: color-mix(in srgb, #0197f6 10%, #02182b);
+    --card-foreground: #e6f4f9;
+    --popover: color-mix(in srgb, #0197f6 10%, #02182b);
+    --popover-foreground: #e6f4f9;
+    --primary: #d7263d;
+    --primary-foreground: #ffffff;
+    --secondary: color-mix(in srgb, #0197f6 18%, #02182b);
+    --secondary-foreground: #e6f4f9;
+    --muted: color-mix(in srgb, #0197f6 18%, #02182b);
+    --muted-foreground: #8fb6c4;
+    --accent: color-mix(in srgb, #0197f6 25%, #02182b);
+    --accent-foreground: #e6f4f9;
+    --destructive: #d7263d;
+    --destructive-foreground: #ff6b7c;
+    --border: color-mix(in srgb, #448fa3 40%, #02182b);
+    --input: color-mix(in srgb, #448fa3 40%, #02182b);
+    --ring: #68c5db;
+    --chart-1: #d7263d;
+    --chart-2: #0197f6;
+    --chart-3: #448fa3;
+    --chart-4: #68c5db;
+    --chart-5: #e6f4f9;
+    --sidebar: color-mix(in srgb, #0197f6 10%, #02182b);
+    --sidebar-foreground: #e6f4f9;
+    --sidebar-primary: #0197f6;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: color-mix(in srgb, #0197f6 25%, #02182b);
+    --sidebar-accent-foreground: #e6f4f9;
+    --sidebar-border: color-mix(in srgb, #448fa3 40%, #02182b);
+    --sidebar-ring: #68c5db;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
