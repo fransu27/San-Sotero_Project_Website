@@ -9,5 +9,8 @@ class Comment extends Model
 {
     protected $fillable = ['complaint_id', 'user_id', 'body']; // whitelist (mass-assignment safety)
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

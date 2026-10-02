@@ -14,8 +14,13 @@ export default function ThemeToggle() {
     const label = t(dark ? 'theme.toLight' : 'theme.toDark');
 
     return (
-        <button type="button" onClick={() => updateAppearance(dark ? 'light' : 'dark')} aria-label={label} title={label}
-            className="rounded-full p-2 text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0197F6]">
+        <button
+            type="button"
+            onClick={() => updateAppearance(dark ? 'light' : 'dark')}
+            aria-label={label}
+            title={label}
+            className="rounded-full p-2 text-muted-foreground outline-none hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+        >
             {dark ? <Sun size={18} /> : <Moon size={18} />}
         </button>
     );

@@ -30,6 +30,8 @@ class ProfileUpdateTest extends TestCase
             ->patch(route('profile.update'), [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
+                'phone' => '09171234567',
+                'birthdate' => '1990-01-01',
             ]);
 
         $response
@@ -52,6 +54,8 @@ class ProfileUpdateTest extends TestCase
             ->patch(route('profile.update'), [
                 'name' => 'Test User',
                 'email' => $user->email,
+                'phone' => '09171234567',
+                'birthdate' => '1990-01-01',
             ]);
 
         $response

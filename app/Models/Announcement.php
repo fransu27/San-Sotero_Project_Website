@@ -38,5 +38,8 @@ class Announcement extends Model
         return ['title' => $this->title, 'body' => $this->body, 'lang' => 'en'];
     }
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

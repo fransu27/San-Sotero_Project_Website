@@ -10,7 +10,9 @@ export default function AppLogo() {
             </div>
             <div className="ml-1 grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{BRAND.place}</span>
-                <span className="truncate text-xs opacity-60">{BRAND.product}</span>
+                <span className="truncate text-xs opacity-60">
+                    {BRAND.product}
+                </span>
             </div>
         </>
     );
