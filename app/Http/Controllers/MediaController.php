@@ -8,6 +8,7 @@ use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Serves uploaded photos straight from storage/app/public, so the site does NOT depend on the
@@ -23,7 +24,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class MediaController extends Controller
 {
-    public function show(Request $request, string $folder, string $file)
+    public function show(Request $request, string $folder, string $file): StreamedResponse
     {
         $path = "$folder/$file";
 
@@ -41,14 +42,14 @@ class MediaController extends Controller
     }
 
     /** Public barangay location photo (route has no `auth` middleware). */
-    public function branding(string $file)
+    public function branding(string $file): StreamedResponse
     {
         abort_unless(SiteSetting::read('banner_path') === "branding/$file", 404);
 
         return $this->stream("branding/$file", 'public, max-age=86400');
     }
 
-    private function stream(string $path, string $cacheControl)
+    private function stream(string $path, string $cacheControl): StreamedResponse
     {
         $disk = Storage::disk('public');
         abort_unless($disk->exists($path), 404);

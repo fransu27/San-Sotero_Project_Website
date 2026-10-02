@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\SiteSetting;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +28,7 @@ class BarangayController extends Controller
      * SECURITY: text is tag-stripped and length-limited; the photo must be a real jpg/png/webp <= 4 MB (no SVG),
      * is stored under a random name, and the previous file is deleted so nothing piles up on disk.
      */
-    public function update(Request $request)
+    public function update(Request $request): RedirectResponse
     {
         $request->merge([
             'name' => trim(strip_tags((string) $request->input('name'))),
@@ -41,11 +43,18 @@ class BarangayController extends Controller
             'remove_image' => ['boolean'],
         ]);
 
+        /** @var array<string, string|null> $values */
         $values = ['barangay_name' => $data['name'] ?: null, 'barangay_caption' => $data['caption'] ?: null];
         $old = SiteSetting::read('banner_path');
 
         if ($request->hasFile('image')) {
-            $values['banner_path'] = $request->file('image')->store('branding', 'public');
+            $path = $request->file('image')->store('branding', 'public'); // false when the disk could not write the file
+
+            if ($path === false) {
+                throw ValidationException::withMessages(['image' => 'The photo could not be saved. Please try again.']);
+            }
+
+            $values['banner_path'] = $path;
             $values['banner_version'] = (string) time(); // cache-buster for the <img> URL
         } elseif ($data['remove_image']) {
             $values['banner_path'] = null;
