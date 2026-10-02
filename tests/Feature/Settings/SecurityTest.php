@@ -79,24 +79,24 @@ class SecurityTest extends TestCase
     }
 
     public function test_password_can_be_updated()
-{
-    $user = User::factory()->create();
+    {
+        $user = User::factory()->create();
 
-    $response = $this
-        ->actingAs($user)
-        ->from(route('security.edit'))
-        ->put(route('user-password.update'), [
-            'current_password' => 'password',
-            'password' => 'NewPassword123',
-            'password_confirmation' => 'NewPassword123',
-        ]);
+        $response = $this
+            ->actingAs($user)
+            ->from(route('security.edit'))
+            ->put(route('user-password.update'), [
+                'current_password' => 'password',
+                'password' => 'NewPassword123',
+                'password_confirmation' => 'NewPassword123',
+            ]);
 
-    $response
-        ->assertSessionHasNoErrors()
-        ->assertRedirect(route('security.edit'));
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('security.edit'));
 
-    $this->assertTrue(Hash::check('NewPassword123', $user->refresh()->password));
-}
+        $this->assertTrue(Hash::check('NewPassword123', $user->refresh()->password));
+    }
 
     public function test_correct_password_must_be_provided_to_update_password()
     {
