@@ -19,7 +19,9 @@ export default function AnnouncementCard({ a, isAdmin }: { a: Notice; isAdmin: b
     const [newImage, setNewImage] = useState<File | null>(null);
     const [dropImage, setDropImage] = useState(false);
 
-    const startEdit = () => { setDraft({ title: a.title, body: a.body }); setNewImage(null); setDropImage(false); setErrors({}); setEditing(true); };
+    const startEdit = () => {
+ setDraft({ title: a.title, body: a.body }); setNewImage(null); setDropImage(false); setErrors({}); setEditing(true); 
+};
 
     const save = () => {
         setSaving(true);

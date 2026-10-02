@@ -32,13 +32,26 @@ export default function Composer({ mode, userName, categories }: Props) {
     // Instant preview: a temporary local URL for the chosen file. It is revoked on change/unmount
     // so the browser frees the memory. Nothing is uploaded until "Post" is pressed.
     const previewUrl = useMemo(() => (form.data.image ? URL.createObjectURL(form.data.image) : null), [form.data.image]);
-    useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+    useEffect(() => () => {
+ if (previewUrl) {
+URL.revokeObjectURL(previewUrl);
+} 
+}, [previewUrl]);
 
     /** Validate the picked file in the browser, then keep it in form state for the preview. */
     const pick = (file?: File) => {
-        if (!file) return;
-        if (!TYPES.includes(file.type)) return setFileError('Please choose a JPG, PNG or WebP photo.');
-        if (file.size > MAX_MB * 1024 * 1024) return setFileError(`That photo is over ${MAX_MB} MB. Choose a smaller one.`);
+        if (!file) {
+return;
+}
+
+        if (!TYPES.includes(file.type)) {
+return setFileError('Please choose a JPG, PNG or WebP photo.');
+}
+
+        if (file.size > MAX_MB * 1024 * 1024) {
+return setFileError(`That photo is over ${MAX_MB} MB. Choose a smaller one.`);
+}
+
         setFileError(null);
         form.setData('image', file);
     };
@@ -54,7 +67,9 @@ export default function Composer({ mode, userName, categories }: Props) {
         form.post(isNote ? '/announcements' : '/complaints', {
             forceFormData: true, // needed so the photo is sent as a file, not JSON
             preserveScroll: true,
-            onSuccess: () => { form.reset(); setOpen(false); setFileError(null); },
+            onSuccess: () => {
+ form.reset(); setOpen(false); setFileError(null); 
+},
         });
     };
 
@@ -104,7 +119,9 @@ export default function Composer({ mode, userName, categories }: Props) {
                             <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#0197F6] hover:bg-muted focus-within:ring-2 focus-within:ring-[#0197F6]">
                                 <ImageIcon size={18} /> Photo
                                 <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only"
-                                    onChange={(e) => { setOpen(true); pick(e.target.files?.[0]); e.target.value = ''; }} />
+                                    onChange={(e) => {
+ setOpen(true); pick(e.target.files?.[0]); e.target.value = ''; 
+}} />
                             </label>
                             {isNote && (
                                 <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">

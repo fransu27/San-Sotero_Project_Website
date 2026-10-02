@@ -35,10 +35,21 @@ export function translate(locale: Locale, key: string, vars?: Record<string, str
 export function timeAgo(ts: number, locale: Locale): string {
     const s = Math.max(0, Math.floor(Date.now() / 1000 - ts));
 
-    if (s < 60) return translate(locale, 'time.now');
-    if (s < 3600) return translate(locale, 'time.min', { n: Math.floor(s / 60) });
-    if (s < 86400) return translate(locale, 'time.hour', { n: Math.floor(s / 3600) });
-    if (s < 7 * 86400) return translate(locale, 'time.day', { n: Math.floor(s / 86400) });
+    if (s < 60) {
+return translate(locale, 'time.now');
+}
+
+    if (s < 3600) {
+return translate(locale, 'time.min', { n: Math.floor(s / 60) });
+}
+
+    if (s < 86400) {
+return translate(locale, 'time.hour', { n: Math.floor(s / 3600) });
+}
+
+    if (s < 7 * 86400) {
+return translate(locale, 'time.day', { n: Math.floor(s / 86400) });
+}
 
     return new Date(ts * 1000).toLocaleDateString(DATE_LOCALE[locale], { year: 'numeric', month: 'short', day: 'numeric' });
 }
@@ -55,7 +66,10 @@ export function localizeAnnouncement(
 
     for (const lang of [locale, ...LOCALES]) {
         const hit = all[lang];
-        if (hit?.title && hit?.body) return { title: hit.title, body: hit.body, lang };
+
+        if (hit?.title && hit?.body) {
+return { title: hit.title, body: hit.body, lang };
+}
     }
 
     return { title: a.title, body: a.body, lang: 'en' };

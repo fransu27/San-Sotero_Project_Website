@@ -19,6 +19,7 @@ export function checkPassword(pw: string, confirm = '') {
     // Bonus points (not required) for length and symbols → the bar reaches "Strong".
     const score = rules.filter((r) => r.ok).length + (pw.length >= 12 ? 1 : 0) + (/[^A-Za-z0-9]/.test(pw) ? 1 : 0);
     const level = !pw ? 0 : !meetsAll ? 1 : score >= 6 ? 3 : 2;
+
     return { rules, meetsAll, level, matches: pw.length > 0 && pw === confirm };
 }
 
@@ -27,6 +28,7 @@ const COLORS = ['bg-muted', 'bg-[#D7263D]', 'bg-[#0197F6]', 'bg-[#448FA3]'];
 
 export default function PasswordStrength({ password }: { password: string }) {
     const { rules, level } = checkPassword(password);
+
     return (
         <div className="space-y-2 rounded-lg border border-border bg-background/40 p-3" aria-live="polite">
             <div className="flex items-center gap-2">

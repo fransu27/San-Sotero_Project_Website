@@ -34,7 +34,10 @@ export function useLocale() {
     }, [locale]);
 
     const setLocale = (next: Locale) => {
-        try { localStorage.setItem(KEY, next); } catch { /* ignore */ }
+        try {
+ localStorage.setItem(KEY, next); 
+} catch { /* ignore */ }
+
         listeners.forEach((l) => l());
 
         if (user) {

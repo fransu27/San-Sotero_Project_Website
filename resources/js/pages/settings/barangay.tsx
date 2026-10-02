@@ -21,15 +21,28 @@ export default function BarangaySettings() {
     });
 
     const preview = useMemo(() => (form.data.image ? URL.createObjectURL(form.data.image) : null), [form.data.image]);
-    useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+    useEffect(() => () => {
+ if (preview) {
+URL.revokeObjectURL(preview);
+} 
+}, [preview]);
     const shown = preview ?? (form.data.remove_image ? null : barangay.banner_url);
     // "Remove" only makes sense for a photo the admin uploaded; removing it brings back the bundled default.
     const hasCustom = Boolean(preview) || (!barangay.banner_is_default && !form.data.remove_image);
 
     const pick = (f?: File) => {
-        if (!f) return;
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) return setLocalError(t('brgy.badType'));
-        if (f.size > 4 * 1024 * 1024) return setLocalError(t('brgy.tooBig'));
+        if (!f) {
+return;
+}
+
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+return setLocalError(t('brgy.badType'));
+}
+
+        if (f.size > 4 * 1024 * 1024) {
+return setLocalError(t('brgy.tooBig'));
+}
+
         setLocalError(null);
         form.setData((d) => ({ ...d, image: f, remove_image: false }));
     };
@@ -37,7 +50,9 @@ export default function BarangaySettings() {
     return (
         <>
             <Head title={t('set.barangay')} />
-            <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); form.post('/settings/barangay', { forceFormData: true, preserveScroll: true, onSuccess: () => form.setData((d) => ({ ...d, image: null, remove_image: false })) }); }}>
+            <form className="space-y-6" onSubmit={(e) => {
+ e.preventDefault(); form.post('/settings/barangay', { forceFormData: true, preserveScroll: true, onSuccess: () => form.setData((d) => ({ ...d, image: null, remove_image: false })) }); 
+}}>
                 <div>
                     <h2 className="text-lg font-semibold">{t('brgy.title')}</h2>
                     <p className="text-sm text-muted-foreground">{t('brgy.desc')}</p>
@@ -61,7 +76,9 @@ export default function BarangaySettings() {
                     <div className="flex flex-wrap items-center gap-2">
                         <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm font-medium hover:bg-muted focus-within:ring-2 focus-within:ring-[#0197F6]">
                             <ImagePlus size={16} /> {shown ? t('brgy.change') : t('brgy.choose')}
-                            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+                            <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => {
+ pick(e.target.files?.[0]); e.target.value = ''; 
+}} />
                         </label>
                         {hasCustom && (
                             <button type="button" onClick={() => form.setData((d) => ({ ...d, image: null, remove_image: true }))} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-[#D7263D] hover:bg-muted">

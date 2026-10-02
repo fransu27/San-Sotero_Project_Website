@@ -21,7 +21,9 @@ export const statusColor: Record<Status | 'Approval' | 'Removed', string> = {
 };
 
 /** Text → voice with the browser's speech synthesis. Runs locally; nothing is sent to any server. */
-const speak = (t: string) => { window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); };
+const speak = (t: string) => {
+ window.speechSynthesis.cancel(); window.speechSynthesis.speak(new SpeechSynthesisUtterance(t)); 
+};
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** One equal-width button in the action bar (Satisfied · Not satisfied · Listen · Comment). */
@@ -75,10 +77,15 @@ export default function PostCard({ c, isAdmin, statuses, categories }: { c: Comp
 
     /** Admin: flag the post as removed. The reason is required (min 5 chars) and validated again on the server. */
     const confirmRemove = () => {
-        if (reason.trim().length < 5) return setReasonError('Please give a reason (at least 5 characters).');
+        if (reason.trim().length < 5) {
+return setReasonError('Please give a reason (at least 5 characters).');
+}
+
         router.patch(`/complaints/${c.id}/remove`, { reason }, {
             preserveScroll: true,
-            onSuccess: () => { setRemoving(false); setReason(''); setReasonError(null); },
+            onSuccess: () => {
+ setRemoving(false); setReason(''); setReasonError(null); 
+},
             onError: (e) => setReasonError(e.reason ?? 'Could not remove this post.'),
         });
     };
@@ -148,7 +155,9 @@ export default function PostCard({ c, isAdmin, statuses, categories }: { c: Comp
                     <textarea id={`reason-${c.id}`} rows={2} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Duplicate report, inappropriate language, not a barangay concern…" className={fieldClass} />
                     {reasonError && <p className="text-xs text-[#D7263D]">{reasonError}</p>}
                     <div className="flex justify-end gap-2">
-                        <button onClick={() => { setRemoving(false); setReasonError(null); }} className="rounded-lg px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
+                        <button onClick={() => {
+ setRemoving(false); setReasonError(null); 
+}} className="rounded-lg px-3 py-1.5 text-sm hover:bg-muted">Cancel</button>
                         <button onClick={confirmRemove} className="rounded-lg bg-[#D7263D] px-3 py-1.5 text-sm font-medium text-white">Remove post</button>
                     </div>
                 </div>
