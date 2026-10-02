@@ -51,13 +51,17 @@ class AnnouncementRequest extends FormRequest
         ];
     }
 
-    /** The JSON stored in announcements.translations (null when the admin wrote no translation). */
+    /**
+     * The JSON stored in announcements.translations (null when the admin wrote no translation).
+     *
+     * @return array<string, array{title: string, body: string}>|null
+     */
     public function translations(): ?array
     {
         $out = [];
         foreach (['tl', 'ceb'] as $lang) {
-            $title = $this->input("{$lang}_title");
-            $body = $this->input("{$lang}_body");
+            $title = (string) $this->input("{$lang}_title");
+            $body = (string) $this->input("{$lang}_body");
             if ($title !== '' && $body !== '') {
                 $out[$lang] = ['title' => $title, 'body' => $body];
             }

@@ -2,11 +2,11 @@ import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
-import { BRAND } from '@/lib/brand';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import FeedLayout from '@/layouts/feed-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import { BRAND } from '@/lib/brand';
 
 const appName = BRAND.name; // always the barangay title, even if .env still says APP_NAME=Laravel
 

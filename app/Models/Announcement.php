@@ -2,9 +2,39 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $title
+ * @property string $body
+ * @property bool $pinned
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property string|null $image_path
+ * @property CarbonImmutable|null $edited_at
+ * @property array<array-key, mixed>|null $translations
+ * @property-read User $user
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereBody($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereEditedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereImagePath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement wherePinned($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereTranslations($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Announcement whereUserId($value)
+ *
+ * @mixin \Eloquent
+ */
 class Announcement extends Model
 {
     /** Languages an announcement can be written in (order = fallback order). */
@@ -38,5 +68,9 @@ class Announcement extends Model
         return ['title' => $this->title, 'body' => $this->body, 'lang' => 'en'];
     }
 
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+    /** @return BelongsTo<User, $this> */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 }

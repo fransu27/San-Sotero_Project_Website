@@ -20,9 +20,15 @@ export default function Wordmark() {
 export function PaletteStripe({ className = '' }: { className?: string }) {
     return (
         <div aria-hidden className={`flex h-1.5 w-full ${className}`}>
-            {['#D7263D', '#02182B', '#0197F6', '#448FA3', '#68C5DB'].map((c) => (
-                <span key={c} className="flex-1" style={{ backgroundColor: c }} />
-            ))}
+            {['#D7263D', '#02182B', '#0197F6', '#448FA3', '#68C5DB'].map(
+                (c) => (
+                    <span
+                        key={c}
+                        className="flex-1"
+                        style={{ backgroundColor: c }}
+                    />
+                ),
+            )}
         </div>
     );
 }
