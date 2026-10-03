@@ -98,7 +98,7 @@ class Complaint extends Model
     /** Everyone can see it: public + approved by an admin + not removed. */
     public function isPubliclyVisible(): bool
     {
-        return $this->visibility === 'public' && $this->isApproved() && ! $this->isRemoved();
+        return $this->visibility === 'public' && $this->isApproved() && !$this->isRemoved();
     }
 
     /**
@@ -107,33 +107,23 @@ class Complaint extends Model
      *   resident -> their own posts (any state)  +  other people's posts that are public AND approved AND not removed
      * ComplaintPolicy::view() expresses the same rule for a single post; keep the two in sync.
      *
-     * @param  Builder<$this>  $query
+     * @param  Builder<$this>$query
      * @return Builder<$this>
      */
-    public function scopeVisibleTo(Builder $query, User $user): Builder
+    public function scopeVisibleTo(Builder $query, User$user): Builder
     {
         if ($user->isAdmin()) {
             return $query;
         }
 
-        return $query->where(fn (Builder $w) => $w
+        return $query->where(fn (Builder $w) =>$w
             ->where('user_id', $user->id)
-            ->orWhere(fn (Builder $p) => $p
+            ->orWhere(fn (Builder $p) =>$p
                 ->where('visibility', 'public')
                 ->where('approval_status', self::APPROVAL_APPROVED)
                 ->whereNull('removed_at')));
     }
 
-<<<<<<< HEAD
-    public function user(): BelongsTo { return $this->belongsTo(User::class); }
-
-    public function reactions(): HasMany { return $this->hasMany(Reaction::class); }
-
-    public function comments(): HasMany { return $this->hasMany(Comment::class)->oldest(); }
-
-    /** The progress timeline, oldest first. */
-    public function events(): HasMany { return $this->hasMany(ComplaintEvent::class)->oldest('created_at')->oldest('id'); }
-=======
     /**
      * @return BelongsTo<User, $this>
      */
@@ -167,13 +157,12 @@ class Complaint extends Model
     {
         return $this->hasMany(ComplaintEvent::class)->oldest('created_at')->oldest('id');
     }
->>>>>>> 203efdfdb230bac433b5f827dd07c5930c31825d
 
     /** Add a line to the timeline. */
     public function log(string $type, ?User $actor = null, ?string $status = null, ?string $note = null): ComplaintEvent
     {
         /** @var ComplaintEvent $event */
-        $event = $this->events()->create([
+        $event =$this->events()->create([
             'user_id' => $actor?->id,
             'type' => $type,
             'status' => $status,
