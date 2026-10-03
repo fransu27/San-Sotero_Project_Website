@@ -61,15 +61,10 @@ class AnnouncementRequest extends FormRequest
     public function translations(): ?array
     {
         $out = [];
-<<<<<<< HEAD
         foreach (['tl', 'ceb', 'war'] as $lang) {
-            $title = $this->input("{$lang}_title");
-            $body = $this->input("{$lang}_body");
-=======
-        foreach (['tl', 'ceb'] as $lang) {
             $title = (string) $this->input("{$lang}_title");
             $body = (string) $this->input("{$lang}_body");
->>>>>>> 203efdfdb230bac433b5f827dd07c5930c31825d
+
             if ($title !== '' && $body !== '') {
                 $out[$lang] = ['title' => $title, 'body' => $body];
             }
