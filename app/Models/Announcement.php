@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Announcement extends Model
 {
     /** Languages an announcement can be written in (order = fallback order). */
-    public const LOCALES = ['en', 'tl', 'ceb'];
+    public const LOCALES = ['en', 'tl', 'ceb', 'war'];
 
     // SECURITY: whitelist for mass assignment. Only AnnouncementController (admin-only route) writes these.
     protected $fillable = ['user_id', 'title', 'body', 'translations', 'image_path', 'pinned'];
@@ -38,8 +38,5 @@ class Announcement extends Model
         return ['title' => $this->title, 'body' => $this->body, 'lang' => 'en'];
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
 }

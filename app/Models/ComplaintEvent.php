@@ -20,8 +20,5 @@ class ComplaintEvent extends Model
         return ['created_at' => 'datetime'];
     }
 
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
 }

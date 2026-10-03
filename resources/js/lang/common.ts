@@ -78,3 +78,28 @@ export const ceb: Record<keyof typeof en, string> = {
     'time.hour': '{n} oras ang milabay',
     'time.day': '{n} adlaw ang milabay',
 };
+
+export const war: Record<keyof typeof en, string> = {
+    'lang.label': 'Pinulongan',
+    'theme.toLight': 'Balyo ngadto ha light mode',
+    'theme.toDark': 'Balyo ngadto ha dark mode',
+
+    'status.Pending': 'Naghuhulat',
+    'status.Under Review': 'Ginsusi',
+    'status.In Progress': 'Nagpapadayon',
+    'status.Resolved': 'Nasulbad',
+    'status.Rejected': 'Ginsalikway',
+    'status.Approval': 'Naghuhulat hin pag-aprubar',
+    'status.ApprovalAdmin': 'Pila ha pag-aprubar',
+    'status.Removed': 'Gintanggal',
+
+    'cat.Infrastructure': 'Imprastraktura',
+    'cat.Sanitation': 'Kaharo',
+    'cat.Peace and Order': 'Kamurayaw ngan Kahusay',
+    'cat.Others': 'Iba pa',
+
+    'time.now': 'yana la',
+    'time.min': '{n} min nga naglabay',
+    'time.hour': '{n} oras nga naglabay',
+    'time.day': '{n} adlaw nga naglabay',
+};

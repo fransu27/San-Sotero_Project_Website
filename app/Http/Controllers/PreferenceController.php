@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
  */
 class PreferenceController extends Controller
 {
-    public const LOCALES = ['en', 'tl', 'ceb'];
+    public const LOCALES = ['en', 'tl', 'ceb', 'war'];
 
     public function update(Request $request)
     {

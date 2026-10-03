@@ -154,3 +154,18 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * Landing-page palette. The Welcome page used to be hard-coded dark; these three colours (as "R G B" triplets so
+ * opacity works: rgb(var(--w-bg) / 0.5)) now follow the Dark / Light switch. Blue, red and teal accents stay the same.
+ */
+.w-theme {
+    --w-bg: 244 249 252;
+    --w-fg: 2 24 43;
+    --w-accent: 7 105 150;
+}
+.dark .w-theme {
+    --w-bg: 2 24 43;
+    --w-fg: 241 248 251;
+    --w-accent: 104 197 219;
+}

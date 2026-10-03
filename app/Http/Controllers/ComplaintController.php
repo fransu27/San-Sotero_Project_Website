@@ -178,10 +178,20 @@ class ComplaintController extends Controller
 
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:300']]);
 
-        $complaint->forceFill([
-            'removed_at' => now(),
-            'removed_reason' => trim(strip_tags($data['reason'])),
-        ])->save();
+        $reason = trim(strip_tags($data['reason']));
+
+        DB::transaction(function () use ($complaint, $reason, $request) {
+            $wasWaiting = ! $complaint->isApproved();
+
+            $complaint->forceFill(['removed_at' => now(), 'removed_reason' => $reason])->save();
+
+            // Rejecting a post that was still in the queue = status "Rejected" + the reason on its timeline,
+            // so the resident sees WHY on their own post.
+            if ($wasWaiting) {
+                $complaint->forceFill(['status' => 'Rejected'])->save();
+                $complaint->log('status', $request->user(), 'Rejected', $reason);
+            }
+        });
 
         return back();
     }
