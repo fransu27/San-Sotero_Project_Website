@@ -6,6 +6,7 @@ use App\Http\Requests\ComplaintRequest;
 use App\Models\Comment;
 use App\Models\Complaint;
 use App\Models\Reaction;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -34,16 +35,21 @@ class ComplaintController extends Controller
      *   is never shown to anyone but staff, so it needs no approval.
      * - The first timeline line ("submitted") is written in the same transaction as the complaint.
      */
-    public function store(ComplaintRequest $request)
+    public function store(ComplaintRequest $request): RedirectResponse
     {
         $user = $request->user();
         $fields = $request->fields();
-        $needsApproval = $fields['visibility'] === 'public' && ! $user->isAdmin();
+        $needsApproval = isset($fields['visibility']) && $fields['visibility'] === 'public' && (! $user || ! $user->isAdmin());
 
-        $complaint = DB::transaction(function () use ($request, $user, $fields, $needsApproval) {
+        /** @var Complaint $complaint */
+        $complaint = DB::transaction(function () use ($request, $user, $fields, $needsApproval): Complaint {
             $complaint = new Complaint($fields);
-            $complaint->user_id = $user->id;
-            $complaint->image_path = $request->file('image')?->store('complaints', 'public'); // random filename
+            $complaint->user_id = (int) auth()->id();
+
+            $path = $request->file('image')?->store('complaints');
+            $complaint->image_path = ($path !== false && $path !== null) ? $path : null;
+
+            // random filename
             $complaint->forceFill(['approval_status' => $needsApproval ? Complaint::APPROVAL_PENDING : Complaint::APPROVAL_APPROVED])->save();
             $complaint->log('submitted', $user);
 
@@ -65,12 +71,12 @@ class ComplaintController extends Controller
      *   (visibility / anonymous) — those belong to the author.
      * - Photo: a new upload replaces the old file; remove_image deletes it. edited_at feeds the "Edited" label.
      */
-    public function update(ComplaintRequest $request, Complaint $complaint)
+    public function update(ComplaintRequest $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('update', $complaint);
 
         $user = $request->user();
-        $isAuthor = $complaint->user_id === $user->id;
+        $isAuthor = $user !== null && $complaint->user_id === $user->id;
         $fields = $request->fields();
 
         if (! $isAuthor) {
@@ -79,10 +85,11 @@ class ComplaintController extends Controller
 
         $sentBackToQueue = false;
 
-        DB::transaction(function () use ($request, $complaint, $fields, $user, &$sentBackToQueue) {
+        DB::transaction(function () use ($request, $complaint, $fields, $user, &$sentBackToQueue): void {
             if ($request->hasFile('image')) {
                 $this->deletePhoto($complaint);
-                $fields['image_path'] = $request->file('image')->store('complaints', 'public');
+                $path = $request->file('image')?->store('complaints', 'public');
+                $fields['image_path'] = ($path !== false && $path !== null) ? $path : null;
             } elseif ($request->boolean('remove_image')) {
                 $this->deletePhoto($complaint);
                 $fields['image_path'] = null;
@@ -90,7 +97,7 @@ class ComplaintController extends Controller
 
             $complaint->fill($fields);
 
-            if (! $user->isAdmin()) {
+            if ($user !== null && ! $user->isAdmin()) {
                 $public = $complaint->visibility === 'public';
                 $sentBackToQueue = $public;
                 $complaint->approval_status = $public ? Complaint::APPROVAL_PENDING : Complaint::APPROVAL_APPROVED;
@@ -110,12 +117,12 @@ class ComplaintController extends Controller
     /**
      * Approve a post waiting in the moderation queue (admin). Idempotent: approving twice does nothing.
      */
-    public function approve(Request $request, Complaint $complaint)
+    public function approve(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('moderate', $complaint);
 
         if (! $complaint->isApproved()) {
-            DB::transaction(function () use ($complaint, $request) {
+            DB::transaction(function () use ($complaint, $request): void {
                 $complaint->forceFill(['approval_status' => Complaint::APPROVAL_APPROVED])->save();
                 $complaint->log('approved', $request->user());
             });
@@ -130,10 +137,11 @@ class ComplaintController extends Controller
      * - A note is optional, except for "Rejected": the resident is owed a reason.
      * - A post still waiting for approval can't be moved along (the resident/community haven't seen it yet).
      */
-    public function updateStatus(Request $request, Complaint $complaint)
+    public function updateStatus(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('moderate', $complaint);
 
+        /** @var array{status: string, note?: string|null} $data */
         $data = $request->validate([
             'status' => ['required', Rule::in(Complaint::STATUSES)],
             'note' => ['nullable', 'string', 'min:5', 'max:300', 'required_if:status,Rejected'],
@@ -144,9 +152,10 @@ class ComplaintController extends Controller
         }
 
         if ($data['status'] !== $complaint->status) {
-            DB::transaction(function () use ($complaint, $data, $request) {
+            DB::transaction(function () use ($complaint, $data, $request): void {
                 $complaint->forceFill(['status' => $data['status']])->save();
-                $complaint->log('status', $request->user(), $data['status'], isset($data['note']) ? trim(strip_tags($data['note'])) : null);
+                $note = isset($data['note']) ? trim(strip_tags((string) $data['note'])) : null;
+                $complaint->log('status', $request->user(), $data['status'], $note);
             });
         }
 
@@ -157,7 +166,7 @@ class ComplaintController extends Controller
      * The author permanently deletes THEIR OWN post (row, comments, votes, timeline and photo file).
      * The policy allows only the author — not even an admin — so admins use remove() and leave a paper trail.
      */
-    public function destroy(Request $request, Complaint $complaint)
+    public function destroy(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('delete', $complaint);
 
@@ -172,10 +181,11 @@ class ComplaintController extends Controller
      * a post in the approval queue: the resident sees "Removed by the barangay: <reason>".
      * removed_* are not fillable, so they can only be set here through forceFill().
      */
-    public function remove(Request $request, Complaint $complaint)
+    public function remove(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('moderate', $complaint);
 
+        /** @var array{reason: string} $data */
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:300']]);
 
         $reason = trim(strip_tags($data['reason']));
@@ -197,7 +207,7 @@ class ComplaintController extends Controller
     }
 
     /** Admin: undo a removal. */
-    public function restore(Complaint $complaint)
+    public function restore(Complaint $complaint): RedirectResponse
     {
         Gate::authorize('moderate', $complaint);
 
@@ -210,16 +220,17 @@ class ComplaintController extends Controller
      * Comment on a complaint. Allowed on any post the person can see AND that is approved (policy "interact").
      * Text is stored as plain text; React escapes it on display (no XSS).
      */
-    public function comment(Request $request, Complaint $complaint)
+    public function comment(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('interact', $complaint);
 
-        $body = $request->validate(['body' => ['required', 'string', 'max:1000']])['body'];
+        /** @var array{body: string} $validated */
+        $validated = $request->validate(['body' => ['required', 'string', 'max:1000']]);
 
         Comment::create([
             'complaint_id' => $complaint->id,
-            'user_id' => $request->user()->id,
-            'body' => trim(strip_tags($body)),
+            'user_id' => (int) $request->user()?->id,
+            'body' => trim(strip_tags($validated['body'])),
         ]);
 
         return back();
@@ -229,12 +240,20 @@ class ComplaintController extends Controller
      * Satisfied / Not satisfied. One vote per person per post: the same vote again removes it, the other switches it.
      * The unique (complaint_id, user_id) index makes double-voting impossible even under concurrent clicks.
      */
-    public function react(Request $request, Complaint $complaint)
+    public function react(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('interact', $complaint);
 
         $user = $request->user();
-        $type = $request->validate(['type' => ['required', Rule::in(Reaction::TYPES)]])['type'];
+        if ($user === null) {
+            return back();
+        }
+
+        /** @var array{type: string} $validated */
+        $validated = $request->validate(['type' => ['required', Rule::in(Reaction::TYPES)]]);
+        $type = $validated['type'];
+
+        /** @var Reaction|null $existing */
         $existing = Reaction::where(['complaint_id' => $complaint->id, 'user_id' => $user->id])->first();
 
         if ($existing && $existing->type === $type) {

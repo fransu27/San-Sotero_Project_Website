@@ -2,13 +2,32 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * Tiny key/value store for things a local admin edits from Settings (barangay name, caption, location photo).
+ *
  * Read on every page (it is shared with Inertia), so the whole table is cached and the cache is cleared on write.
+ *
+ * @property int $id
+ * @property string $key
+ * @property string|null $value
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting whereKey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|SiteSetting whereValue($value)
+ *
+ * @mixin \Eloquent
  */
 class SiteSetting extends Model
 {
