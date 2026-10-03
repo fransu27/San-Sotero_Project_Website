@@ -68,7 +68,7 @@ class Announcement extends Model
         return ['title' => $this->title, 'body' => $this->body, 'lang' => 'en'];
     }
 
-<<<<<<< HEAD
+    HEAD
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
 =======
     /** @return BelongsTo<User, $this> */
