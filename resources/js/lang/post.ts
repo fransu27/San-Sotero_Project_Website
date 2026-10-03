@@ -12,25 +12,31 @@ export const en = {
     'post.menu': 'Post options',
     'post.edit': 'Edit post',
     'post.delete': 'Delete my post',
-    'post.deleteConfirm': 'Delete your post permanently? This cannot be undone.',
+    'post.deleteConfirm':
+        'Delete your post permanently? This cannot be undone.',
     'post.remove': 'Remove with reason…',
     'post.restore': 'Restore post',
     'post.removedBanner': 'Removed by the barangay.',
     'post.rejectedBanner': 'Rejected by the barangay.',
     'post.reason': 'Reason: {reason}',
     'post.removedContent': 'The content of this post is no longer shown.',
-    'post.awaitingMine': 'Waiting for barangay approval. Only you and the barangay can see this until it is approved.',
-    'post.awaitingAdmin': 'Waiting for your approval. Residents cannot see this post yet.',
+    'post.awaitingMine':
+        'Waiting for barangay approval. Only you and the barangay can see this until it is approved.',
+    'post.awaitingAdmin':
+        'Waiting for your approval. Residents cannot see this post yet.',
     'post.approve': 'Approve',
     'post.reject': 'Reject…',
-    'post.rejectAsk': 'Why is this post being rejected or removed? The resident will see this reason.',
-    'post.rejectPh': 'e.g. Duplicate report, inappropriate language, not a barangay concern…',
+    'post.rejectAsk':
+        'Why is this post being rejected or removed? The resident will see this reason.',
+    'post.rejectPh':
+        'e.g. Duplicate report, inappropriate language, not a barangay concern…',
     'post.reasonMin': 'Please give a reason (at least 5 characters).',
     'post.cancel': 'Cancel',
     'post.rejectBtn': 'Reject post',
     'post.status': 'Update status',
     'post.noteLabel': 'Note for the resident (optional)',
-    'post.noteRejected': 'Reason for rejecting (required, at least 5 characters)',
+    'post.noteRejected':
+        'Reason for rejecting (required, at least 5 characters)',
     'post.updateStatus': 'Update status',
     'post.timeline': 'Progress timeline ({n})',
     'tl.submitted': 'Report submitted',
@@ -47,7 +53,8 @@ export const en = {
     'post.saving': 'Saving…',
     'post.title': 'Title',
     'post.details': 'Details',
-    'post.reviewAgain': 'Public posts are reviewed by the barangay again after you edit them.',
+    'post.reviewAgain':
+        'Public posts are reviewed by the barangay again after you edit them.',
     'post.shownIn': 'Shown in {lang}',
     'post.pinned': 'Pinned announcement',
     'post.editAnn': 'Edit announcement',
@@ -59,7 +66,8 @@ export const en = {
 
 export const tl: Record<keyof typeof en, string> = {
     'post.anon': 'Anonymous na residente',
-    'post.anonMine': 'Anonymous: ikaw at ang barangay lamang ang nakakakita ng pangalan mo',
+    'post.anonMine':
+        'Anonymous: ikaw at ang barangay lamang ang nakakakita ng pangalan mo',
     'post.anonAdmin': 'Nag-post nang anonymous',
     'post.edited': 'Na-edit',
     'post.happened': 'Nangyari noong {date}',
@@ -70,25 +78,31 @@ export const tl: Record<keyof typeof en, string> = {
     'post.menu': 'Mga opsyon ng post',
     'post.edit': 'I-edit ang post',
     'post.delete': 'Burahin ang post ko',
-    'post.deleteConfirm': 'Permanenteng buburahin ang post mo? Hindi na ito mababawi.',
+    'post.deleteConfirm':
+        'Permanenteng buburahin ang post mo? Hindi na ito mababawi.',
     'post.remove': 'Alisin nang may dahilan…',
     'post.restore': 'Ibalik ang post',
     'post.removedBanner': 'Inalis ng barangay.',
     'post.rejectedBanner': 'Tinanggihan ng barangay.',
     'post.reason': 'Dahilan: {reason}',
     'post.removedContent': 'Hindi na ipinapakita ang laman ng post na ito.',
-    'post.awaitingMine': 'Naghihintay ng pag-apruba ng barangay. Ikaw at ang barangay lamang ang makakakita nito hanggang maaprubahan.',
-    'post.awaitingAdmin': 'Naghihintay ng pag-apruba mo. Hindi pa ito nakikita ng mga residente.',
+    'post.awaitingMine':
+        'Naghihintay ng pag-apruba ng barangay. Ikaw at ang barangay lamang ang makakakita nito hanggang maaprubahan.',
+    'post.awaitingAdmin':
+        'Naghihintay ng pag-apruba mo. Hindi pa ito nakikita ng mga residente.',
     'post.approve': 'Aprubahan',
     'post.reject': 'Tanggihan…',
-    'post.rejectAsk': 'Bakit tinatanggihan o inaalis ang post na ito? Makikita ng residente ang dahilan.',
-    'post.rejectPh': 'hal. Doble ang ulat, hindi angkop na salita, hindi alalahanin ng barangay…',
+    'post.rejectAsk':
+        'Bakit tinatanggihan o inaalis ang post na ito? Makikita ng residente ang dahilan.',
+    'post.rejectPh':
+        'hal. Doble ang ulat, hindi angkop na salita, hindi alalahanin ng barangay…',
     'post.reasonMin': 'Magbigay ng dahilan (hindi bababa sa 5 titik).',
     'post.cancel': 'Kanselahin',
     'post.rejectBtn': 'Tanggihan ang post',
     'post.status': 'I-update ang katayuan',
     'post.noteLabel': 'Tala para sa residente (opsyonal)',
-    'post.noteRejected': 'Dahilan ng pagtanggi (kailangan, hindi bababa sa 5 titik)',
+    'post.noteRejected':
+        'Dahilan ng pagtanggi (kailangan, hindi bababa sa 5 titik)',
     'post.updateStatus': 'I-update ang katayuan',
     'post.timeline': 'Timeline ng progreso ({n})',
     'tl.submitted': 'Naisumite ang ulat',
@@ -105,7 +119,8 @@ export const tl: Record<keyof typeof en, string> = {
     'post.saving': 'Sine-save…',
     'post.title': 'Pamagat',
     'post.details': 'Detalye',
-    'post.reviewAgain': 'Susuriin muli ng barangay ang mga pampublikong post pagkatapos mong i-edit.',
+    'post.reviewAgain':
+        'Susuriin muli ng barangay ang mga pampublikong post pagkatapos mong i-edit.',
     'post.shownIn': 'Ipinapakita sa {lang}',
     'post.pinned': 'Naka-pin na anunsyo',
     'post.editAnn': 'I-edit ang anunsyo',
@@ -117,7 +132,8 @@ export const tl: Record<keyof typeof en, string> = {
 
 export const ceb: Record<keyof typeof en, string> = {
     'post.anon': 'Anonymous nga residente',
-    'post.anonMine': 'Anonymous: ikaw ug ang barangay ra ang makakita sa imong ngalan',
+    'post.anonMine':
+        'Anonymous: ikaw ug ang barangay ra ang makakita sa imong ngalan',
     'post.anonAdmin': 'Nag-post nga anonymous',
     'post.edited': 'Gi-edit',
     'post.happened': 'Nahitabo kaniadtong {date}',
@@ -135,18 +151,23 @@ export const ceb: Record<keyof typeof en, string> = {
     'post.rejectedBanner': 'Gisalikway sa barangay.',
     'post.reason': 'Rason: {reason}',
     'post.removedContent': 'Dili na ipakita ang sulod niini nga post.',
-    'post.awaitingMine': 'Naghulat og pag-aprobar sa barangay. Ikaw ug ang barangay ra ang makakita niini hangtod maaprobahan.',
-    'post.awaitingAdmin': 'Naghulat sa imong pag-aprobar. Wala pa kini makita sa mga residente.',
+    'post.awaitingMine':
+        'Naghulat og pag-aprobar sa barangay. Ikaw ug ang barangay ra ang makakita niini hangtod maaprobahan.',
+    'post.awaitingAdmin':
+        'Naghulat sa imong pag-aprobar. Wala pa kini makita sa mga residente.',
     'post.approve': 'Aprobahi',
     'post.reject': 'Isalikway…',
-    'post.rejectAsk': 'Nganong gisalikway o gikuha kini nga post? Makita sa residente ang rason.',
-    'post.rejectPh': 'pananglitan Doble ang report, dili angay nga pulong, dili problema sa barangay…',
+    'post.rejectAsk':
+        'Nganong gisalikway o gikuha kini nga post? Makita sa residente ang rason.',
+    'post.rejectPh':
+        'pananglitan Doble ang report, dili angay nga pulong, dili problema sa barangay…',
     'post.reasonMin': 'Hatagi og rason (labing menos 5 ka letra).',
     'post.cancel': 'Kanselahon',
     'post.rejectBtn': 'Isalikway ang post',
     'post.status': 'I-update ang kahimtang',
     'post.noteLabel': 'Nota para sa residente (opsyonal)',
-    'post.noteRejected': 'Rason sa pagsalikway (kinahanglan, labing menos 5 ka letra)',
+    'post.noteRejected':
+        'Rason sa pagsalikway (kinahanglan, labing menos 5 ka letra)',
     'post.updateStatus': 'I-update ang kahimtang',
     'post.timeline': 'Timeline sa pag-uswag ({n})',
     'tl.submitted': 'Napadala ang report',
@@ -163,7 +184,8 @@ export const ceb: Record<keyof typeof en, string> = {
     'post.saving': 'Nag-save…',
     'post.title': 'Titulo',
     'post.details': 'Detalye',
-    'post.reviewAgain': 'Susihon pag-usab sa barangay ang mga publiko nga post human nimo kini i-edit.',
+    'post.reviewAgain':
+        'Susihon pag-usab sa barangay ang mga publiko nga post human nimo kini i-edit.',
     'post.shownIn': 'Gipakita sa {lang}',
     'post.pinned': 'Naka-pin nga pahibalo',
     'post.editAnn': 'I-edit ang pahibalo',
@@ -175,7 +197,8 @@ export const ceb: Record<keyof typeof en, string> = {
 
 export const war: Record<keyof typeof en, string> = {
     'post.anon': 'Anonymous nga residente',
-    'post.anonMine': 'Anonymous: ikaw ngan an barangay la an makakita han imo ngaran',
+    'post.anonMine':
+        'Anonymous: ikaw ngan an barangay la an makakita han imo ngaran',
     'post.anonAdmin': 'Nag-post nga anonymous',
     'post.edited': 'Na-edit',
     'post.happened': 'Nahitabo han {date}',
@@ -193,18 +216,23 @@ export const war: Record<keyof typeof en, string> = {
     'post.rejectedBanner': 'Ginsalikway han barangay.',
     'post.reason': 'Rason: {reason}',
     'post.removedContent': 'Diri na ipapakita an sulod hini nga post.',
-    'post.awaitingMine': 'Naghuhulat hin pag-aprubar han barangay. Ikaw ngan an barangay la an makakita hini tubtob maaprubahan.',
-    'post.awaitingAdmin': 'Naghuhulat ha imo pag-aprubar. Waray pa ini makita han mga residente.',
+    'post.awaitingMine':
+        'Naghuhulat hin pag-aprubar han barangay. Ikaw ngan an barangay la an makakita hini tubtob maaprubahan.',
+    'post.awaitingAdmin':
+        'Naghuhulat ha imo pag-aprubar. Waray pa ini makita han mga residente.',
     'post.approve': 'Aprubahi',
     'post.reject': 'Isalikway…',
-    'post.rejectAsk': 'Kay ano ginsasalikway o gintatanggal ini nga post? Makikita han residente an rason.',
-    'post.rejectPh': 'pananglitan Doble an report, diri angay nga pulong, diri problema han barangay…',
+    'post.rejectAsk':
+        'Kay ano ginsasalikway o gintatanggal ini nga post? Makikita han residente an rason.',
+    'post.rejectPh':
+        'pananglitan Doble an report, diri angay nga pulong, diri problema han barangay…',
     'post.reasonMin': 'Hatagi hin rason (labing gutiay 5 ka letra).',
     'post.cancel': 'Kanselahon',
     'post.rejectBtn': 'Isalikway an post',
     'post.status': 'I-update an kahimtang',
     'post.noteLabel': 'Nota para ha residente (opsyonal)',
-    'post.noteRejected': 'Rason han pagsalikway (kinahanglan, labing gutiay 5 ka letra)',
+    'post.noteRejected':
+        'Rason han pagsalikway (kinahanglan, labing gutiay 5 ka letra)',
     'post.updateStatus': 'I-update an kahimtang',
     'post.timeline': 'Timeline han pag-uswag ({n})',
     'tl.submitted': 'Napadala an report',
@@ -221,7 +249,8 @@ export const war: Record<keyof typeof en, string> = {
     'post.saving': 'Nag-se-save…',
     'post.title': 'Titulo',
     'post.details': 'Detalye',
-    'post.reviewAgain': 'Susihon liwat han barangay an mga publiko nga post pagkahuman mo hini i-edit.',
+    'post.reviewAgain':
+        'Susihon liwat han barangay an mga publiko nga post pagkahuman mo hini i-edit.',
     'post.shownIn': 'Ginpakita ha {lang}',
     'post.pinned': 'Naka-pin nga pahibaro',
     'post.editAnn': 'I-edit an pahibaro',
