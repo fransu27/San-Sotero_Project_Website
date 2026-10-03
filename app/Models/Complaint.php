@@ -64,13 +64,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Complaint extends Model
 {
     public const CATEGORIES = ['Infrastructure', 'Sanitation', 'Peace and Order', 'Others'];
-
     public const STATUSES = ['Pending', 'Under Review', 'In Progress', 'Resolved', 'Rejected'];
-
     public const VISIBILITIES = ['public', 'private'];
-
     public const APPROVAL_PENDING = 'pending';
-
     public const APPROVAL_APPROVED = 'approved';
 
     // SECURITY (mass assignment): `status`, `approval_status`, `removed_*` and `edited_at` are deliberately
@@ -95,15 +91,9 @@ class Complaint extends Model
     }
 
     /** True once the barangay has removed it (the row is kept; see ComplaintController::remove). */
-    public function isRemoved(): bool
-    {
-        return $this->removed_at !== null;
-    }
+    public function isRemoved(): bool { return $this->removed_at !== null; }
 
-    public function isApproved(): bool
-    {
-        return $this->approval_status === self::APPROVAL_APPROVED;
-    }
+    public function isApproved(): bool { return $this->approval_status === self::APPROVAL_APPROVED; }
 
     /** Everyone can see it: public + approved by an admin + not removed. */
     public function isPubliclyVisible(): bool
@@ -134,6 +124,16 @@ class Complaint extends Model
                 ->whereNull('removed_at')));
     }
 
+<<<<<<< HEAD
+    public function user(): BelongsTo { return $this->belongsTo(User::class); }
+
+    public function reactions(): HasMany { return $this->hasMany(Reaction::class); }
+
+    public function comments(): HasMany { return $this->hasMany(Comment::class)->oldest(); }
+
+    /** The progress timeline, oldest first. */
+    public function events(): HasMany { return $this->hasMany(ComplaintEvent::class)->oldest('created_at')->oldest('id'); }
+=======
     /**
      * @return BelongsTo<User, $this>
      */
@@ -167,6 +167,7 @@ class Complaint extends Model
     {
         return $this->hasMany(ComplaintEvent::class)->oldest('created_at')->oldest('id');
     }
+>>>>>>> 203efdfdb230bac433b5f827dd07c5930c31825d
 
     /** Add a line to the timeline. */
     public function log(string $type, ?User $actor = null, ?string $status = null, ?string $note = null): ComplaintEvent
