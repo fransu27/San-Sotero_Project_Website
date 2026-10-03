@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Settings\BarangayController;
 use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Middleware\EnsureAdmin;
 use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Middleware\EnsureAdmin;
 /* @chisel-password-confirmation */
 use Illuminate\Auth\Middleware\RequirePassword;
 /* @end-chisel-password-confirmation */

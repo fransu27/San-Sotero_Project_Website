@@ -19,7 +19,8 @@ export const en = {
     'set.barangay': 'Barangay',
 
     'banner.placeholderTitle': 'Barangay location photo',
-    'banner.placeholderHint': 'No photo yet. It will appear here once the barangay adds one.',
+    'banner.placeholderHint':
+        'No photo yet. It will appear here once the barangay adds one.',
     'banner.adminHint': 'Add a photo in Settings → Barangay',
 
     'feed.showing': 'Showing {what}',
@@ -27,14 +28,17 @@ export const en = {
     'feed.clear': 'Clear filter',
     'feed.emptyFiltered': 'No reports match this filter.',
     'feed.emptyAdmin': 'No reports yet. Residents’ reports will appear here.',
-    'feed.emptyResident': 'No reports to show yet. Use the box above to tell the barangay about a concern.',
+    'feed.emptyResident':
+        'No reports to show yet. Use the box above to tell the barangay about a concern.',
     'widget.admin': 'Reports overview',
     'widget.resident': 'Community reports',
     'widget.total': 'Total',
-    'widget.privacy': 'Posts set to Private are visible only to you and the barangay officials.',
+    'widget.privacy':
+        'Posts set to Private are visible only to you and the barangay officials.',
 
     'brgy.title': 'Barangay details',
-    'brgy.desc': 'Set the name, a short caption and a location photo of your barangay. It replaces the default banner on the dashboard and settings pages.',
+    'brgy.desc':
+        'Set the name, a short caption and a location photo of your barangay. It replaces the default banner on the dashboard and settings pages.',
     'brgy.name': 'Barangay name',
     'brgy.caption': 'Short caption',
     'brgy.captionPh': 'e.g. Purok 1 to 7, Municipality of Abuyog',
@@ -50,8 +54,10 @@ export const en = {
 
     'auth.headline': 'A louder voice for every purok of {place}.',
     'auth.p1': 'Report a problem with a photo and a short description.',
-    'auth.p2': 'Follow it from Pending to Resolved and read barangay announcements.',
-    'auth.p3': 'Choose who sees your report: everyone, or the barangay only. You can even hide your name.',
+    'auth.p2':
+        'Follow it from Pending to Resolved and read barangay announcements.',
+    'auth.p3':
+        'Choose who sees your report: everyone, or the barangay only. You can even hide your name.',
     'auth.back': '← Back to home',
 } as const;
 
@@ -75,22 +81,27 @@ export const tl: Record<keyof typeof en, string> = {
     'set.barangay': 'Barangay',
 
     'banner.placeholderTitle': 'Larawan ng lokasyon ng barangay',
-    'banner.placeholderHint': 'Wala pang larawan. Lalabas ito dito kapag nag-upload ang barangay.',
+    'banner.placeholderHint':
+        'Wala pang larawan. Lalabas ito dito kapag nag-upload ang barangay.',
     'banner.adminHint': 'Magdagdag ng larawan sa Mga Setting → Barangay',
 
     'feed.showing': 'Ipinapakita: {what}',
     'feed.results': 'mga resulta para sa “{q}”',
     'feed.clear': 'I-clear ang filter',
     'feed.emptyFiltered': 'Walang ulat na tumutugma sa filter na ito.',
-    'feed.emptyAdmin': 'Wala pang ulat. Lalabas dito ang mga ulat ng mga residente.',
-    'feed.emptyResident': 'Wala pang maipapakitang ulat. Gamitin ang kahon sa itaas para ipaalam sa barangay ang iyong alalahanin.',
+    'feed.emptyAdmin':
+        'Wala pang ulat. Lalabas dito ang mga ulat ng mga residente.',
+    'feed.emptyResident':
+        'Wala pang maipapakitang ulat. Gamitin ang kahon sa itaas para ipaalam sa barangay ang iyong alalahanin.',
     'widget.admin': 'Pangkalahatang-ideya ng mga ulat',
     'widget.resident': 'Mga ulat ng komunidad',
     'widget.total': 'Kabuuan',
-    'widget.privacy': 'Ang mga post na naka-Private ay makikita lamang mo at ng mga opisyal ng barangay.',
+    'widget.privacy':
+        'Ang mga post na naka-Private ay makikita lamang mo at ng mga opisyal ng barangay.',
 
     'brgy.title': 'Detalye ng barangay',
-    'brgy.desc': 'Itakda ang pangalan, maikling caption at larawan ng lokasyon ng barangay. Papalitan nito ang default na banner sa dashboard at settings.',
+    'brgy.desc':
+        'Itakda ang pangalan, maikling caption at larawan ng lokasyon ng barangay. Papalitan nito ang default na banner sa dashboard at settings.',
     'brgy.name': 'Pangalan ng barangay',
     'brgy.caption': 'Maikling caption',
     'brgy.captionPh': 'hal. Purok 1 hanggang 7, Bayan ng Abuyog',
@@ -98,7 +109,8 @@ export const tl: Record<keyof typeof en, string> = {
     'brgy.choose': 'Pumili ng larawan',
     'brgy.change': 'Palitan ang larawan',
     'brgy.remove': 'Alisin ang larawan',
-    'brgy.hint': 'JPG, PNG o WebP · hanggang 4 MB · mas maganda ang malapad na larawan',
+    'brgy.hint':
+        'JPG, PNG o WebP · hanggang 4 MB · mas maganda ang malapad na larawan',
     'brgy.save': 'I-save',
     'brgy.saving': 'Sine-save…',
     'brgy.tooBig': 'Lampas 4 MB ang larawan. Pumili ng mas maliit.',
@@ -106,8 +118,10 @@ export const tl: Record<keyof typeof en, string> = {
 
     'auth.headline': 'Mas malakas na tinig para sa bawat purok ng {place}.',
     'auth.p1': 'Mag-ulat ng problema na may larawan at maikling paglalarawan.',
-    'auth.p2': 'Sundan ito mula Nakabinbin hanggang Nalutas at basahin ang mga anunsyo ng barangay.',
-    'auth.p3': 'Piliin kung sino ang makakakita ng ulat mo: lahat, o barangay lamang. Maaari mo ring itago ang pangalan mo.',
+    'auth.p2':
+        'Sundan ito mula Nakabinbin hanggang Nalutas at basahin ang mga anunsyo ng barangay.',
+    'auth.p3':
+        'Piliin kung sino ang makakakita ng ulat mo: lahat, o barangay lamang. Maaari mo ring itago ang pangalan mo.',
     'auth.back': '← Bumalik sa home',
 };
 
@@ -131,22 +145,27 @@ export const ceb: Record<keyof typeof en, string> = {
     'set.barangay': 'Barangay',
 
     'banner.placeholderTitle': 'Litrato sa lugar sa barangay',
-    'banner.placeholderHint': 'Wala pay litrato. Makita kini dinhi kung mag-upload ang barangay.',
+    'banner.placeholderHint':
+        'Wala pay litrato. Makita kini dinhi kung mag-upload ang barangay.',
     'banner.adminHint': 'Magdugang og litrato sa Mga Setting → Barangay',
 
     'feed.showing': 'Gipakita: {what}',
     'feed.results': 'mga resulta para sa “{q}”',
     'feed.clear': 'I-clear ang filter',
     'feed.emptyFiltered': 'Walay report nga motugma niini nga filter.',
-    'feed.emptyAdmin': 'Wala pay report. Makita dinhi ang mga report sa mga residente.',
-    'feed.emptyResident': 'Wala pay mapakita nga report. Gamita ang kahon sa ibabaw aron ipahibalo sa barangay ang imong problema.',
+    'feed.emptyAdmin':
+        'Wala pay report. Makita dinhi ang mga report sa mga residente.',
+    'feed.emptyResident':
+        'Wala pay mapakita nga report. Gamita ang kahon sa ibabaw aron ipahibalo sa barangay ang imong problema.',
     'widget.admin': 'Katingbanan sa mga report',
     'widget.resident': 'Mga report sa komunidad',
     'widget.total': 'Kinatibuk-an',
-    'widget.privacy': 'Ang mga post nga Private makita ra nimo ug sa mga opisyal sa barangay.',
+    'widget.privacy':
+        'Ang mga post nga Private makita ra nimo ug sa mga opisyal sa barangay.',
 
     'brgy.title': 'Detalye sa barangay',
-    'brgy.desc': 'Itakda ang ngalan, mubo nga caption ug litrato sa lugar sa barangay. Ilisan niini ang default nga banner sa dashboard ug settings.',
+    'brgy.desc':
+        'Itakda ang ngalan, mubo nga caption ug litrato sa lugar sa barangay. Ilisan niini ang default nga banner sa dashboard ug settings.',
     'brgy.name': 'Ngalan sa barangay',
     'brgy.caption': 'Mubo nga caption',
     'brgy.captionPh': 'pananglitan Purok 1 hangtod 7, Lungsod sa Abuyog',
@@ -154,16 +173,20 @@ export const ceb: Record<keyof typeof en, string> = {
     'brgy.choose': 'Pili og litrato',
     'brgy.change': 'Ilisi ang litrato',
     'brgy.remove': 'Kuhaa ang litrato',
-    'brgy.hint': 'JPG, PNG o WebP · hangtod 4 MB · mas nindot ang lapad nga litrato',
+    'brgy.hint':
+        'JPG, PNG o WebP · hangtod 4 MB · mas nindot ang lapad nga litrato',
     'brgy.save': 'I-save',
     'brgy.saving': 'Nag-save…',
     'brgy.tooBig': 'Lapas sa 4 MB ang litrato. Pili og mas gamay.',
     'brgy.badType': 'Pili og JPG, PNG o WebP nga litrato.',
 
     'auth.headline': 'Mas kusog nga tingog para sa matag purok sa {place}.',
-    'auth.p1': 'Mag-report og problema nga naay litrato ug mubo nga paghulagway.',
-    'auth.p2': 'Sunda kini gikan sa Naghulat hangtod Nasulbad ug basaha ang mga pahibalo sa barangay.',
-    'auth.p3': 'Pili kung kinsa ang makakita sa imong report: tanan, o barangay lang. Mahimo pud nimong tagoon ang imong ngalan.',
+    'auth.p1':
+        'Mag-report og problema nga naay litrato ug mubo nga paghulagway.',
+    'auth.p2':
+        'Sunda kini gikan sa Naghulat hangtod Nasulbad ug basaha ang mga pahibalo sa barangay.',
+    'auth.p3':
+        'Pili kung kinsa ang makakita sa imong report: tanan, o barangay lang. Mahimo pud nimong tagoon ang imong ngalan.',
     'auth.back': '← Balik sa home',
 };
 
@@ -187,22 +210,27 @@ export const war: Record<keyof typeof en, string> = {
     'set.barangay': 'Barangay',
 
     'banner.placeholderTitle': 'Litrato han lugar han barangay',
-    'banner.placeholderHint': 'Waray pa litrato. Makikita ito dinhi kon mag-upload an barangay.',
+    'banner.placeholderHint':
+        'Waray pa litrato. Makikita ito dinhi kon mag-upload an barangay.',
     'banner.adminHint': 'Magdugang hin litrato ha Mga Setting → Barangay',
 
     'feed.showing': 'Ginpapakita: {what}',
     'feed.results': 'mga resulta para ha “{q}”',
     'feed.clear': 'I-clear an filter',
     'feed.emptyFiltered': 'Waray report nga katugma hini nga filter.',
-    'feed.emptyAdmin': 'Waray pa report. Makikita dinhi an mga report han mga residente.',
-    'feed.emptyResident': 'Waray pa mapapakita nga report. Gamita an kahon ha ibabaw basi igpahibaro ha barangay an imo problema.',
+    'feed.emptyAdmin':
+        'Waray pa report. Makikita dinhi an mga report han mga residente.',
+    'feed.emptyResident':
+        'Waray pa mapapakita nga report. Gamita an kahon ha ibabaw basi igpahibaro ha barangay an imo problema.',
     'widget.admin': 'Katingbanan han mga report',
     'widget.resident': 'Mga report han komunidad',
     'widget.total': 'Kabug-osan',
-    'widget.privacy': 'An mga post nga Private makikita la nimo ngan han mga opisyal han barangay.',
+    'widget.privacy':
+        'An mga post nga Private makikita la nimo ngan han mga opisyal han barangay.',
 
     'brgy.title': 'Detalye han barangay',
-    'brgy.desc': 'Itakda an ngaran, mubo nga caption ngan litrato han lugar han barangay. Ilalis hini an default nga banner ha dashboard ngan settings.',
+    'brgy.desc':
+        'Itakda an ngaran, mubo nga caption ngan litrato han lugar han barangay. Ilalis hini an default nga banner ha dashboard ngan settings.',
     'brgy.name': 'Ngaran han barangay',
     'brgy.caption': 'Mubo nga caption',
     'brgy.captionPh': 'pananglitan Purok 1 tubtob 7, Bungto han Abuyog',
@@ -210,15 +238,19 @@ export const war: Record<keyof typeof en, string> = {
     'brgy.choose': 'Pili hin litrato',
     'brgy.change': 'Ilisi an litrato',
     'brgy.remove': 'Kuhaa an litrato',
-    'brgy.hint': 'JPG, PNG o WebP · tubtob 4 MB · mas maupay an malapad nga litrato',
+    'brgy.hint':
+        'JPG, PNG o WebP · tubtob 4 MB · mas maupay an malapad nga litrato',
     'brgy.save': 'I-save',
     'brgy.saving': 'Nag-se-save…',
     'brgy.tooBig': 'Labaw ha 4 MB an litrato. Pili hin mas gutiay.',
     'brgy.badType': 'Pili hin JPG, PNG o WebP nga litrato.',
 
     'auth.headline': 'Mas makusog nga tingog para ha kada purok han {place}.',
-    'auth.p1': 'Mag-report hin problema nga may litrato ngan mubo nga paghulagway.',
-    'auth.p2': 'Sunda ito tikang ha Naghuhulat tubtob ha Nasulbad ngan basaha an mga pahibaro han barangay.',
-    'auth.p3': 'Pili kon hin-o an makakita han imo report: ngatanan, o barangay la. Mahimo mo pa tagoon an imo ngaran.',
+    'auth.p1':
+        'Mag-report hin problema nga may litrato ngan mubo nga paghulagway.',
+    'auth.p2':
+        'Sunda ito tikang ha Naghuhulat tubtob ha Nasulbad ngan basaha an mga pahibaro han barangay.',
+    'auth.p3':
+        'Pili kon hin-o an makakita han imo report: ngatanan, o barangay la. Mahimo mo pa tagoon an imo ngaran.',
     'auth.back': '← Balik ha home',
 };

@@ -64,9 +64,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Complaint extends Model
 {
     public const CATEGORIES = ['Infrastructure', 'Sanitation', 'Peace and Order', 'Others'];
+
     public const STATUSES = ['Pending', 'Under Review', 'In Progress', 'Resolved', 'Rejected'];
+
     public const VISIBILITIES = ['public', 'private'];
+
     public const APPROVAL_PENDING = 'pending';
+
     public const APPROVAL_APPROVED = 'approved';
 
     // SECURITY (mass assignment): `status`, `approval_status`, `removed_*` and `edited_at` are deliberately
@@ -91,14 +95,20 @@ class Complaint extends Model
     }
 
     /** True once the barangay has removed it (the row is kept; see ComplaintController::remove). */
-    public function isRemoved(): bool { return $this->removed_at !== null; }
+    public function isRemoved(): bool
+    {
+        return $this->removed_at !== null;
+    }
 
-    public function isApproved(): bool { return $this->approval_status === self::APPROVAL_APPROVED; }
+    public function isApproved(): bool
+    {
+        return $this->approval_status === self::APPROVAL_APPROVED;
+    }
 
     /** Everyone can see it: public + approved by an admin + not removed. */
     public function isPubliclyVisible(): bool
     {
-        return $this->visibility === 'public' && $this->isApproved() && !$this->isRemoved();
+        return $this->visibility === 'public' && $this->isApproved() && ! $this->isRemoved();
     }
 
     /**
@@ -107,18 +117,18 @@ class Complaint extends Model
      *   resident -> their own posts (any state)  +  other people's posts that are public AND approved AND not removed
      * ComplaintPolicy::view() expresses the same rule for a single post; keep the two in sync.
      *
-     * @param  Builder<$this>$query
+     * @param  Builder<$this>  $query
      * @return Builder<$this>
      */
-    public function scopeVisibleTo(Builder $query, User$user): Builder
+    public function scopeVisibleTo(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
             return $query;
         }
 
-        return $query->where(fn (Builder $w) =>$w
+        return $query->where(fn (Builder $w) => $w
             ->where('user_id', $user->id)
-            ->orWhere(fn (Builder $p) =>$p
+            ->orWhere(fn (Builder $p) => $p
                 ->where('visibility', 'public')
                 ->where('approval_status', self::APPROVAL_APPROVED)
                 ->whereNull('removed_at')));
@@ -162,7 +172,7 @@ class Complaint extends Model
     public function log(string $type, ?User $actor = null, ?string $status = null, ?string $note = null): ComplaintEvent
     {
         /** @var ComplaintEvent $event */
-        $event =$this->events()->create([
+        $event = $this->events()->create([
             'user_id' => $actor?->id,
             'type' => $type,
             'status' => $status,
