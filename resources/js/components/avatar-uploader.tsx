@@ -21,30 +21,65 @@ export default function AvatarUploader({ name, url, staff, error }: { name: stri
 
     const pick = (f: File | undefined) => {
         setLocalError(null);
-        if (!f) return;
-        if (!TYPES.includes(f.type)) return setLocalError('Use a JPG, PNG or WebP picture.');
-        if (f.size > MAX_MB * 1024 * 1024) return setLocalError(`The picture must be ${MAX_MB} MB or smaller.`);
-        if (preview) URL.revokeObjectURL(preview);
+
+        if (!f) {
+            return;
+        }
+
+        if (!TYPES.includes(f.type)) {
+            setLocalError('Use a JPG, PNG or WebP picture.');
+
+            return;
+        }
+
+        if (f.size > MAX_MB * 1024 * 1024) {
+            setLocalError(`The picture must be ${MAX_MB} MB or smaller.`);
+
+            return;
+        }
+
+        if (preview) {
+            URL.revokeObjectURL(preview);
+        }
+
         setFile(f);
         setPreview(URL.createObjectURL(f));
     };
 
     const reset = () => {
-        if (preview) URL.revokeObjectURL(preview);
+        if (preview) {
+            URL.revokeObjectURL(preview);
+        }
+
         setPreview(null);
         setFile(null);
-        if (input.current) input.current.value = '';
+
+        if (input.current) {
+            input.current.value = '';
+        }
     };
 
     const upload = () => {
-        if (!file) return;
+        if (!file) {
+            return;
+        }
+
         router.post('/settings/profile/avatar', { avatar: file }, {
-            forceFormData: true, preserveScroll: true,
-            onStart: () => setBusy(true), onFinish: () => setBusy(false), onSuccess: reset,
+            forceFormData: true,
+            preserveScroll: true,
+            onStart: () => setBusy(true),
+            onFinish: () => setBusy(false),
+            onSuccess: reset,
         });
     };
 
-    const remove = () => router.delete('/settings/profile/avatar', { preserveScroll: true, onStart: () => setBusy(true), onFinish: () => setBusy(false) });
+    const remove = () => {
+        router.delete('/settings/profile/avatar', {
+            preserveScroll: true,
+            onStart: () => setBusy(true),
+            onFinish: () => setBusy(false),
+        });
+    };
 
     return (
         <div className="flex flex-wrap items-center gap-5">

@@ -1,5 +1,5 @@
 import { UserRound } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -19,16 +19,6 @@ export function Avatar({
     size?: number;
     anonymous?: boolean;
 }) {
-    const [failed, setFailed] = useState(false);
-    useEffect(() => setFailed(false), [src]);
-
-    const initials = name
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((w) => w[0]?.toUpperCase())
-        .join('');
-
     if (anonymous) {
         // No initials for an anonymous author: a neutral person icon, so nothing about the name leaks
         return (
@@ -42,23 +32,70 @@ export function Avatar({
         );
     }
 
-    if (src && !failed) {
+    if (src) {
         return (
-            <img
+            <AvatarImage
+                key={src}
+                name={name}
                 src={src}
-                alt=""
-                width={size}
-                height={size}
-                loading="lazy"
-                onError={() => setFailed(true)}
-                style={{ width: size, height: size }}
-                className={cn(
-                    'shrink-0 rounded-full object-cover ring-2',
-                    staff ? 'ring-[#0197F6]' : 'ring-transparent',
-                )}
+                staff={staff}
+                size={size}
             />
         );
     }
+
+    return <AvatarFallback name={name} staff={staff} size={size} />;
+}
+
+function AvatarImage({
+    name,
+    src,
+    staff,
+    size,
+}: {
+    name: string;
+    src: string;
+    staff: boolean;
+    size: number;
+}) {
+    const [failed, setFailed] = useState(false);
+
+    if (failed) {
+        return <AvatarFallback name={name} staff={staff} size={size} />;
+    }
+
+    return (
+        <img
+            src={src}
+            alt=""
+            width={size}
+            height={size}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            style={{ width: size, height: size }}
+            className={cn(
+                'shrink-0 rounded-full object-cover ring-2',
+                staff ? 'ring-[#0197F6]' : 'ring-transparent',
+            )}
+        />
+    );
+}
+
+function AvatarFallback({
+    name,
+    staff,
+    size,
+}: {
+    name: string;
+    staff: boolean;
+    size: number;
+}) {
+    const initials = name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase())
+        .join('');
 
     return (
         <span

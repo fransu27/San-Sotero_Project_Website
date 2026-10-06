@@ -21,8 +21,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '@/components/feed/avatar';
-import { StarRating } from '@/components/feed/star-rating';
 import { fieldClass, PhotoEditor } from '@/components/feed/edit-fields';
+import { StarRating } from '@/components/feed/star-rating';
 import {
     DropdownMenu,
     DropdownMenuContent,
