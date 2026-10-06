@@ -83,6 +83,7 @@ export default function Dashboard({
                     <Composer
                         mode={isAdmin ? 'announcement' : 'complaint'}
                         userName={auth.user.name}
+                        userAvatar={auth.user.avatar ?? null}
                         categories={categories}
                     />
 

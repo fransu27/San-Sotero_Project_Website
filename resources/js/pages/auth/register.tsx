@@ -188,5 +188,5 @@ export default function Register({ passwordRules }: Props) {
 Register.layout = {
     title: 'Create your account',
     description:
-        'Register once as a resident of San Sotero. Every report you file stays tied to your name.',
+        'Register once as a resident of Santotero. Every report you file stays tied to your name.',
 };

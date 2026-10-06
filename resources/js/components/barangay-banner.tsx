@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 /**
  * The barangay "location photo" header. It replaces the old fixed banner graphics on the dashboard (size="lg")
  * and the settings pages (size="sm"). The photo, name and caption come from Settings → Barangay (shared Inertia
- * prop `barangay`), so a local admin can change them any time. Until then the bundled San Sotero photo is shown.
+ * prop `barangay`), so a local admin can change them any time. Until then the bundled Santotero photo is shown.
  * If no photo can be loaded at all, a neutral placeholder is drawn instead; admins get a link to upload one.
  * SECURITY: name/caption were tag-stripped on save and are rendered as React text (auto-escaped);
  * the image URL is a server-built /media/branding/... path, never user-typed.

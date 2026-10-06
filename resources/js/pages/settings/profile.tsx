@@ -3,6 +3,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 /* @end-chisel-email-verification */
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
+import AvatarUploader from '@/components/avatar-uploader';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -26,15 +27,19 @@ export default function Profile(
         status,
         phone,
         birthdate,
+        avatarUrl,
     }: {
         mustVerifyEmail: boolean;
         status?: string;
         phone: string | null;
         birthdate: string | null;
+        avatarUrl: string | null;
     },
     /* @end-chisel-email-verification */
 ) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth, errors } = usePage<
+        PageProps & { errors: Record<string, string> }
+    >().props;
 
     return (
         <>
@@ -46,7 +51,14 @@ export default function Profile(
                 <Heading
                     variant="small"
                     title="Profile"
-                    description="Update your name, email, mobile number and date of birth"
+                    description="Update your picture, name, email, mobile number and date of birth"
+                />
+
+                <AvatarUploader
+                    name={auth.user.name}
+                    url={avatarUrl}
+                    staff={auth.user.role === 'admin'}
+                    error={errors.avatar}
                 />
 
                 <Form

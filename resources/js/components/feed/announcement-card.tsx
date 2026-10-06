@@ -19,6 +19,7 @@ export type Notice = {
     edited: boolean;
     image_url: string | null;
     author: string;
+    author_avatar: string | null;
     ts: number;
 };
 
@@ -101,7 +102,7 @@ export default function AnnouncementCard({
             )}
 
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
-                <Avatar name={a.author} staff />
+                <Avatar name={a.author} src={a.author_avatar} staff />
                 <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-1.5 text-sm leading-5 font-semibold">
                         <span className="truncate">{a.author}</span>

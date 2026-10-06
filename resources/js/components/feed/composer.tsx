@@ -45,6 +45,7 @@ const TRANSLATED = [
 type Props = {
     mode: 'complaint' | 'announcement';
     userName: string;
+    userAvatar?: string | null;
     categories: string[];
 };
 type FormData = {
@@ -83,7 +84,12 @@ function Err({
     ) : null;
 }
 
-export default function Composer({ mode, userName, categories }: Props) {
+export default function Composer({
+    mode,
+    userName,
+    userAvatar = null,
+    categories,
+}: Props) {
     const isNote = mode === 'announcement';
     const { t } = useLocale();
     const authUser = (
@@ -214,7 +220,7 @@ export default function Composer({ mode, userName, categories }: Props) {
             className="rounded-xl border border-border bg-card p-4 shadow-sm"
         >
             <div className="flex gap-3">
-                <Avatar name={userName} staff={isNote} />
+                <Avatar name={userName} src={userAvatar} staff={isNote} />
                 <div className="min-w-0 flex-1 space-y-3">
                     <input
                         className={`${field} rounded-full bg-[#F0F2F5] dark:bg-muted`}

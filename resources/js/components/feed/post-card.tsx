@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar } from '@/components/feed/avatar';
+import { StarRating } from '@/components/feed/star-rating';
 import { fieldClass, PhotoEditor } from '@/components/feed/edit-fields';
 import {
     DropdownMenu,
@@ -40,6 +41,7 @@ type Comment = {
     id: number;
     body: string;
     author: string | null;
+    avatar: string | null;
     staff: boolean;
 };
 type TimelineEvent = {
@@ -69,6 +71,11 @@ export type Complaint = {
     satisfied: number;
     not_satisfied: number;
     my_vote: Vote | null;
+    closed: boolean;
+    rating_avg: number | null;
+    rating_count: number;
+    my_rating: number | null;
+    author_avatar: string | null;
     removed: boolean;
     removed_reason: string | null;
     image_url: string | null;
@@ -377,7 +384,11 @@ export default function PostCard({
 
             {/* Header */}
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
-                <Avatar name={name} anonymous={c.author === null} />
+                <Avatar
+                    name={name}
+                    src={c.author_avatar}
+                    anonymous={c.author === null}
+                />
                 <div className="min-w-0 flex-1">
                     <p className="flex flex-wrap items-center gap-x-1.5 text-sm leading-5 font-semibold">
                         <span className="truncate">{name}</span>
@@ -861,6 +872,17 @@ export default function PostCard({
                 </div>
             )}
 
+            {/* Community satisfaction (1-5 stars): open once the barangay closed the post, resolved or not. */}
+            {c.closed && !hiddenFromMe && !editing && (
+                <StarRating
+                    id={c.id}
+                    avg={c.rating_avg}
+                    count={c.rating_count}
+                    mine={c.my_rating}
+                    closedAs={c.status === 'Rejected' ? 'Rejected' : 'Resolved'}
+                />
+            )}
+
             {/* Progress timeline: every submit / approval / status change, so the resident can follow along */}
             {!hiddenFromMe && !editing && c.events.length > 0 && (
                 <div className="border-t border-border px-5 py-3">
@@ -994,6 +1016,7 @@ export default function PostCard({
                         <div key={m.id} className="flex gap-2">
                             <Avatar
                                 name={m.author ?? t('post.anon')}
+                                src={m.avatar}
                                 anonymous={m.author === null}
                                 staff={m.staff}
                                 size={28}

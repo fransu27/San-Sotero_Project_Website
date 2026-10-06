@@ -40,7 +40,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                // `avatar` = profile picture URL (null -> the UI shows an initials badge)
+                'user' => ($user = $request->user()) ? [...$user->toArray(), 'avatar' => $user->avatarUrl()] : null,
             ],
             // Branding editable by an admin in Settings → Barangay. Shared to every page (cached; see SiteSetting).
             'barangay' => fn () => [

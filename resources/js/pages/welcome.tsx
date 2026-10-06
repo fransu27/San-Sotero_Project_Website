@@ -181,7 +181,7 @@ export default function Welcome({
                 </header>
 
                 {/* Hero: the barangay photo sits BEHIND the headline as a soft overlay (it fades into the page at the bottom).
-                    The photo is the admin's upload from Settings → Barangay, or the bundled San Sotero photo. */}
+                    The photo is the admin's upload from Settings → Barangay, or the bundled Santotero photo. */}
                 <div className="relative isolate overflow-hidden">
                     <div aria-hidden className="absolute inset-0 -z-10">
                         {barangay.banner_url && !photoFailed && (
@@ -216,9 +216,11 @@ export default function Welcome({
                                 {t('w.h1a')}{' '}
                                 <span className="text-[#0197F6]">
                                     {t('w.h1b')}
-                                </span>{' '}
-                                {t('w.h1c')}
+                                </span>
                             </h1>
+                            <p className="mt-3 text-[18px] font-medium text-[rgb(var(--w-fg)/0.85)]">
+                                {t('w.tagline')}
+                            </p>
                             <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[rgb(var(--w-fg)/0.7)]">
                                 {t('w.lead')}
                             </p>

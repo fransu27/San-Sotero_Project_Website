@@ -7,9 +7,9 @@ export const en = {
     'w.register': 'Register',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Barangay community service',
-    'w.h1a': 'Report concerns.',
-    'w.h1b': 'Track progress.',
-    'w.h1c': 'Improve your community.',
+    'w.h1a': 'Santotero',
+    'w.h1b': 'Report Concerns',
+    'w.tagline': 'Report concerns. Track progress. Improve your community.',
     'w.lead':
         'A simple way for residents to report barangay concerns and keep track of their progress from submission to resolution.',
     'w.cta': 'Report a Complaint',
@@ -65,7 +65,7 @@ export const en = {
     'w.ctaBody':
         'Create your account and submit your first complaint. Your report will be sent to the barangay for review.',
     'w.ctaBtn': 'Create Your Account',
-    'w.footer1': 'San Sotero Complaint Logging System',
+    'w.footer1': 'Santotero Report Concerns',
     'w.footer2': 'For residents and barangay staff',
 } as const;
 
@@ -77,9 +77,9 @@ export const tl: Record<keyof typeof en, string> = {
     'w.register': 'Magrehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo ng komunidad ng barangay',
-    'w.h1a': 'Iulat ang mga hinaing.',
-    'w.h1b': 'Subaybayan ang progreso.',
-    'w.h1c': 'Paunlarin ang komunidad.',
+    'w.h1a': 'Santotero',
+    'w.h1b': 'Report Concerns',
+    'w.tagline': 'Iulat ang mga hinaing. Subaybayan ang progreso. Paunlarin ang komunidad.',
     'w.lead':
         'Madaling paraan para sa mga residente na mag-ulat ng mga alalahanin sa barangay at masubaybayan ito mula pagsumite hanggang sa paglutas.',
     'w.cta': 'Magsumite ng Reklamo',
@@ -139,7 +139,7 @@ export const tl: Record<keyof typeof en, string> = {
     'w.ctaBody':
         'Gumawa ng account at isumite ang iyong unang reklamo. Ipapadala ang ulat sa barangay para suriin.',
     'w.ctaBtn': 'Gumawa ng Account',
-    'w.footer1': 'San Sotero Complaint Logging System',
+    'w.footer1': 'Santotero Report Concerns',
     'w.footer2': 'Para sa mga residente at kawani ng barangay',
 };
 
@@ -151,9 +151,9 @@ export const ceb: Record<keyof typeof en, string> = {
     'w.register': 'Magparehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo sa komunidad sa barangay',
-    'w.h1a': 'I-report ang mga problema.',
-    'w.h1b': 'Subaya ang pag-uswag.',
-    'w.h1c': 'Padaygon ang komunidad.',
+    'w.h1a': 'Santotero',
+    'w.h1b': 'Report Concerns',
+    'w.tagline': 'I-report ang mga problema. Subaya ang pag-uswag. Padaygon ang komunidad.',
     'w.lead':
         'Sayon nga paagi para sa mga residente sa pag-report sa mga problema sa barangay ug pagsubay niini gikan sa pagpadala hangtod masulbad.',
     'w.cta': 'Mag-report og Reklamo',
@@ -213,7 +213,7 @@ export const ceb: Record<keyof typeof en, string> = {
     'w.ctaBody':
         'Paghimo og account ug ipadala ang imong unang reklamo. Ipadala ang report sa barangay aron susihon.',
     'w.ctaBtn': 'Paghimo og Account',
-    'w.footer1': 'San Sotero Complaint Logging System',
+    'w.footer1': 'Santotero Report Concerns',
     'w.footer2': 'Para sa mga residente ug kawani sa barangay',
 };
 
@@ -225,9 +225,9 @@ export const war: Record<keyof typeof en, string> = {
     'w.register': 'Magparehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo para ha komunidad han barangay',
-    'w.h1a': 'Ireport an mga problema.',
-    'w.h1b': 'Subaya an pag-uswag.',
-    'w.h1c': 'Pauswaga an imo komunidad.',
+    'w.h1a': 'Santotero',
+    'w.h1b': 'Report Concerns',
+    'w.tagline': 'Ireport an mga problema. Subaya an pag-uswag. Pauswaga an imo komunidad.',
     'w.lead':
         'Masayon nga paagi para ha mga residente ha pag-report han mga problema ha barangay ngan pagsubay hini tikang ha pagpadala tubtob nga masulbad.',
     'w.cta': 'Mag-report hin Reklamo',
@@ -287,6 +287,6 @@ export const war: Record<keyof typeof en, string> = {
     'w.ctaBody':
         'Maghimo hin account ngan ipadala an imo siyahan nga reklamo. Ipapadara an report ha barangay basi susihon.',
     'w.ctaBtn': 'Maghimo hin Account',
-    'w.footer1': 'San Sotero Complaint Logging System',
+    'w.footer1': 'Santotero Report Concerns',
     'w.footer2': 'Para ha mga residente ngan kawani han barangay',
 };

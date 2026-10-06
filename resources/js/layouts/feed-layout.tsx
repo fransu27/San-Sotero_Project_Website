@@ -196,7 +196,11 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                             aria-label={t('nav.account')}
                             className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]"
                         >
-                            <Avatar name={auth.user.name} staff={isAdmin} />
+                            <Avatar
+                                name={auth.user.name}
+                                src={auth.user.avatar ?? null}
+                                staff={isAdmin}
+                            />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-56">
                             <UserMenuContent user={auth.user} />
