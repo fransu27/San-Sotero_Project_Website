@@ -7,7 +7,7 @@ export const en = {
     'w.register': 'Register',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Barangay community service',
-    'w.h1a': 'Santotero',
+    'w.h1a': 'San Sotero',
     'w.h1b': 'Report Concerns',
     'w.tagline': 'Report concerns. Track progress. Improve your community.',
     'w.lead':
@@ -77,9 +77,10 @@ export const tl: Record<keyof typeof en, string> = {
     'w.register': 'Magrehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo ng komunidad ng barangay',
-    'w.h1a': 'Santotero',
+    'w.h1a': 'San Sotero',
     'w.h1b': 'Report Concerns',
-    'w.tagline': 'Iulat ang mga hinaing. Subaybayan ang progreso. Paunlarin ang komunidad.',
+    'w.tagline':
+        'Iulat ang mga hinaing. Subaybayan ang progreso. Paunlarin ang komunidad.',
     'w.lead':
         'Madaling paraan para sa mga residente na mag-ulat ng mga alalahanin sa barangay at masubaybayan ito mula pagsumite hanggang sa paglutas.',
     'w.cta': 'Magsumite ng Reklamo',
@@ -151,9 +152,10 @@ export const ceb: Record<keyof typeof en, string> = {
     'w.register': 'Magparehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo sa komunidad sa barangay',
-    'w.h1a': 'Santotero',
+    'w.h1a': 'San Sotero',
     'w.h1b': 'Report Concerns',
-    'w.tagline': 'I-report ang mga problema. Subaya ang pag-uswag. Padaygon ang komunidad.',
+    'w.tagline':
+        'I-report ang mga problema. Subaya ang pag-uswag. Padaygon ang komunidad.',
     'w.lead':
         'Sayon nga paagi para sa mga residente sa pag-report sa mga problema sa barangay ug pagsubay niini gikan sa pagpadala hangtod masulbad.',
     'w.cta': 'Mag-report og Reklamo',
@@ -225,9 +227,10 @@ export const war: Record<keyof typeof en, string> = {
     'w.register': 'Magparehistro',
     'w.dashboard': 'Dashboard',
     'w.badge': 'Serbisyo para ha komunidad han barangay',
-    'w.h1a': 'Santotero',
+    'w.h1a': 'San Sotero',
     'w.h1b': 'Report Concerns',
-    'w.tagline': 'Ireport an mga problema. Subaya an pag-uswag. Pauswaga an imo komunidad.',
+    'w.tagline':
+        'Ireport an mga problema. Subaya an pag-uswag. Pauswaga an imo komunidad.',
     'w.lead':
         'Masayon nga paagi para ha mga residente ha pag-report han mga problema ha barangay ngan pagsubay hini tikang ha pagpadala tubtob nga masulbad.',
     'w.cta': 'Mag-report hin Reklamo',

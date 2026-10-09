@@ -28,13 +28,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $visibility
  * @property bool $is_anonymous
  * @property string $approval_status
+ * @property-read float|string|null $ratings_avg_rating
+ * @property-read int|null $satisfied_count
+ * @property-read int|null $not_satisfied_count
  * @property-read Collection<int, Comment> $comments
  * @property-read int|null $comments_count
  * @property-read Collection<int, ComplaintEvent> $events
  * @property-read int|null $events_count
  * @property-read Collection<int, Reaction> $reactions
  * @property-read int|null $reactions_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Rating> $ratings
+ * @property-read Collection<int, Rating> $ratings
  * @property-read int|null $ratings_count
  * @property-read User $user
  *
