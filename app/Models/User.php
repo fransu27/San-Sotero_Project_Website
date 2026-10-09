@@ -26,6 +26,7 @@ use Laravel\Passkeys\Passkey;
  * @property string|null $phone
  * @property Carbon|null $birthdate
  * @property string|null $locale
+ * @property string|null $avatar_path
  * @property bool $anonymous_default
  * @property Carbon|null $email_verified_at
  * @property string $password
@@ -64,7 +65,7 @@ use Laravel\Passkeys\Passkey;
  * @mixin \Eloquent
  */
 #[Fillable(['name', 'email', 'phone', 'birthdate', 'password', 'locale', 'anonymous_default'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -86,6 +87,12 @@ class User extends Authenticatable implements PasskeyUser
             'two_factor_confirmed_at' => 'datetime',
             /* @end-chisel-2fa */
         ];
+    }
+
+    /** URL of the profile picture (served by MediaController), or null to show the initials badge. */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? '/media/'.$this->avatar_path : null;
     }
 
     /** True for the barangay admin. `role` is not fillable, so it can't be set from a form. */

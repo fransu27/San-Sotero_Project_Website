@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Complaint;
 use App\Models\SiteSetting;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * SECURITY: the file name is never joined into a path blindly — it is looked up in the database first, so
  * ../ tricks or guessing other file names do nothing.
  *  - announcements/…  logged-in users
+ *  - avatars/…        logged-in users (profile pictures)
  *  - complaints/…     only people who may VIEW that complaint (ComplaintPolicy::view); a removed post's photo is
  *                     hidden from residents
  *  - branding/…       the barangay location photo: PUBLIC (the landing page shows it to visitors), and only the
@@ -34,6 +36,10 @@ class MediaController extends Controller
             $complaint = Complaint::where('image_path', $path)->firstOrFail();
             Gate::authorize('view', $complaint);
             abort_if($complaint->isRemoved() && ! $request->user()->isAdmin(), 403);
+        } elseif ($folder === 'avatars') {
+            // Profile pictures are visible to every signed-in resident (that is the point: telling who is who).
+            // Anonymous posts never receive the author's picture, see DashboardController::present().
+            abort_unless(User::where('avatar_path', $path)->exists(), 404);
         } else {
             abort(404);
         }

@@ -69,12 +69,15 @@ class DashboardController extends Controller
                     ->orWhere('location', 'like', $like)
                     ->orWhere('custom_category', 'like', $like));
             })
-            ->with(['user:id,name', 'comments.user:id,name,role', 'events.user:id,role'])
+            ->with(['user:id,name,avatar_path', 'comments.user:id,name,role,avatar_path', 'events.user:id,role'])
             ->withCount([
                 'reactions as satisfied_count' => fn ($q) => $q->where('type', 'satisfied'),
                 'reactions as not_satisfied_count' => fn ($q) => $q->where('type', 'not_satisfied'),
             ])
+            ->withCount('ratings')
+            ->withAvg('ratings', 'rating')
             ->with(['reactions' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'type')])
+            ->with(['ratings' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'rating')])
             ->latest()->limit(50)->get()
             ->map(fn (Complaint $c) => $this->present($c, $user));
 
@@ -88,7 +91,7 @@ class DashboardController extends Controller
             'isAdmin' => $isAdmin,
             'counts' => $counts,
             'complaints' => $feed,
-            'announcements' => Announcement::with('user:id,name')->latest()->limit(20)->get()
+            'announcements' => Announcement::with('user:id,name,avatar_path')->latest()->limit(20)->get()
                 ->map(fn (Announcement $a) => [
                     'id' => $a->id,
                     'title' => $a->title,
@@ -98,6 +101,7 @@ class DashboardController extends Controller
                     'image_url' => $this->photo($a->image_path),
                     'edited' => $a->edited_at !== null,
                     'author' => $a->user->name,
+                    'author_avatar' => $a->user->avatarUrl(),
                     'time' => $a->created_at?->diffForHumans(),
                     'ts' => $a->created_at?->timestamp,
                 ]),
@@ -114,7 +118,7 @@ class DashboardController extends Controller
      */
     private function present(Complaint $c, User $viewer): array
     {
-        /** @var Complaint&object{satisfied_count?: int, not_satisfied_count?: int} $c */ $isAdmin = $viewer->isAdmin();
+        /** @var Complaint&object{satisfied_count?: int, not_satisfied_count?: int, ratings_count?: int, ratings_avg_rating?: float|string|null} $c */ $isAdmin = $viewer->isAdmin();
         $isOwner = $c->user_id === $viewer->id;
         $hide = $c->isRemoved() && ! $isAdmin;               // residents don't get the content of a removed post
         $maskAuthor = $c->is_anonymous && ! $isOwner && ! $isAdmin; // strangers never receive an anonymous author's name
@@ -141,12 +145,20 @@ class DashboardController extends Controller
             'satisfied' => (int) ($c->satisfied_count ?? 0),
             'not_satisfied' => (int) ($c->not_satisfied_count ?? 0),
             'my_vote' => $c->reactions->first()?->type,
+            // Community star rating (1-5), open once the post is Resolved or Rejected.
+            'closed' => $c->isClosed(),
+            'rating_avg' => $c->ratings_count > 0 ? round((float) $c->ratings_avg_rating, 1) : null,
+            'rating_count' => (int) $c->ratings_count,
+            'my_rating' => $c->ratings->first()?->rating,
+            // Anonymous authors never give their picture away either.
+            'author_avatar' => $maskAuthor ? null : $c->user->avatarUrl(),
             'comments' => $hide ? [] : $c->comments->map(fn ($m) => [
                 'id' => $m->id,
                 'body' => $m->body,
                 'staff' => $m->user->isAdmin(),
                 // the author's own comments on an anonymous post must not give the name away either
                 'author' => ($maskAuthor && $m->user_id === $c->user_id) ? null : $m->user->name,
+                'avatar' => ($maskAuthor && $m->user_id === $c->user_id) ? null : $m->user->avatarUrl(),
             ]),
             // The timeline never includes WHO (only "the barangay" vs "the resident"), so no names leak.
             'events' => $hide ? [] : $c->events->map(fn ($e) => [

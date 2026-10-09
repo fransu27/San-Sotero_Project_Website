@@ -104,7 +104,7 @@ export default function BarangaySettings() {
                         maxLength={80}
                         value={form.data.name}
                         onChange={(e) => form.setData('name', e.target.value)}
-                        placeholder="San Sotero"
+                        placeholder="Santotero"
                     />
                     <InputError message={form.errors.name} />
                 </div>

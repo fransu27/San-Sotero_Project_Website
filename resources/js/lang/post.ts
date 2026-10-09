@@ -62,6 +62,18 @@ export const en = {
     'post.unpin': 'Unpin',
     'post.deleteAnn': 'Delete announcement',
     'post.deleteAnnConfirm': 'Delete this announcement?',
+    'rate.askResolved': 'How satisfied are you with how this was resolved?',
+    'rate.askRejected': 'How do you feel about how this was handled?',
+    'rate.group': 'Rate this concern from 1 to 5 stars',
+    'rate.1': 'Very poor',
+    'rate.2': 'Poor',
+    'rate.3': 'Okay',
+    'rate.4': 'Good',
+    'rate.5': 'Excellent',
+    'rate.none': 'No ratings yet. Be the first!',
+    'rate.one': '1 rating',
+    'rate.many': '{n} ratings',
+    'rate.star': '{n} star(s)',
 } as const;
 
 export const tl: Record<keyof typeof en, string> = {
@@ -128,6 +140,18 @@ export const tl: Record<keyof typeof en, string> = {
     'post.unpin': 'I-unpin',
     'post.deleteAnn': 'Burahin ang anunsyo',
     'post.deleteAnnConfirm': 'Burahin ang anunsyong ito?',
+    'rate.askResolved': 'Gaano ka nasiyahan sa pagresolba nito?',
+    'rate.askRejected': 'Ano ang pakiramdam mo sa paghawak nito?',
+    'rate.group': 'I-rate ang hinaing na ito mula 1 hanggang 5 bituin',
+    'rate.1': 'Napakasama',
+    'rate.2': 'Masama',
+    'rate.3': 'Okay lang',
+    'rate.4': 'Mabuti',
+    'rate.5': 'Napakahusay',
+    'rate.none': 'Wala pang rating. Ikaw ang una!',
+    'rate.one': '1 rating',
+    'rate.many': '{n} rating',
+    'rate.star': '{n} bituin',
 };
 
 export const ceb: Record<keyof typeof en, string> = {
@@ -193,6 +217,18 @@ export const ceb: Record<keyof typeof en, string> = {
     'post.unpin': 'I-unpin',
     'post.deleteAnn': 'Papasa ang pahibalo',
     'post.deleteAnnConfirm': 'Papason kini nga pahibalo?',
+    'rate.askResolved': 'Unsa ka ka-kontento sa pag-resolba niini?',
+    'rate.askRejected': 'Unsa imong gibati sa pagdumala niini?',
+    'rate.group': 'I-rate kining reklamo gikan 1 hangtod 5 ka bitoon',
+    'rate.1': 'Daotan kaayo',
+    'rate.2': 'Daotan',
+    'rate.3': 'Okay ra',
+    'rate.4': 'Maayo',
+    'rate.5': 'Maayo kaayo',
+    'rate.none': 'Wala pay rating. Ikaw ang una!',
+    'rate.one': '1 ka rating',
+    'rate.many': '{n} ka rating',
+    'rate.star': '{n} ka bitoon',
 };
 
 export const war: Record<keyof typeof en, string> = {
@@ -258,4 +294,16 @@ export const war: Record<keyof typeof en, string> = {
     'post.unpin': 'I-unpin',
     'post.deleteAnn': 'Papasa an pahibaro',
     'post.deleteAnnConfirm': 'Papason ini nga pahibaro?',
+    'rate.askResolved': 'Gaano ka nasadang han pagresolba hini?',
+    'rate.askRejected': 'Ano an imo gibati han pag-asikaso hini?',
+    'rate.group': 'I-rate ini nga reklamo tikang 1 hasta 5 nga bituon',
+    'rate.1': 'Maraot gud',
+    'rate.2': 'Maraot',
+    'rate.3': 'Okay la',
+    'rate.4': 'Maopay',
+    'rate.5': 'Maopay gud',
+    'rate.none': 'Waray pa rating. Ikaw an nahuna!',
+    'rate.one': '1 nga rating',
+    'rate.many': '{n} nga rating',
+    'rate.star': '{n} nga bituon',
 };

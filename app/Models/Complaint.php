@@ -28,12 +28,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $visibility
  * @property bool $is_anonymous
  * @property string $approval_status
+ * @property-read float|string|null $ratings_avg_rating
+ * @property-read int|null $satisfied_count
+ * @property-read int|null $not_satisfied_count
  * @property-read Collection<int, Comment> $comments
  * @property-read int|null $comments_count
  * @property-read Collection<int, ComplaintEvent> $events
  * @property-read int|null $events_count
  * @property-read Collection<int, Reaction> $reactions
  * @property-read int|null $reactions_count
+ * @property-read Collection<int, Rating> $ratings
+ * @property-read int|null $ratings_count
  * @property-read User $user
  *
  * @method static Builder<static>|Complaint newModelQuery()
@@ -69,6 +74,9 @@ class Complaint extends Model
 
     public const VISIBILITIES = ['public', 'private'];
 
+    /** Statuses after which the community can leave a 1-5 star rating. */
+    public const CLOSED_STATUSES = ['Resolved', 'Rejected'];
+
     public const APPROVAL_PENDING = 'pending';
 
     public const APPROVAL_APPROVED = 'approved';
@@ -98,6 +106,12 @@ class Complaint extends Model
     public function isRemoved(): bool
     {
         return $this->removed_at !== null;
+    }
+
+    /** Closed out by the barangay (Resolved or Rejected): from here on the community may rate the outcome. */
+    public function isClosed(): bool
+    {
+        return in_array($this->status, self::CLOSED_STATUSES, true);
     }
 
     public function isApproved(): bool
@@ -148,6 +162,14 @@ class Complaint extends Model
     public function reactions(): HasMany
     {
         return $this->hasMany(Reaction::class);
+    }
+
+    /**
+     * @return HasMany<Rating, $this>
+     */
+    public function ratings(): HasMany
+    {
+        return $this->hasMany(Rating::class);
     }
 
     /**

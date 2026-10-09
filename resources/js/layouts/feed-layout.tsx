@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import BrandMark from '@/components/brand-mark';
 import { Avatar } from '@/components/feed/avatar';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
@@ -153,9 +154,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                         href="/dashboard"
                         className="flex items-center gap-2 font-semibold"
                     >
-                        <span className="flex size-9 items-center justify-center rounded-full bg-[#0197F6] text-white">
-                            <Building2 size={18} />
-                        </span>
+                        <BrandMark size={40} />
                         <span className="hidden leading-tight sm:grid">
                             <span className="text-sm font-semibold">
                                 {BRAND.place}

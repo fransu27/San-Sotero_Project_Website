@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ComplaintRequest;
 use App\Models\Comment;
 use App\Models\Complaint;
+use App\Models\Rating;
 use App\Models\Reaction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -260,6 +261,37 @@ class ComplaintController extends Controller
             $existing->delete();
         } else {
             Reaction::updateOrCreate(['complaint_id' => $complaint->id, 'user_id' => $user->id], ['type' => $type]);
+        }
+
+        return back();
+    }
+
+    /**
+     * 1-5 star community rating, only after the barangay CLOSED the post (Resolved or Rejected).
+     * One rating per person per post: a new number replaces the old one, the same number again clears it.
+     * The unique (complaint_id, user_id) index makes double-rating impossible even under concurrent clicks.
+     */
+    public function rate(Request $request, Complaint $complaint): RedirectResponse
+    {
+        Gate::authorize('interact', $complaint);
+        abort_unless($complaint->isClosed(), 422, 'You can rate a concern after it is resolved or rejected.');
+
+        $user = $request->user();
+        if ($user === null) {
+            return back();
+        }
+
+        /** @var array{rating: int|string} $validated */
+        $validated = $request->validate(['rating' => ['required', 'integer', 'between:'.Rating::MIN.','.Rating::MAX]]);
+        $stars = (int) $validated['rating'];
+
+        /** @var Rating|null $existing */
+        $existing = Rating::where(['complaint_id' => $complaint->id, 'user_id' => $user->id])->first();
+
+        if ($existing && $existing->rating === $stars) {
+            $existing->delete();
+        } else {
+            Rating::updateOrCreate(['complaint_id' => $complaint->id, 'user_id' => $user->id], ['rating' => $stars]);
         }
 
         return back();

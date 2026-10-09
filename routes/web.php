@@ -23,7 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Photos are streamed through here (no storage:link needed); access is checked in MediaController.
-    Route::get('media/{folder}/{file}', [MediaController::class, 'show'])->where(['folder' => 'announcements|complaints', 'file' => '[A-Za-z0-9._-]+'])->name('media.show');
+    Route::get('media/{folder}/{file}', [MediaController::class, 'show'])->where(['folder' => 'announcements|complaints|avatars', 'file' => '[A-Za-z0-9._-]+'])->name('media.show');
 
     // throttle = anti-spam / abuse limits per user.
     // WHO may act on WHICH complaint is decided inside each action by ComplaintPolicy (Gate::authorize), not by the URL.
@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('complaints/{complaint}', [ComplaintController::class, 'update'])->middleware('throttle:20,1')->name('complaints.update');      // author or admin
     Route::delete('complaints/{complaint}', [ComplaintController::class, 'destroy'])->name('complaints.destroy');                              // author only
     Route::post('complaints/{complaint}/comments', [ComplaintController::class, 'comment'])->middleware('throttle:30,1')->name('complaints.comment');
+    Route::post('complaints/{complaint}/rate', [ComplaintController::class, 'rate'])->middleware('throttle:60,1')->name('complaints.rate');
     Route::post('complaints/{complaint}/react', [ComplaintController::class, 'react'])->middleware('throttle:60,1')->name('complaints.react');
 
     // Admin-only: EnsureAdmin here + Gate::authorize('moderate') inside each action (two locks).
