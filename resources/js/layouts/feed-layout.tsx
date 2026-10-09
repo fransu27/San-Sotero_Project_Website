@@ -2,16 +2,16 @@ import { Link, usePage } from '@inertiajs/react';
 import { Ban, Building2, CheckCircle2, ClipboardCheck, Clock, Eye, HardHat, Home, Loader, MoreHorizontal, Search, Settings, Shield, Trash2, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar } from '@/components/feed/avatar';
 import BrandMark from '@/components/brand-mark';
+import { Avatar } from '@/components/feed/avatar';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
-import { useLocale } from '@/hooks/use-locale';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
-import { edit } from '@/routes/profile';
+import { useLocale } from '@/hooks/use-locale';
 import { BRAND } from '@/lib/brand';
 import { cn } from '@/lib/utils';
+import { edit } from '@/routes/profile';
 
 /**
  * Facebook-style shell: sticky top bar (logo · search · profile) + left navigation + content area.
