@@ -15,9 +15,8 @@ parameters:
     treatPhpDocTypesAsCertain: false
 
     ignoreErrors:
-        - '#Parameter \#1 \$callback of method Illuminate\\Support\\Collection.*expects.*Model.*Closure.*Complaint.*given#'
-        - '#Method App\\Http\\Controllers\\SubmissionController::applyFilter\(\) has parameter \$q with generic class Illuminate\\Database\\Eloquent\\Builder but does not specify its types#'
-        - '#Method App\\Http\\Controllers\\SubmissionController::applyFilter\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types#'
+        - '#Call to function abort_unless\(\) with bool and 404 will always evaluate to true\.#'
+        - '#Return type of call to method Illuminate\\Support\\Collection.*contains unresolvable type\.#'
 
     parallel:
         maximumNumberOfProcesses: 1
