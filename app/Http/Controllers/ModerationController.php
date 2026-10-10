@@ -58,7 +58,6 @@ class ModerationController extends Controller
                 'image_url' => $this->photo($c->image_path),
                 'removed' => $c->isRemoved(),
                 'removed_reason' => $c->removed_reason,
-                // @phpstan-ignore method.unresolvableReturnType
                 'events' => $c->events->map(fn ($e) => [
                     'id' => $e->id,
                     'type' => $e->type,

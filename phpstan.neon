@@ -15,7 +15,6 @@ parameters:
     treatPhpDocTypesAsCertain: false
 
     ignoreErrors:
-        - '#Call to function abort_unless\(\) with bool and 404 will always evaluate to true\.#'
         - '#Return type of call to method Illuminate\\Support\\Collection.*contains unresolvable type\.#'
 
     parallel:
