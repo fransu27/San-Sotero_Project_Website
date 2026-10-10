@@ -19,7 +19,10 @@ export default function TicketCode({
     const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        if (!copied) return;
+        if (!copied) {
+            return;
+        }
+
         const id = window.setTimeout(() => setCopied(false), 1800);
 
         return () => window.clearTimeout(id);

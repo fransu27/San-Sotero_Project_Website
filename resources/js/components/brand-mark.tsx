@@ -15,6 +15,7 @@ export default function BrandMark({
 }) {
     const page = usePage().props as any;
     const logoUrl = page.barangay?.logo_url || '/images/logo.png';
+
     return (
         <img
             src={logoUrl}

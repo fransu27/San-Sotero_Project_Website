@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import TicketCode from '@/components/feed/ticket-code';
 import { statusColor } from '@/components/feed/post-card';
+import TicketCode from '@/components/feed/ticket-code';
 import { useLocale } from '@/hooks/use-locale';
 import { DATE_LOCALE, timeAgo } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -54,7 +54,12 @@ type Row = {
         staff: boolean;
     }[];
 };
-type Filters = { q: string; ticket?: string; status: string | null; sort: 'new' | 'reacted' };
+type Filters = {
+    q: string;
+    ticket?: string;
+    status: string | null;
+    sort: 'new' | 'reacted';
+};
 type Props = {
     rows: Row[];
     pagination: { page: number; last: number; total: number };
@@ -83,16 +88,49 @@ export default function Submissions({
     const [q, setQ] = useState(filters.q);
     const [preview, setPreview] = useState<Row | null>(null);
     const filtering = Boolean(filters.q || filters.status || filters.ticket);
-    useEffect(() => { if (filters.ticket) { const match = rows.find((row) => row.ticket_code?.toUpperCase() === filters.ticket?.toUpperCase()); if (match) setPreview(match); } }, [filters.ticket, rows]);
+
+    useEffect(() => {
+        if (!filters.ticket) {
+            return;
+        }
+
+        const match = rows.find(
+            (row) =>
+                row.ticket_code?.toUpperCase() ===
+                filters.ticket?.toUpperCase(),
+        );
+
+        if (!match) {
+            return;
+        }
+
+        const timeoutId = setTimeout(() => {
+            setPreview(match);
+        }, 0);
+
+        return () => clearTimeout(timeoutId);
+    }, [filters.ticket, rows]);
 
     /** Reload the list with the new options. Only values from fixed lists (or the search text) are ever sent. */
     const go = (patch: Partial<Filters> & { page?: number }) => {
         const next = { ...filters, ...patch };
         const query: Record<string, string | number> = {};
-        if (next.q) query.q = next.q;
-        if (next.status) query.status = next.status;
-        if (next.sort !== 'new') query.sort = next.sort;
-        if (patch.page && patch.page > 1) query.page = patch.page;
+
+        if (next.q) {
+            query.q = next.q;
+        }
+
+        if (next.status) {
+            query.status = next.status;
+        }
+
+        if (next.sort !== 'new') {
+            query.sort = next.sort;
+        }
+
+        if (patch.page && patch.page > 1) {
+            query.page = patch.page;
+        }
 
         router.get('/my-submissions', query, {
             preserveScroll: true,
@@ -210,7 +248,10 @@ export default function Submissions({
                     <ul className="space-y-3">
                         {rows.map((r) => (
                             <li key={r.id}>
-                                <SubmissionCard r={r} onPreview={() => setPreview(r)} />
+                                <SubmissionCard
+                                    r={r}
+                                    onPreview={() => setPreview(r)}
+                                />
                             </li>
                         ))}
                     </ul>
@@ -253,31 +294,142 @@ export default function Submissions({
                     role="dialog"
                     aria-modal="true"
                     aria-labelledby="submission-preview-title"
-                    onClick={(e) => { if (e.target === e.currentTarget) setPreview(null); }}
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setPreview(null);
+                        }
+                    }}
                 >
                     <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl">
                         <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                                <p className="text-xs font-semibold uppercase tracking-wide text-[#0197F6]">My report preview</p>
-                                <h2 id="submission-preview-title" className="mt-1 text-xl font-bold">{preview.title}</h2>
-                                {preview.ticket_code && <p className="mt-1 text-xs text-muted-foreground">{preview.ticket_code}</p>}
+                                <p className="text-xs font-semibold tracking-wide text-[#0197F6] uppercase">
+                                    My report preview
+                                </p>
+                                <h2
+                                    id="submission-preview-title"
+                                    className="mt-1 text-xl font-bold"
+                                >
+                                    {preview.title}
+                                </h2>
+                                {preview.ticket_code && (
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {preview.ticket_code}
+                                    </p>
+                                )}
                             </div>
-                            <button type="button" onClick={() => setPreview(null)} aria-label="Close report preview" className="rounded-lg p-2 hover:bg-muted"><X size={20}/></button>
+                            <button
+                                type="button"
+                                onClick={() => setPreview(null)}
+                                aria-label="Close report preview"
+                                className="rounded-lg p-2 hover:bg-muted"
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                            <span className="rounded-full bg-muted px-3 py-1">{preview.status}</span>
-                            <span className="rounded-full bg-muted px-3 py-1">{preview.approval === 'pending' ? 'Waiting approval' : 'Approved'}</span>
-                            <span className="rounded-full bg-muted px-3 py-1">{preview.visibility === 'private' ? 'Private' : 'Public'}</span>
+                            <span className="rounded-full bg-muted px-3 py-1">
+                                {preview.status}
+                            </span>
+                            <span className="rounded-full bg-muted px-3 py-1">
+                                {preview.approval === 'pending'
+                                    ? 'Waiting approval'
+                                    : 'Approved'}
+                            </span>
+                            <span className="rounded-full bg-muted px-3 py-1">
+                                {preview.visibility === 'private'
+                                    ? 'Private'
+                                    : 'Public'}
+                            </span>
                         </div>
-                        {preview.image_url && <img src={preview.image_url} alt={`Attachment for ${preview.title}`} className="mt-4 max-h-80 w-full rounded-xl border border-border object-contain" />}
-                        <p className="mt-4 whitespace-pre-wrap text-sm leading-6">{preview.description || preview.excerpt || 'No description provided.'}</p>
+                        {preview.image_url && (
+                            <img
+                                src={preview.image_url}
+                                alt={`Attachment for ${preview.title}`}
+                                className="mt-4 max-h-80 w-full rounded-xl border border-border object-contain"
+                            />
+                        )}
+                        <p className="mt-4 text-sm leading-6 whitespace-pre-wrap">
+                            {preview.description ||
+                                preview.excerpt ||
+                                'No description provided.'}
+                        </p>
                         <div className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
-                            <div className="flex items-start gap-2 text-sm"><Tag size={16} className="mt-0.5 text-muted-foreground"/><div><p className="text-xs text-muted-foreground">Category</p><p>{preview.category === 'Others' && preview.custom_category ? `${t('cat.Others')}: ${preview.custom_category}` : t(`cat.${preview.category}`)}</p></div></div>
-                            <div className="flex items-start gap-2 text-sm"><MapPin size={16} className="mt-0.5 text-muted-foreground"/><div><p className="text-xs text-muted-foreground">Location</p><p>{preview.location || 'Not specified'}</p></div></div>
-                            <div className="flex items-start gap-2 text-sm"><CalendarDays size={16} className="mt-0.5 text-muted-foreground"/><div><p className="text-xs text-muted-foreground">Submitted</p><p>{preview.ts ? new Date(preview.ts * 1000).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }) : 'Date unavailable'}</p></div></div>
+                            <div className="flex items-start gap-2 text-sm">
+                                <Tag
+                                    size={16}
+                                    className="mt-0.5 text-muted-foreground"
+                                />
+                                <div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Category
+                                    </p>
+                                    <p>
+                                        {preview.category === 'Others' &&
+                                        preview.custom_category
+                                            ? `${t('cat.Others')}: ${preview.custom_category}`
+                                            : t(`cat.${preview.category}`)}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2 text-sm">
+                                <MapPin
+                                    size={16}
+                                    className="mt-0.5 text-muted-foreground"
+                                />
+                                <div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Location
+                                    </p>
+                                    <p>{preview.location || 'Not specified'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start gap-2 text-sm">
+                                <CalendarDays
+                                    size={16}
+                                    className="mt-0.5 text-muted-foreground"
+                                />
+                                <div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Submitted
+                                    </p>
+                                    <p>
+                                        {preview.ts
+                                            ? new Date(
+                                                  preview.ts * 1000,
+                                              ).toLocaleString(undefined, {
+                                                  year: 'numeric',
+                                                  month: 'short',
+                                                  day: 'numeric',
+                                                  hour: '2-digit',
+                                                  minute: '2-digit',
+                                                  hour12: false,
+                                              })
+                                            : 'Date unavailable'}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3"><p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Barangay feedback</p><p className="mt-1 whitespace-pre-wrap text-sm">{preview.feedback || (preview.approval === 'pending' ? 'Your report is waiting for approval.' : 'No additional feedback yet.')}</p></div>
-                        <div className="mt-5 flex justify-end"><button type="button" onClick={() => setPreview(null)} className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-semibold text-white hover:opacity-90">Close preview</button></div>
+                        <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3">
+                            <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                                Barangay feedback
+                            </p>
+                            <p className="mt-1 text-sm whitespace-pre-wrap">
+                                {preview.feedback ||
+                                    (preview.approval === 'pending'
+                                        ? 'Your report is waiting for approval.'
+                                        : 'No additional feedback yet.')}
+                            </p>
+                        </div>
+                        <div className="mt-5 flex justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setPreview(null)}
+                                className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                            >
+                                Close preview
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -413,28 +565,28 @@ function SubmissionCard({ r, onPreview }: { r: Row; onPreview: () => void }) {
                     </span>
                 </span>
                 <span className="flex items-center gap-1">
-                <button
-                    type="button"
-                    onClick={onPreview}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#0197F6] transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
-                >
-                    <Eye size={14} /> Preview
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setOpen((v) => !v)}
-                    aria-expanded={open}
-                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#0197F6] transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
-                >
-                    {open ? t('sub.hideTimeline') : t('sub.timeline')}
-                    <ChevronDown
-                        size={14}
-                        className={cn(
-                            'transition-transform',
-                            open && 'rotate-180',
-                        )}
-                    />
-                </button>
+                    <button
+                        type="button"
+                        onClick={onPreview}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#0197F6] transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+                    >
+                        <Eye size={14} /> Preview
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setOpen((v) => !v)}
+                        aria-expanded={open}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-[#0197F6] transition-colors outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+                    >
+                        {open ? t('sub.hideTimeline') : t('sub.timeline')}
+                        <ChevronDown
+                            size={14}
+                            className={cn(
+                                'transition-transform',
+                                open && 'rotate-180',
+                            )}
+                        />
+                    </button>
                 </span>
             </div>
 

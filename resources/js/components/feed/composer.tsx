@@ -212,7 +212,11 @@ export default function Composer({
                         };
                     }
                 ).flash;
-                if (flash?.ticket) setTicket(flash.ticket);
+
+                if (flash?.ticket) {
+                    setTicket(flash.ticket);
+                }
+
                 form.reset();
                 form.setData(
                     'is_anonymous',

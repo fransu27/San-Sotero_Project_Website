@@ -21,8 +21,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import BrandMark from '@/components/brand-mark';
+import { useState } from 'react';
 import AssistantChat from '@/components/assistant-chat';
+import BrandMark from '@/components/brand-mark';
 import { Avatar } from '@/components/feed/avatar';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
@@ -35,7 +36,6 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useLocale } from '@/hooks/use-locale';
 import { BRAND } from '@/lib/brand';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import { edit } from '@/routes/profile';
 
 /**
@@ -101,15 +101,26 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
         category: null,
         status: null,
     };
-    const onDashboard = page.url === '/dashboard' || page.url.startsWith('/dashboard?');
+    const onDashboard =
+        page.url === '/dashboard' || page.url.startsWith('/dashboard?');
     const onNewsfeed = page.url.startsWith('/newsfeed');
     const [reportsOpen, setReportsOpen] = useState(false);
-    const noFilter = onNewsfeed && !onSettings && !onSubs && !onModeration && !f.category && !f.status && !f.q;
+    const noFilter =
+        onNewsfeed &&
+        !onSettings &&
+        !onSubs &&
+        !onModeration &&
+        !f.category &&
+        !f.status &&
+        !f.q;
 
     // Build the left navigation from the same fixed lists the server validates against.
     const feedLinks: NavLink[] = [
         {
-            label: 'Dashboard', href: '/dashboard', icon: ChartNoAxesCombined, active: onDashboard,
+            label: 'Dashboard',
+            href: '/dashboard',
+            icon: ChartNoAxesCombined,
+            active: onDashboard,
         },
         {
             label: t('nav.newsfeed'),
@@ -125,7 +136,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                       href: '/admin/moderation',
                       icon: ClipboardCheck,
                       active: onModeration,
-                    },
+                  },
               ]
             : [
                   {
@@ -192,7 +203,8 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                         <BrandMark size={40} />
                         <span className="hidden leading-tight sm:grid">
                             <span className="text-sm font-semibold">
-                                {(page.props as any).barangay?.name || BRAND.place}
+                                {(page.props as any).barangay?.name ||
+                                    BRAND.place}
                             </span>
                             <span className="text-[11px] text-muted-foreground">
                                 {BRAND.product}
@@ -220,8 +232,25 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                         />
                     </form>
 
-                    <nav className="hidden items-center gap-1 xl:flex" aria-label={t('nav.categories')}>
-                        {categoryLinks.map((l) => <Link key={l.label} href={l.href} preserveScroll className={cn('rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors', l.active ? 'bg-[#0197F6] text-white' : 'text-muted-foreground hover:bg-muted hover:text-foreground')}>{l.label}</Link>)}
+                    <nav
+                        className="hidden items-center gap-1 xl:flex"
+                        aria-label={t('nav.categories')}
+                    >
+                        {categoryLinks.map((l) => (
+                            <Link
+                                key={l.label}
+                                href={l.href}
+                                preserveScroll
+                                className={cn(
+                                    'rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors',
+                                    l.active
+                                        ? 'bg-[#0197F6] text-white'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                )}
+                            >
+                                {l.label}
+                            </Link>
+                        ))}
                     </nav>
                     <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                         <LanguageSwitcher className="hidden sm:inline-flex" />
@@ -243,8 +272,25 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
             </header>
 
             <div className="border-b border-border bg-card/90 xl:hidden">
-                <nav className="mx-auto flex max-w-[1400px] gap-2 overflow-x-auto px-3 py-2" aria-label={t('nav.categories')}>
-                    {categoryLinks.map((l) => <Link key={l.label} href={l.href} preserveScroll className={cn('shrink-0 rounded-full px-3 py-1.5 text-xs font-medium', l.active ? 'bg-[#0197F6] text-white' : 'bg-muted text-foreground hover:bg-muted/70')}>{l.label}</Link>)}
+                <nav
+                    className="mx-auto flex max-w-[1400px] gap-2 overflow-x-auto px-3 py-2"
+                    aria-label={t('nav.categories')}
+                >
+                    {categoryLinks.map((l) => (
+                        <Link
+                            key={l.label}
+                            href={l.href}
+                            preserveScroll
+                            className={cn(
+                                'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium',
+                                l.active
+                                    ? 'bg-[#0197F6] text-white'
+                                    : 'bg-muted text-foreground hover:bg-muted/70',
+                            )}
+                        >
+                            {l.label}
+                        </Link>
+                    ))}
                 </nav>
             </div>
             <div className="mx-auto grid max-w-[1400px] gap-4 px-3 py-4 lg:grid-cols-[250px_minmax(0,1fr)]">
@@ -257,10 +303,31 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                         {feedLinks.map(renderLink)}
                     </nav>
                     <div>
-                        <button type="button" onClick={() => setReportsOpen(!reportsOpen)} className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted">
-                            <span>{t(isAdmin ? 'nav.reportsAdmin' : 'nav.reportsResident')}</span><ChevronDown size={16} className={cn('transition-transform', reportsOpen && 'rotate-180')} />
+                        <button
+                            type="button"
+                            onClick={() => setReportsOpen(!reportsOpen)}
+                            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
+                        >
+                            <span>
+                                {t(
+                                    isAdmin
+                                        ? 'nav.reportsAdmin'
+                                        : 'nav.reportsResident',
+                                )}
+                            </span>
+                            <ChevronDown
+                                size={16}
+                                className={cn(
+                                    'transition-transform',
+                                    reportsOpen && 'rotate-180',
+                                )}
+                            />
                         </button>
-                        {reportsOpen && <nav className="space-y-0.5">{statusLinks.map(renderLink)}</nav>}
+                        {reportsOpen && (
+                            <nav className="space-y-0.5">
+                                {statusLinks.map(renderLink)}
+                            </nav>
+                        )}
                     </div>
                     <Link
                         href={edit()}
@@ -282,7 +349,16 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                 >
                     {[
                         ...feedLinks,
-                        { label: t(isAdmin ? 'nav.reportsAdmin' : 'nav.reportsResident'), href: '/newsfeed', icon: ClipboardList, active: false },
+                        {
+                            label: t(
+                                isAdmin
+                                    ? 'nav.reportsAdmin'
+                                    : 'nav.reportsResident',
+                            ),
+                            href: '/newsfeed',
+                            icon: ClipboardList,
+                            active: false,
+                        },
                         {
                             label: t('nav.settings'),
                             href: edit().url,

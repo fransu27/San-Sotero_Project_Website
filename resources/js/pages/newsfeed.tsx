@@ -1,5 +1,12 @@
 import { Head, usePage, usePoll } from '@inertiajs/react';
-import { CalendarDays, CheckCircle2, CircleX, Clock3, FileText, Lock } from 'lucide-react';
+import {
+    CalendarDays,
+    CheckCircle2,
+    CircleX,
+    Clock3,
+    FileText,
+    Lock,
+} from 'lucide-react';
 import BarangayBanner from '@/components/barangay-banner';
 import AnnouncementCard from '@/components/feed/announcement-card';
 import type { Notice } from '@/components/feed/announcement-card';
@@ -25,10 +32,25 @@ import { useLocale } from '@/hooks/use-locale';
 type Props = {
     isAdmin: boolean;
     counts: Record<string, number>;
-    analytics: Record<'week' | 'month' | 'year', { total: number; awaiting: number; approved: number; rejected: number; in_progress: number; resolved: number }>;
+    analytics: Record<
+        'week' | 'month' | 'year',
+        {
+            total: number;
+            awaiting: number;
+            approved: number;
+            rejected: number;
+            in_progress: number;
+            resolved: number;
+        }
+    >;
     complaints: Complaint[];
     announcements: Notice[];
-    filters: { q: string; category: string | null; status: string | null; sort?: 'new' | 'best' | 'hot' };
+    filters: {
+        q: string;
+        category: string | null;
+        status: string | null;
+        sort?: 'new' | 'best' | 'hot';
+    };
     categories: string[];
     statuses: Status[];
 };
@@ -49,7 +71,9 @@ export default function Dashboard({
 }: Props) {
     const { auth } = usePage().props as any;
     const { t } = useLocale();
-    usePoll(15000, { only: ['complaints', 'announcements', 'counts', 'analytics'] });
+    usePoll(15000, {
+        only: ['complaints', 'announcements', 'counts', 'analytics'],
+    });
     const filtering = Boolean(filters.q || filters.category || filters.status);
     const sort = filters.sort ?? 'new';
 
@@ -62,13 +86,27 @@ export default function Dashboard({
                   .map((a): FeedItem => ({ kind: 'notice', ts: a.ts, a }))),
         ...complaints.map((c): FeedItem => ({ kind: 'post', ts: c.ts, c })),
     ].sort((x, y) => {
-        if (sort === 'new') return y.ts - x.ts;
+        if (sort === 'new') {
+            return y.ts - x.ts;
+        }
+
         if (x.kind === 'post' && y.kind === 'post') {
-            const scoreX = sort === 'best' ? (x.c.rating_avg ?? 0) * 100 + x.c.satisfied : x.c.satisfied + x.c.not_satisfied;
-            const scoreY = sort === 'best' ? (y.c.rating_avg ?? 0) * 100 + y.c.satisfied : y.c.satisfied + y.c.not_satisfied;
+            const scoreX =
+                sort === 'best'
+                    ? (x.c.rating_avg ?? 0) * 100 + x.c.satisfied
+                    : x.c.satisfied + x.c.not_satisfied;
+            const scoreY =
+                sort === 'best'
+                    ? (y.c.rating_avg ?? 0) * 100 + y.c.satisfied
+                    : y.c.satisfied + y.c.not_satisfied;
+
             return scoreY - scoreX || y.ts - x.ts;
         }
-        if (x.kind !== y.kind) return x.kind === 'post' ? -1 : 1;
+
+        if (x.kind !== y.kind) {
+            return x.kind === 'post' ? -1 : 1;
+        }
+
         return y.ts - x.ts;
     });
 
@@ -87,36 +125,89 @@ export default function Dashboard({
                     <BarangayBanner />
 
                     {/* Period analytics: server-scoped to all reports for admins and own reports for residents. */}
-                    <section aria-label="Submission statistics" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <section
+                        aria-label="Submission statistics"
+                        className="grid grid-cols-1 gap-3 sm:grid-cols-3"
+                    >
                         {[
-                            { key: 'week' as const, label: 'This week', detail: 'Monday–Sunday', icon: CalendarDays },
-                            { key: 'month' as const, label: 'This month', detail: 'Calendar month', icon: Clock3 },
-                            { key: 'year' as const, label: 'This year', detail: 'Calendar year', icon: FileText },
+                            {
+                                key: 'week' as const,
+                                label: 'This week',
+                                detail: 'Monday–Sunday',
+                                icon: CalendarDays,
+                            },
+                            {
+                                key: 'month' as const,
+                                label: 'This month',
+                                detail: 'Calendar month',
+                                icon: Clock3,
+                            },
+                            {
+                                key: 'year' as const,
+                                label: 'This year',
+                                detail: 'Calendar year',
+                                icon: FileText,
+                            },
                         ].map((period) => {
                             const stats = analytics[period.key];
                             const Icon = period.icon;
+
                             return (
-                                <div key={period.key} className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md">
+                                <div
+                                    key={period.key}
+                                    className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                                >
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
-                                            <p className="text-sm font-medium text-muted-foreground">{period.label}</p>
-                                            <p className="mt-1 text-3xl font-semibold tracking-tight">{stats.total}</p>
-                                            <p className="mt-0.5 text-xs text-muted-foreground">{period.detail} · {isAdmin ? 'all submissions' : 'your submissions'}</p>
+                                            <p className="text-sm font-medium text-muted-foreground">
+                                                {period.label}
+                                            </p>
+                                            <p className="mt-1 text-3xl font-semibold tracking-tight">
+                                                {stats.total}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {period.detail} ·{' '}
+                                                {isAdmin
+                                                    ? 'all submissions'
+                                                    : 'your submissions'}
+                                            </p>
                                         </div>
-                                        <span className="rounded-lg bg-muted p-2 text-muted-foreground"><Icon size={18} /></span>
+                                        <span className="rounded-lg bg-muted p-2 text-muted-foreground">
+                                            <Icon size={18} />
+                                        </span>
                                     </div>
                                     <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
-                                        <span className="flex items-center gap-1.5 text-muted-foreground"><Clock3 size={13} /> Awaiting <strong className="ml-auto text-foreground">{stats.awaiting}</strong></span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground"><CheckCircle2 size={13} /> Approved <strong className="ml-auto text-foreground">{stats.approved}</strong></span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground"><CircleX size={13} /> Rejected <strong className="ml-auto text-foreground">{stats.rejected}</strong></span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground"><CheckCircle2 size={13} /> Resolved <strong className="ml-auto text-foreground">{stats.resolved}</strong></span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <Clock3 size={13} /> Awaiting{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.awaiting}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CheckCircle2 size={13} /> Approved{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.approved}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CircleX size={13} /> Rejected{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.rejected}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CheckCircle2 size={13} /> Resolved{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.resolved}
+                                            </strong>
+                                        </span>
                                     </div>
                                 </div>
                             );
                         })}
                     </section>
 
-                    <div className="sticky top-[60px] z-20 rounded-xl bg-background/95 pb-1 pt-1 backdrop-blur-sm">
+                    <div className="sticky top-[60px] z-20 rounded-xl bg-background/95 pt-1 pb-1 backdrop-blur-sm">
                         <Composer
                             mode={isAdmin ? 'announcement' : 'complaint'}
                             userName={auth.user.name}
@@ -125,10 +216,28 @@ export default function Dashboard({
                         />
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3" aria-label="Newsfeed sort">
-                        <span className="mr-1 text-sm text-muted-foreground">Show:</span>
-                        {[{ value: 'new', label: 'New' }, { value: 'best', label: 'Best' }, { value: 'hot', label: 'Hot' }].map((option) => (
-                            <a key={option.value} href={`/newsfeed?${new URLSearchParams({ ...(filters.q ? { q: filters.q } : {}), ...(filters.category ? { category: filters.category } : {}), ...(filters.status ? { status: filters.status } : {}), sort: option.value })}`} aria-current={sort === option.value ? 'page' : undefined} className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${sort === option.value ? 'border-[#0197F6] bg-[#0197F6]/10 text-[#0197F6]' : 'border-border hover:bg-muted'}`}>{option.label}</a>
+                    <div
+                        className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card p-3"
+                        aria-label="Newsfeed sort"
+                    >
+                        <span className="mr-1 text-sm text-muted-foreground">
+                            Show:
+                        </span>
+                        {[
+                            { value: 'new', label: 'New' },
+                            { value: 'best', label: 'Best' },
+                            { value: 'hot', label: 'Hot' },
+                        ].map((option) => (
+                            <a
+                                key={option.value}
+                                href={`/newsfeed?${new URLSearchParams({ ...(filters.q ? { q: filters.q } : {}), ...(filters.category ? { category: filters.category } : {}), ...(filters.status ? { status: filters.status } : {}), sort: option.value })}`}
+                                aria-current={
+                                    sort === option.value ? 'page' : undefined
+                                }
+                                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${sort === option.value ? 'border-[#0197F6] bg-[#0197F6]/10 text-[#0197F6]' : 'border-border hover:bg-muted'}`}
+                            >
+                                {option.label}
+                            </a>
                         ))}
                     </div>
 
