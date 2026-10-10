@@ -17,6 +17,9 @@ createInertiaApp({
             case name === 'welcome':
                 return null;
             case name === 'dashboard':
+            case name === 'newsfeed':
+            case name === 'submissions':
+            case name === 'admin/moderation':
                 return FeedLayout; // Facebook-style shell (top bar + left nav)
             case name.startsWith('auth/'):
                 return AuthLayout;

@@ -1,3 +1,5 @@
+import { usePage } from '@inertiajs/react';
+
 /**
  * The barangay seal. ONE place, ONE file: public/images/logo.png.
  * To change the logo everywhere (landing page, login/register, dashboard bar), just replace that file.
@@ -11,9 +13,11 @@ export default function BrandMark({
     size?: number;
     className?: string;
 }) {
+    const page = usePage().props as any;
+    const logoUrl = page.barangay?.logo_url || '/images/logo.png';
     return (
         <img
-            src="/images/logo.png"
+            src={logoUrl}
             alt=""
             width={size}
             height={size}

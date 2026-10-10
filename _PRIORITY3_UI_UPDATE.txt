@@ -1,0 +1,10 @@
+Priority 3 UI refinement
+
+- /dashboard is now a dedicated role-scoped analytics page; admins see barangay-wide statistics and residents see only their own submissions.
+- /newsfeed is a separate route for announcements and report posts.
+- Dashboard includes Day / Week / Month / Year controls, summary cards, a seven-day activity bar chart for the weekly view, range total for other views, and a status breakdown.
+- Newsfeed composer is sticky so the posting/report title field remains reachable while scrolling.
+- Report status filters are collapsed behind a sidebar dropdown by default; categories are compact header chips on large screens and a horizontal strip on smaller screens.
+- Existing server-side report visibility, moderation authorization, and privacy scope remain enforced by Laravel.
+
+Validation performed: PHP syntax checks on DashboardController.php and routes/web.php passed. Frontend build and Laravel tests were not run because dependencies (node_modules/vendor) are not installed in this project copy.

@@ -1,13 +1,15 @@
 import BrandMark from '@/components/brand-mark';
 import { BRAND } from '@/lib/brand';
+import { usePage } from '@inertiajs/react';
 
 /** Wordmark — the barangay seal (public/images/logo.png) + two-line brand name. Static text only (no user input rendered). */
 export default function Wordmark() {
+    const { barangay } = usePage().props as any;
     return (
         <span className="flex items-center gap-3">
             <BrandMark size={40} />
             <span className="grid leading-tight">
-                <span className="text-[14px] font-semibold">{BRAND.place}</span>
+                <span className="text-[14px] font-semibold">{barangay?.name || BRAND.place}</span>
                 <span className="text-[11px] opacity-60">{BRAND.product}</span>
             </span>
         </span>

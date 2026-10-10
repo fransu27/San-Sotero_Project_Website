@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 /**
  * @property int $id
  * @property int $user_id
+ * @property string|null $ticket_code
  * @property string $title
  * @property string $description
  * @property string $location
@@ -103,6 +106,28 @@ class Complaint extends Model
     }
 
     /** True once the barangay has removed it (the row is kept; see ComplaintController::remove). */
+    /**
+     * A new, human-readable, unique support reference: SS-YYMM-XXXXXX (e.g. SS-2610-K7M3QP).
+     * The 6 letters/digits come from random_int (cryptographically secure) and skip look-alikes (0/O, 1/I), so a
+     * resident can read the code over the phone. It is NOT the database id, so nobody can guess the next ticket.
+     * The unique index on `ticket_code` is the final guard against a collision.
+     */
+    public static function newTicketCode(?CarbonInterface $at = null): string
+    {
+        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $month = ($at ?? now())->format('ym');
+
+        do {
+            $suffix = '';
+            for ($i = 0; $i < 6; $i++) {
+                $suffix .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+            $code = 'SS-'.$month.'-'.$suffix;
+        } while (static::where('ticket_code', $code)->exists());
+
+        return Str::upper($code);
+    }
+
     public function isRemoved(): bool
     {
         return $this->removed_at !== null;

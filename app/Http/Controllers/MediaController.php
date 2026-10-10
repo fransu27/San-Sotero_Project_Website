@@ -50,7 +50,7 @@ class MediaController extends Controller
     /** Public barangay location photo (route has no `auth` middleware). */
     public function branding(string $file): StreamedResponse
     {
-        abort_unless(SiteSetting::read('banner_path') === "branding/$file", 404);
+        abort_unless(in_array("branding/$file", [SiteSetting::read('banner_path'), SiteSetting::read('logo_path')], true), 404);
 
         return $this->stream("branding/$file", 'public, max-age=86400');
     }

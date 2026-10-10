@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                     ? '/media/'.$file.'?v='.SiteSetting::read('banner_version', '1')
                     : '/images/barangay-default.jpg',
                 'banner_is_default' => ! SiteSetting::read('banner_path'),
+                'logo_url' => ($logo = SiteSetting::read('logo_path')) ? '/media/branding/'.basename($logo).'?v='.SiteSetting::read('logo_version', '1') : '/images/logo.png',
+                'logo_is_default' => ! SiteSetting::read('logo_path'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

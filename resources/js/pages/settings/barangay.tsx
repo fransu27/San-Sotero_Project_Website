@@ -19,6 +19,8 @@ export default function BarangaySettings() {
             caption: string | null;
             banner_url: string | null;
             banner_is_default: boolean;
+            logo_url: string;
+            logo_is_default: boolean;
         };
     };
     const { t } = useLocale();
@@ -28,11 +30,15 @@ export default function BarangaySettings() {
         caption: string;
         image: File | null;
         remove_image: boolean;
+        logo: File | null;
+        remove_logo: boolean;
     }>({
         name: barangay.name ?? '',
         caption: barangay.caption ?? '',
         image: null,
         remove_image: false,
+        logo: null,
+        remove_logo: false,
     });
 
     const preview = useMemo(
@@ -47,6 +53,9 @@ export default function BarangaySettings() {
         },
         [preview],
     );
+    const logoPreview = useMemo(() => form.data.logo ? URL.createObjectURL(form.data.logo) : null, [form.data.logo]);
+    useEffect(() => () => { if (logoPreview) URL.revokeObjectURL(logoPreview); }, [logoPreview]);
+    const shownLogo = logoPreview ?? (form.data.remove_logo ? '/images/logo.png' : barangay.logo_url);
     const shown =
         preview ?? (form.data.remove_image ? null : barangay.banner_url);
     // "Remove" only makes sense for a photo the admin uploaded; removing it brings back the bundled default.
@@ -86,6 +95,8 @@ export default function BarangaySettings() {
                                 ...d,
                                 image: null,
                                 remove_image: false,
+        logo: null,
+        remove_logo: false,
                             })),
                     });
                 }}
@@ -121,6 +132,22 @@ export default function BarangaySettings() {
                         placeholder={t('brgy.captionPh')}
                     />
                     <InputError message={form.errors.caption} />
+                </div>
+
+                <div className="grid gap-2">
+                    <Label htmlFor="b-logo">Website logo</Label>
+                    <div className="flex items-center gap-3">
+                        <img src={shownLogo} alt="Website logo preview" className="size-16 rounded-lg border border-border bg-white object-contain p-1" />
+                        <div className="flex flex-wrap gap-2">
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm font-medium hover:bg-muted">
+                                <ImagePlus size={16} /> Change logo
+                                <input id="b-logo" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { const f=e.target.files?.[0]; if (f && f.size > 2*1024*1024) { setLocalError('Logo must be 2 MB or smaller.'); } else if (f) { setLocalError(null); form.setData((d)=>({...d, logo:f, remove_logo:false})); } e.target.value=''; }} />
+                            </label>
+                            {!barangay.logo_is_default && <button type="button" onClick={()=>form.setData((d)=>({...d, logo:null, remove_logo:true}))} className="rounded-lg px-3 py-2 text-sm text-[#D7263D] hover:bg-muted"><Trash2 size={16} className="mr-1 inline"/> Reset logo</button>}
+                        </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">PNG, JPG or WebP, up to 2 MB. Updates the logo across the site.</p>
+                    <InputError message={form.errors.logo} />
                 </div>
 
                 <div className="grid gap-2">

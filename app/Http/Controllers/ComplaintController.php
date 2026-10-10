@@ -46,8 +46,10 @@ class ComplaintController extends Controller
         $complaint = DB::transaction(function () use ($request, $user, $fields, $needsApproval): Complaint {
             $complaint = new Complaint($fields);
             $complaint->user_id = (int) auth()->id();
+            // Human-readable support reference; the unique index is the final collision guard.
+            $complaint->ticket_code = Complaint::newTicketCode();
 
-            $path = $request->file('image')?->store('complaints');
+            $path = $request->file('image')?->store('complaints', 'public');
             $complaint->image_path = ($path !== false && $path !== null) ? $path : null;
 
             // random filename
@@ -60,6 +62,8 @@ class ComplaintController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => $needsApproval
             ? 'Report sent. It will appear in the feed once the barangay approves it.'
             : 'Report saved. Only you and the barangay can see it.']);
+        // The composer shows this code on screen right after submitting (see "Report submitted" card).
+        Inertia::flash('ticket', ['code' => $complaint->ticket_code, 'needs_approval' => $needsApproval]);
 
         return back();
     }
@@ -122,10 +126,15 @@ class ComplaintController extends Controller
     {
         Gate::authorize('moderate', $complaint);
 
-        if (! $complaint->isApproved()) {
-            DB::transaction(function () use ($complaint, $request): void {
+        $data = $request->validate([
+            'note' => ['nullable', 'string', 'min:3', 'max:300'],
+        ]);
+
+        if (! $complaint->isApproved() && ! $complaint->isRemoved()) {
+            DB::transaction(function () use ($complaint, $request, $data): void {
                 $complaint->forceFill(['approval_status' => Complaint::APPROVAL_APPROVED])->save();
-                $complaint->log('approved', $request->user());
+                $note = isset($data['note']) ? trim(strip_tags((string) $data['note'])) : null;
+                $complaint->log('approved', $request->user(), null, $note);
             });
         }
 
@@ -191,17 +200,16 @@ class ComplaintController extends Controller
 
         $reason = trim(strip_tags($data['reason']));
 
-        DB::transaction(function () use ($complaint, $reason, $request) {
-            $wasWaiting = ! $complaint->isApproved();
+        DB::transaction(function () use ($complaint, $reason, $request): void {
+            // A disapproval is a recorded decision, not just a hidden card. Keep the row and reason
+            // so the resident can see the outcome in My Submissions and the progress timeline.
+            $complaint->forceFill([
+                'removed_at' => now(),
+                'removed_reason' => $reason,
+                'status' => 'Rejected',
+            ])->save();
 
-            $complaint->forceFill(['removed_at' => now(), 'removed_reason' => $reason])->save();
-
-            // Rejecting a post that was still in the queue = status "Rejected" + the reason on its timeline,
-            // so the resident sees WHY on their own post.
-            if ($wasWaiting) {
-                $complaint->forceFill(['status' => 'Rejected'])->save();
-                $complaint->log('status', $request->user(), 'Rejected', $reason);
-            }
+            $complaint->log('status', $request->user(), 'Rejected', $reason);
         });
 
         return back();

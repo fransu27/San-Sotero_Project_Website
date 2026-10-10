@@ -1,5 +1,6 @@
-import { useForm, usePage } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import {
+    CheckCircle2,
     Globe,
     Image as ImageIcon,
     Lock,
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Avatar } from '@/components/feed/avatar';
+import TicketCode from '@/components/feed/ticket-code';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useLocale } from '@/hooks/use-locale';
@@ -99,6 +101,10 @@ export default function Composer({
     ).user;
     const [open, setOpen] = useState(false);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [ticket, setTicket] = useState<{
+        code: string;
+        needs_approval: boolean;
+    } | null>(null);
 
     const form = useForm<FormData>({
         title: '',
@@ -197,7 +203,16 @@ export default function Composer({
         form.post(isNote ? '/announcements' : '/complaints', {
             forceFormData: true, // so the photo travels as a file, not JSON
             preserveScroll: true,
-            onSuccess: () => {
+            onSuccess: (page) => {
+                // The server sends the new ticket code (flash) so it can be shown right away
+                const flash = (
+                    page as unknown as {
+                        flash?: {
+                            ticket?: { code: string; needs_approval: boolean };
+                        };
+                    }
+                ).flash;
+                if (flash?.ticket) setTicket(flash.ticket);
                 form.reset();
                 form.setData(
                     'is_anonymous',
@@ -219,6 +234,52 @@ export default function Composer({
             onSubmit={submit}
             className="rounded-xl border border-border bg-card p-4 shadow-sm"
         >
+            {ticket && !isNote && (
+                <div
+                    role="status"
+                    className="mb-4 rounded-lg border border-[#448FA3]/40 bg-[#448FA3]/10 p-4"
+                >
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <p className="flex items-center gap-2 font-semibold">
+                                <CheckCircle2
+                                    size={18}
+                                    className="text-[#448FA3]"
+                                />{' '}
+                                {t('sub.doneTitle')}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                {t('sub.doneBody')}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setTicket(null)}
+                            aria-label={t('sub.dismiss')}
+                            className="rounded-full p-1.5 text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+                        >
+                            <X size={16} />
+                        </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <TicketCode code={ticket.code} large />
+                        <Link
+                            href="/my-submissions"
+                            className="text-sm font-medium text-[#0197F6] underline-offset-2 hover:underline"
+                        >
+                            {t('sub.track')}
+                        </Link>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                        {t(
+                            ticket.needs_approval
+                                ? 'sub.doneWaiting'
+                                : 'sub.donePrivate',
+                        )}
+                    </p>
+                </div>
+            )}
+
             <div className="flex gap-3">
                 <Avatar name={userName} src={userAvatar} staff={isNote} />
                 <div className="min-w-0 flex-1 space-y-3">

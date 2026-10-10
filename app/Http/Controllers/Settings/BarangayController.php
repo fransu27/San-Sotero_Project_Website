@@ -34,6 +34,7 @@ class BarangayController extends Controller
             'name' => trim(strip_tags((string) $request->input('name'))),
             'caption' => trim(strip_tags((string) $request->input('caption'))),
             'remove_image' => $request->boolean('remove_image'),
+            'remove_logo' => $request->boolean('remove_logo'),
         ]);
 
         $data = $request->validate([
@@ -41,11 +42,14 @@ class BarangayController extends Controller
             'caption' => ['nullable', 'string', 'max:160'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['boolean'],
+            'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_logo' => ['boolean'],
         ]);
 
         /** @var array<string, string|null> $values */
         $values = ['barangay_name' => $data['name'] ?: null, 'barangay_caption' => $data['caption'] ?: null];
         $old = SiteSetting::read('banner_path');
+        $oldLogo = SiteSetting::read('logo_path');
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('branding', 'public'); // false when the disk could not write the file
@@ -60,7 +64,21 @@ class BarangayController extends Controller
             $values['banner_path'] = null;
         }
 
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('branding', 'public');
+            if ($logoPath === false) {
+                throw ValidationException::withMessages(['logo' => 'The logo could not be saved. Please try again.']);
+            }
+            $values['logo_path'] = $logoPath;
+            $values['logo_version'] = (string) time();
+        } elseif ($data['remove_logo']) {
+            $values['logo_path'] = null;
+        }
+
         SiteSetting::write($values);
+        if (array_key_exists('logo_path', $values) && $oldLogo) {
+            Storage::disk('public')->delete($oldLogo);
+        }
 
         if (array_key_exists('banner_path', $values) && $old) {
             Storage::disk('public')->delete($old);

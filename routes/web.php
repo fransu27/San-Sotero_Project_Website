@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\AssistantChatController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\ModerationController;
 use App\Http\Controllers\PreferenceController;
+use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +23,11 @@ Route::patch('preferences', [PreferenceController::class, 'update'])->middleware
 
 // Everything below needs a logged-in (and verified) account.
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
+    Route::get('newsfeed', [DashboardController::class, 'newsfeed'])->name('newsfeed');
+    Route::post('assistant/chat', AssistantChatController::class)->middleware('throttle:30,1')->name('assistant.chat');
+    // A resident's own reports, searchable by ticket code. Scoped to the signed-in user in SQL (see SubmissionController).
+    Route::get('my-submissions', [SubmissionController::class, 'index'])->name('submissions.index');
 
     // Photos are streamed through here (no storage:link needed); access is checked in MediaController.
     Route::get('media/{folder}/{file}', [MediaController::class, 'show'])->where(['folder' => 'announcements|complaints|avatars', 'file' => '[A-Za-z0-9._-]+'])->name('media.show');
@@ -36,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Admin-only: EnsureAdmin here + Gate::authorize('moderate') inside each action (two locks).
     Route::middleware(EnsureAdmin::class)->group(function () {
+        Route::get('admin/moderation', [ModerationController::class, 'index'])->name('admin.moderation');
         Route::patch('complaints/{complaint}/approve', [ComplaintController::class, 'approve'])->name('complaints.approve');
         Route::patch('complaints/{complaint}/status', [ComplaintController::class, 'updateStatus'])->middleware('throttle:60,1')->name('complaints.status');
         // "Remove" = flag with a reason (this is also how a post is DECLINED); restore undoes it.

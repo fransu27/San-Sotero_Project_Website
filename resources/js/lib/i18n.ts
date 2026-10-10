@@ -2,6 +2,7 @@ import * as common from '@/lang/common';
 import * as composer from '@/lang/composer';
 import * as post from '@/lang/post';
 import * as shell from '@/lang/shell';
+import * as submissions from '@/lang/submissions';
 import * as welcome from '@/lang/welcome';
 
 /** Supported languages. The same list is validated on the server (PreferenceController::LOCALES). */
@@ -31,6 +32,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...shell.en,
         ...composer.en,
         ...post.en,
+        ...submissions.en,
     },
     tl: {
         ...common.tl,
@@ -38,6 +40,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...shell.tl,
         ...composer.tl,
         ...post.tl,
+        ...submissions.tl,
     },
     ceb: {
         ...common.ceb,
@@ -45,6 +48,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...shell.ceb,
         ...composer.ceb,
         ...post.ceb,
+        ...submissions.ceb,
     },
     war: {
         ...common.war,
@@ -52,6 +56,7 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...shell.war,
         ...composer.war,
         ...post.war,
+        ...submissions.war,
     },
 };
 
