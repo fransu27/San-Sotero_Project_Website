@@ -17,7 +17,7 @@ parameters:
     ignoreErrors:
         - '#Call to function abort_unless\(\) with bool and 404 will always evaluate to true\.#'
         - '#Return type of call to method Illuminate\\Support\\Collection.*contains unresolvable type\.#'
-        - '#PHPDoc tag @var with type Closure.*is not subtype of native type Closure.*#'
+        - '#PHPDoc tag \@var with type Closure.*is not subtype of native type Closure.*#'
 
     parallel:
         maximumNumberOfProcesses: 1
