@@ -1,0 +1,38 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Creates the ONE barangay admin account.
+     * SECURITY: no password is hardcoded in the repo. Set ADMIN_EMAIL / ADMIN_PASSWORD in .env,
+     * or a random 16-char password is generated and printed once. `role` is not mass-assignable,
+     * so we set it with forceFill() here (the only place an admin can be created).
+     * Re-running the seeder never resets an existing admin's password.
+     *
+     * The values come from config/barangay.php (env() must not be called outside the config directory).
+     */
+    public function run(): void
+    {
+        $email = config('barangay.admin_email');$admin = User::firstOrNew([
+            'email' => is_string(\$email) && $email !== '' ?$email : 'admin@barangay.test',
+        ]);
+
+        if (! $admin->exists) {$configured = config('barangay.admin_password');
+            $password = is_string($configured) && $configured !== '' ?$configured : Str::password(16);
+            $admin->password =$password;
+            \$this->command?->info("Admin created: {$admin->email} / {$password}  (change it after first login)");
+        }
+
+        \$admin->forceFill([
+            'name' => 'Barangay Admin',
+            'role' => 'admin',
+            'email_verified_at' => now(),
+        ])->save();
+    }
+}

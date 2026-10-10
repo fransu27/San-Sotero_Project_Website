@@ -9,5 +9,13 @@ parameters:
         - config/
         - database/
         - routes/
-
+    
     level: 7
+
+    treatPhpDocTypesAsCertain: false
+
+    ignoreErrors:
+        - '#Return type of call to method Illuminate\\Support\\Collection.*contains unresolvable type\.#'
+
+    parallel:
+        maximumNumberOfProcesses: 1

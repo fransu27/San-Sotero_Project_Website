@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Complaint;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,7 +39,89 @@ class DashboardController extends Controller
      *    dev-tools can't reveal it.
      *  - For a resident, the content of a removed post is blanked here, not just hidden in React.
      */
-    public function index(Request $request): Response
+    /** Role-scoped analytics dashboard, separate from the newsfeed. */
+    public function dashboard(Request $request): Response
+    {
+        $user = $request->user();
+        if ($user === null) {
+            abort(401);
+        }
+        $scope = Complaint::query();
+        if (! $user->isAdmin()) {
+            $scope->where('user_id', $user->id);
+        }
+        $now = now();
+        $analytics = [
+            'day' => $this->periodStats($scope, $now->copy()->startOfDay(), $now->copy()->startOfDay()->addDay()),
+            'week' => $this->periodStats($scope, $now->copy()->startOfWeek(Carbon::MONDAY), $now->copy()->startOfWeek(Carbon::MONDAY)->addWeek()),
+            'month' => $this->periodStats($scope, $now->copy()->startOfMonth(), $now->copy()->startOfMonth()->addMonth()),
+            'year' => $this->periodStats($scope, $now->copy()->startOfYear(), $now->copy()->startOfYear()->addYear()),
+        ];
+        $statusCounts = (clone $scope)->whereNull('removed_at')->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status');
+        // Build complete chart buckets in the application timezone. The browser receives a zero-filled
+        // bucket for every hour/day/month so empty periods remain visible and selectable.
+        $yearStart = $now->copy()->startOfYear();
+        $yearEnd = $yearStart->copy()->addYear();
+        $yearReports = (clone $scope)->where('created_at', '>=', $yearStart)->where('created_at', '<', $yearEnd)
+            ->orderByDesc('created_at')->limit(2000)->get(['id', 'ticket_code', 'title', 'description', 'category', 'custom_category', 'location', 'status', 'approval_status', 'created_at']);
+        $makeBuckets = function (string $period) use ($now, $yearReports): array {
+            $buckets = [];
+            if ($period === 'day') {
+                for ($hour = 0; $hour < 24; $hour++) {
+                    $start = $now->copy()->startOfDay()->addHours($hour);
+                    $end = $start->copy()->addHour();
+                    $buckets[] = ['key' => $start->toDateTimeString(), 'label' => $start->format('H:00'), 'start' => $start->timestamp, 'end' => $end->timestamp, 'total' => 0];
+                }
+            } elseif ($period === 'week') {
+                $monday = $now->copy()->startOfWeek(Carbon::MONDAY);
+                for ($i = 0; $i < 7; $i++) {
+                    $start = $monday->copy()->addDays($i);
+                    $buckets[] = ['key' => $start->toDateString(), 'label' => $start->format('D j'), 'start' => $start->timestamp, 'end' => $start->copy()->addDay()->timestamp, 'total' => 0];
+                }
+            } elseif ($period === 'month') {
+                $monthStart = $now->copy()->startOfMonth();
+                for ($day = 1; $day <= $now->daysInMonth; $day++) {
+                    $start = $monthStart->copy()->addDays($day - 1);
+                    $buckets[] = ['key' => $start->toDateString(), 'label' => (string) $day, 'start' => $start->timestamp, 'end' => $start->copy()->addDay()->timestamp, 'total' => 0];
+                }
+            } else {
+                $year = $now->copy()->startOfYear();
+                for ($month = 0; $month < 12; $month++) {
+                    $start = $year->copy()->addMonths($month);
+                    $buckets[] = ['key' => $start->format('Y-m'), 'label' => $start->format('M'), 'start' => $start->timestamp, 'end' => $start->copy()->addMonth()->timestamp, 'total' => 0];
+                }
+            }
+            foreach ($yearReports as $report) {
+                $created = $report->created_at;
+                if ($period === 'day' && $created->toDateString() !== $now->toDateString()) {
+                    continue;
+                }
+                if ($period === 'week' && ! $created->betweenIncluded($now->copy()->startOfWeek(Carbon::MONDAY), $now->copy()->endOfWeek(Carbon::SUNDAY))) {
+                    continue;
+                }
+                if ($period === 'month' && $created->format('Y-m') !== $now->format('Y-m')) {
+                    continue;
+                }
+                $index = $period === 'day' ? (int) $created->format('G') : ($period === 'week' ? (int) $created->dayOfWeekIso - 1 : ($period === 'month' ? (int) $created->format('j') - 1 : (int) $created->format('n') - 1));
+                if (isset($buckets[$index])) {
+                    $buckets[$index]['total']++;
+                }
+            }
+
+            return $buckets;
+        };
+        $series = ['day' => $makeBuckets('day'), 'week' => $makeBuckets('week'), 'month' => $makeBuckets('month'), 'year' => $makeBuckets('year')];
+        $reports = $yearReports->map(fn (Complaint $c) => [
+            'id' => $c->id, 'ticket_code' => $c->ticket_code, 'title' => $c->title,
+            'description' => $c->description, 'category' => $c->custom_category ?: $c->category,
+            'location' => $c->location, 'status' => $c->status, 'approval' => $c->approval_status,
+            'ts' => $c->created_at?->timestamp, 'created_at' => $c->created_at?->format('Y-m-d H:i:s'),
+        ])->values();
+
+        return Inertia::render('dashboard', ['isAdmin' => $user->isAdmin(), 'analytics' => $analytics, 'statusCounts' => $statusCounts, 'series' => $series, 'reports' => $reports]);
+    }
+
+    public function newsfeed(Request $request): Response
     {
         $user = $request->user();
         if ($user === null) {
@@ -46,21 +130,23 @@ class DashboardController extends Controller
 
         $isAdmin = $user->isAdmin();
 
-        /** @var array{q?: string|null, category?: string|null, status?: string|null} $filters */
+        /** @var array{q?: string|null, category?: string|null, status?: string|null, sort?: 'new'|'best'|'hot'|null} $filters */
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', Rule::in(Complaint::CATEGORIES)],
-            'status' => ['nullable', Rule::in([...Complaint::STATUSES, 'Removed', 'Approval'])],
+            'status' => ['nullable', Rule::in([...Complaint::STATUSES, 'Removed'])],
+            'sort' => ['nullable', Rule::in(['new', 'best', 'hot'])],
         ]);
 
         $visible = fn () => Complaint::visibleTo($user);
 
+        $sort = $filters['sort'] ?? 'new';
         $feed = $visible()
+            ->when(($filters['status'] ?? null) === 'Removed' && $isAdmin, fn ($q) => $q->whereNotNull('removed_at'), fn ($q) => $q->where('approval_status', Complaint::APPROVAL_APPROVED)->whereNull('removed_at'))
             ->when($filters['category'] ?? null, fn ($q, $v) => $q->where('category', $v))
             ->when($filters['status'] ?? null, fn ($q, $v) => match ($v) {
                 'Removed' => $q->whereNotNull('removed_at'),
-                'Approval' => $q->where('approval_status', Complaint::APPROVAL_PENDING),
-                default => $q->where('status', $v)->where('approval_status', Complaint::APPROVAL_APPROVED),
+                default => $q->where('status', $v)->where('approval_status', Complaint::APPROVAL_APPROVED)->whereNull('removed_at'),
             })
             ->when($filters['q'] ?? null, function ($q, $term) {
                 $like = '\%'.addcslashes((string) $term, '%_\\').'%';
@@ -78,18 +164,35 @@ class DashboardController extends Controller
             ->withAvg('ratings', 'rating')
             ->with(['reactions' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'type')])
             ->with(['ratings' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'rating')])
-            ->latest()->limit(50)->get()
+            ->when($sort === 'best', fn ($q) => $q->orderByDesc('ratings_avg_rating')->orderByDesc('satisfied_count'))
+            ->when($sort === 'hot', fn ($q) => $q->orderByRaw('(satisfied_count + ratings_count) DESC')->orderByDesc('created_at'))
+            ->when($sort === 'new', fn ($q) => $q->latest())
+            ->limit(50)->get()
             ->map(fn (Complaint $c) => $this->present($c, $user));
 
         // Sidebar numbers use the SAME visibility scope as the feed, so a count always matches what the click shows.
         $counts = $visible()->where('approval_status', Complaint::APPROVAL_APPROVED)
             ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
         $counts['Removed'] = $visible()->whereNotNull('removed_at')->count();
-        $counts['Approval'] = $visible()->where('approval_status', Complaint::APPROVAL_PENDING)->count();
+        // Pending submissions are intentionally managed only on the dedicated moderation page.
 
-        return Inertia::render('dashboard', [
+        // Period analytics are based on submission creation date. Residents only see their own records;
+        // administrators see all records. The week always starts Monday and ends before the following Monday.
+        $analyticsScope = Complaint::query();
+        if (! $isAdmin) {
+            $analyticsScope->where('user_id', $user->id);
+        }
+        $now = now();
+        $analytics = [
+            'week' => $this->periodStats($analyticsScope, $now->copy()->startOfWeek(Carbon::MONDAY), $now->copy()->startOfWeek(Carbon::MONDAY)->addWeek()),
+            'month' => $this->periodStats($analyticsScope, $now->copy()->startOfMonth(), $now->copy()->startOfMonth()->addMonth()),
+            'year' => $this->periodStats($analyticsScope, $now->copy()->startOfYear(), $now->copy()->startOfYear()->addYear()),
+        ];
+
+        return Inertia::render('newsfeed', [
             'isAdmin' => $isAdmin,
             'counts' => $counts,
+            'analytics' => $analytics,
             'complaints' => $feed,
             'announcements' => Announcement::with('user:id,name,avatar_path')->latest()->limit(20)->get()
                 ->map(fn (Announcement $a) => [
@@ -105,10 +208,37 @@ class DashboardController extends Controller
                     'time' => $a->created_at?->diffForHumans(),
                     'ts' => $a->created_at?->timestamp,
                 ]),
-            'filters' => ['q' => $filters['q'] ?? '', 'category' => $filters['category'] ?? null, 'status' => $filters['status'] ?? null],
+            'filters' => ['q' => $filters['q'] ?? '', 'category' => $filters['category'] ?? null, 'status' => $filters['status'] ?? null, 'sort' => $sort],
             'categories' => Complaint::CATEGORIES,
             'statuses' => Complaint::STATUSES,
         ]);
+    }
+
+    /**
+     * @param  Builder<Complaint>  $scope
+     * @return array{total:int, awaiting:int, approved:int, rejected:int, in_progress:int, resolved:int}
+     */
+    private function periodStats(Builder $scope, \DateTimeInterface $start, \DateTimeInterface $end): array
+    {
+        $row = (clone $scope)
+            ->where('created_at', '>=', $start)
+            ->where('created_at', '<', $end)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN approval_status = ? THEN 1 ELSE 0 END) as awaiting', [Complaint::APPROVAL_PENDING])
+            ->selectRaw('SUM(CASE WHEN approval_status = ? AND status != ? AND removed_at IS NULL THEN 1 ELSE 0 END) as approved', [Complaint::APPROVAL_APPROVED, 'Rejected'])
+            ->selectRaw('SUM(CASE WHEN status = ? OR removed_at IS NOT NULL THEN 1 ELSE 0 END) as rejected', ['Rejected'])
+            ->selectRaw('SUM(CASE WHEN status = ? AND approval_status = ? AND removed_at IS NULL THEN 1 ELSE 0 END) as in_progress', ['In Progress', Complaint::APPROVAL_APPROVED])
+            ->selectRaw('SUM(CASE WHEN status = ? AND approval_status = ? AND removed_at IS NULL THEN 1 ELSE 0 END) as resolved', ['Resolved', Complaint::APPROVAL_APPROVED])
+            ->first();
+
+        return [
+            'total' => (int) ($row->total ?? 0),
+            'awaiting' => (int) ($row->awaiting ?? 0),
+            'approved' => (int) ($row->approved ?? 0),
+            'rejected' => (int) ($row->rejected ?? 0),
+            'in_progress' => (int) ($row->in_progress ?? 0),
+            'resolved' => (int) ($row->resolved ?? 0),
+        ];
     }
 
     /**
