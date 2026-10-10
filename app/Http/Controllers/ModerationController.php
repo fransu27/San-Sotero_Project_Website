@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Complaint;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -53,9 +52,9 @@ class ModerationController extends Controller
                 'visibility' => $c->visibility,
                 'anonymous' => (bool) $c->is_anonymous,
                 'date' => $c->incident_date?->format('Y-m-d'),
-                'created_at' => $c->created_at?->toIso8601String(),
-                'author' => $c->user?->name ?? 'Deleted user',
-                'author_email' => $c->user?->email,
+                'created_at' => $c->created_at->toIso8601String(),
+                'author' => $c->user->name,
+                'author_email' => $c->user->email,
                 'image_url' => $this->photo($c->image_path),
                 'removed' => $c->isRemoved(),
                 'removed_reason' => $c->removed_reason,
@@ -64,8 +63,8 @@ class ModerationController extends Controller
                     'type' => $e->type,
                     'status' => $e->status,
                     'note' => $e->note,
-                    'created_at' => $e->created_at?->toIso8601String(),
-                ])->values(),
+                    'created_at' => $e->created_at->toIso8601String(),
+                ])->values()->all(),
             ];
         });
 

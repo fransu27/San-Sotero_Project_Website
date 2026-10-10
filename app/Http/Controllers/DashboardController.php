@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\Complaint;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -42,9 +43,13 @@ class DashboardController extends Controller
     public function dashboard(Request $request): Response
     {
         $user = $request->user();
-        if ($user === null) { abort(401); }
+        if ($user === null) {
+            abort(401);
+        }
         $scope = Complaint::query();
-        if (! $user->isAdmin()) { $scope->where('user_id', $user->id); }
+        if (! $user->isAdmin()) {
+            $scope->where('user_id', $user->id);
+        }
         $now = now();
         $analytics = [
             'day' => $this->periodStats($scope, $now->copy()->startOfDay(), $now->copy()->startOfDay()->addDay()),
@@ -88,12 +93,21 @@ class DashboardController extends Controller
             }
             foreach ($yearReports as $report) {
                 $created = $report->created_at;
-                if ($period === 'day' && $created->toDateString() !== $now->toDateString()) continue;
-                if ($period === 'week' && ! $created->betweenIncluded($now->copy()->startOfWeek(Carbon::MONDAY), $now->copy()->endOfWeek(Carbon::SUNDAY))) continue;
-                if ($period === 'month' && $created->format('Y-m') !== $now->format('Y-m')) continue;
+                if ($period === 'day' && $created->toDateString() !== $now->toDateString()) {
+                    continue;
+                }
+                if ($period === 'week' && ! $created->betweenIncluded($now->copy()->startOfWeek(Carbon::MONDAY), $now->copy()->endOfWeek(Carbon::SUNDAY))) {
+                    continue;
+                }
+                if ($period === 'month' && $created->format('Y-m') !== $now->format('Y-m')) {
+                    continue;
+                }
                 $index = $period === 'day' ? (int) $created->format('G') : ($period === 'week' ? (int) $created->dayOfWeekIso - 1 : ($period === 'month' ? (int) $created->format('j') - 1 : (int) $created->format('n') - 1));
-                if (isset($buckets[$index])) $buckets[$index]['total']++;
+                if (isset($buckets[$index])) {
+                    $buckets[$index]['total']++;
+                }
             }
+
             return $buckets;
         };
         $series = ['day' => $makeBuckets('day'), 'week' => $makeBuckets('week'), 'month' => $makeBuckets('month'), 'year' => $makeBuckets('year')];
@@ -103,6 +117,7 @@ class DashboardController extends Controller
             'location' => $c->location, 'status' => $c->status, 'approval' => $c->approval_status,
             'ts' => $c->created_at?->timestamp, 'created_at' => $c->created_at?->format('Y-m-d H:i:s'),
         ])->values();
+
         return Inertia::render('dashboard', ['isAdmin' => $user->isAdmin(), 'analytics' => $analytics, 'statusCounts' => $statusCounts, 'series' => $series, 'reports' => $reports]);
     }
 
@@ -115,7 +130,7 @@ class DashboardController extends Controller
 
         $isAdmin = $user->isAdmin();
 
-        /** @var array{q?: string|null, category?: string|null, status?: string|null} $filters */
+        /** @var array{q?: string|null, category?: string|null, status?: string|null, sort?: 'new'|'best'|'hot'|null} $filters */
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'category' => ['nullable', Rule::in(Complaint::CATEGORIES)],
@@ -200,10 +215,10 @@ class DashboardController extends Controller
     }
 
     /**
-     * Aggregate report submissions for a half-open date range [start, end).
+     * @param  Builder<Complaint>  $scope
      * @return array{total:int, awaiting:int, approved:int, rejected:int, in_progress:int, resolved:int}
      */
-    private function periodStats(\Illuminate\Database\Eloquent\Builder $scope, \DateTimeInterface $start, \DateTimeInterface $end): array
+    private function periodStats(Builder $scope, \DateTimeInterface $start, \DateTimeInterface $end): array
     {
         $row = (clone $scope)
             ->where('created_at', '>=', $start)

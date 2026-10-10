@@ -12,6 +12,15 @@ class AvatarTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        if (! extension_loaded('gd')) {
+            $this->markTestSkipped('GD extension is not available in this environment.');
+        }
+    }
+
     public function test_a_user_can_upload_change_and_remove_their_picture(): void
     {
         Storage::fake('public');
