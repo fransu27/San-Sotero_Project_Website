@@ -124,7 +124,6 @@ export default function Dashboard({
                     {/* 0. Barangay location photo (set by an admin in Settings → Barangay; placeholder until then) */}
                     <BarangayBanner />
 
-
                     <div className="sticky top-[60px] z-20 rounded-xl bg-background/95 pt-1 pb-1 backdrop-blur-sm">
                         <Composer
                             mode={isAdmin ? 'announcement' : 'complaint'}
@@ -213,6 +212,7 @@ export default function Dashboard({
                                 key={`c${item.c.id}`}
                                 c={item.c}
                                 isAdmin={isAdmin}
+                                statuses={statuses}
                                 categories={categories}
                             />
                         ),
@@ -261,7 +261,8 @@ export default function Dashboard({
                                     <span
                                         className="size-2 rounded-full"
                                         style={{
-                                            backgroundColor: statusColor.Approval,
+                                            backgroundColor:
+                                                statusColor.Approval,
                                         }}
                                     />
                                     {t(
@@ -279,7 +280,8 @@ export default function Dashboard({
                                     <span
                                         className="size-2 rounded-full"
                                         style={{
-                                            backgroundColor: statusColor.Removed,
+                                            backgroundColor:
+                                                statusColor.Removed,
                                         }}
                                     />
                                     {t('status.Removed')}
@@ -373,7 +375,6 @@ export default function Dashboard({
                             );
                         })}
                     </section>
-
                 </aside>
             </div>
         </>
