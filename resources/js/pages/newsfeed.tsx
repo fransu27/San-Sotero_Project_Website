@@ -124,88 +124,6 @@ export default function Dashboard({
                     {/* 0. Barangay location photo (set by an admin in Settings → Barangay; placeholder until then) */}
                     <BarangayBanner />
 
-                    {/* Period analytics: server-scoped to all reports for admins and own reports for residents. */}
-                    <section
-                        aria-label="Submission statistics"
-                        className="grid grid-cols-1 gap-3 sm:grid-cols-3"
-                    >
-                        {[
-                            {
-                                key: 'week' as const,
-                                label: 'This week',
-                                detail: 'Monday–Sunday',
-                                icon: CalendarDays,
-                            },
-                            {
-                                key: 'month' as const,
-                                label: 'This month',
-                                detail: 'Calendar month',
-                                icon: Clock3,
-                            },
-                            {
-                                key: 'year' as const,
-                                label: 'This year',
-                                detail: 'Calendar year',
-                                icon: FileText,
-                            },
-                        ].map((period) => {
-                            const stats = analytics[period.key];
-                            const Icon = period.icon;
-
-                            return (
-                                <div
-                                    key={period.key}
-                                    className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
-                                >
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div>
-                                            <p className="text-sm font-medium text-muted-foreground">
-                                                {period.label}
-                                            </p>
-                                            <p className="mt-1 text-3xl font-semibold tracking-tight">
-                                                {stats.total}
-                                            </p>
-                                            <p className="mt-0.5 text-xs text-muted-foreground">
-                                                {period.detail} ·{' '}
-                                                {isAdmin
-                                                    ? 'all submissions'
-                                                    : 'your submissions'}
-                                            </p>
-                                        </div>
-                                        <span className="rounded-lg bg-muted p-2 text-muted-foreground">
-                                            <Icon size={18} />
-                                        </span>
-                                    </div>
-                                    <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
-                                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                                            <Clock3 size={13} /> Awaiting{' '}
-                                            <strong className="ml-auto text-foreground">
-                                                {stats.awaiting}
-                                            </strong>
-                                        </span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                                            <CheckCircle2 size={13} /> Approved{' '}
-                                            <strong className="ml-auto text-foreground">
-                                                {stats.approved}
-                                            </strong>
-                                        </span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                                            <CircleX size={13} /> Rejected{' '}
-                                            <strong className="ml-auto text-foreground">
-                                                {stats.rejected}
-                                            </strong>
-                                        </span>
-                                        <span className="flex items-center gap-1.5 text-muted-foreground">
-                                            <CheckCircle2 size={13} /> Resolved{' '}
-                                            <strong className="ml-auto text-foreground">
-                                                {stats.resolved}
-                                            </strong>
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </section>
 
                     <div className="sticky top-[60px] z-20 rounded-xl bg-background/95 pt-1 pb-1 backdrop-blur-sm">
                         <Composer
@@ -295,7 +213,6 @@ export default function Dashboard({
                                 key={`c${item.c.id}`}
                                 c={item.c}
                                 isAdmin={isAdmin}
-                                statuses={statuses}
                                 categories={categories}
                             />
                         ),
@@ -303,7 +220,14 @@ export default function Dashboard({
                 </div>
 
                 {/* ── Right widgets (desktop only) ── */}
-                <aside className="hidden h-fit space-y-4 xl:sticky xl:top-[72px] xl:block">
+                <aside className="hidden h-fit space-y-3 xl:sticky xl:top-[72px] xl:block">
+                    {!isAdmin && (
+                        <div className="flex items-start gap-2 rounded-xl border border-border bg-card p-3.5 text-xs leading-relaxed text-muted-foreground shadow-sm">
+                            <Lock size={14} className="mt-0.5 shrink-0" />
+                            <p>{t('widget.privacy')}</p>
+                        </div>
+                    )}
+
                     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
                         <h2 className="mb-3 text-sm font-semibold">
                             {t(isAdmin ? 'widget.admin' : 'widget.resident')}
@@ -337,8 +261,7 @@ export default function Dashboard({
                                     <span
                                         className="size-2 rounded-full"
                                         style={{
-                                            backgroundColor:
-                                                statusColor.Approval,
+                                            backgroundColor: statusColor.Approval,
                                         }}
                                     />
                                     {t(
@@ -356,8 +279,7 @@ export default function Dashboard({
                                     <span
                                         className="size-2 rounded-full"
                                         style={{
-                                            backgroundColor:
-                                                statusColor.Removed,
+                                            backgroundColor: statusColor.Removed,
                                         }}
                                     />
                                     {t('status.Removed')}
@@ -368,12 +290,90 @@ export default function Dashboard({
                             </li>
                         </ul>
                     </div>
-                    {!isAdmin && (
-                        <div className="flex gap-2 rounded-xl border border-border bg-card p-4 text-xs text-muted-foreground shadow-sm">
-                            <Lock size={14} className="mt-0.5 shrink-0" />{' '}
-                            {t('widget.privacy')}
-                        </div>
-                    )}
+
+                    {/* Period analytics: stacked vertically in the right sidebar. */}
+                    <section
+                        aria-label="Submission statistics"
+                        className="flex flex-col gap-3"
+                    >
+                        {[
+                            {
+                                key: 'week' as const,
+                                label: 'This week',
+                                detail: 'Monday–Sunday',
+                                icon: CalendarDays,
+                            },
+                            {
+                                key: 'month' as const,
+                                label: 'This month',
+                                detail: 'Calendar month',
+                                icon: Clock3,
+                            },
+                            {
+                                key: 'year' as const,
+                                label: 'This year',
+                                detail: 'Calendar year',
+                                icon: FileText,
+                            },
+                        ].map((period) => {
+                            const stats = analytics[period.key];
+                            const Icon = period.icon;
+
+                            return (
+                                <div
+                                    key={period.key}
+                                    className="rounded-xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">
+                                                {period.label}
+                                            </p>
+                                            <p className="mt-1 text-3xl font-semibold tracking-tight">
+                                                {stats.total}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {period.detail} ·{' '}
+                                                {isAdmin
+                                                    ? 'all submissions'
+                                                    : 'your submissions'}
+                                            </p>
+                                        </div>
+                                        <span className="rounded-lg bg-muted p-2 text-muted-foreground">
+                                            <Icon size={18} />
+                                        </span>
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <Clock3 size={13} /> Awaiting{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.awaiting}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CheckCircle2 size={13} /> Approved{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.approved}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CircleX size={13} /> Rejected{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.rejected}
+                                            </strong>
+                                        </span>
+                                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                                            <CheckCircle2 size={13} /> Resolved{' '}
+                                            <strong className="ml-auto text-foreground">
+                                                {stats.resolved}
+                                            </strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </section>
+
                 </aside>
             </div>
         </>
