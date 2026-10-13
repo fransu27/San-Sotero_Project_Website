@@ -148,23 +148,19 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
               ]),
     ];
 
-const statusLinks: NavLink[] = (
-    statuses ?? DEFAULT_STATUSES
-)
-    .filter(
-        (s: string) => !['Rejected', 'Removed'].includes(s),
-    )
-    .map((s: string) => ({
-        label: t(
-            s === 'Approval' && isAdmin
-                ? 'status.ApprovalAdmin'
-                : `status.${s}`,
-        ),
-        href: `/newsfeed?status=${encodeURIComponent(s)}`,
-        icon: statusIcon[s] ?? Clock,
-        active: !onSettings && f.status === s,
-        count: counts ? Number(counts[s] ?? 0) : undefined,
-    }));
+    const statusLinks: NavLink[] = (statuses ?? DEFAULT_STATUSES)
+        .filter((s: string) => !['Rejected', 'Removed'].includes(s))
+        .map((s: string) => ({
+            label: t(
+                s === 'Approval' && isAdmin
+                    ? 'status.ApprovalAdmin'
+                    : `status.${s}`,
+            ),
+            href: `/newsfeed?status=${encodeURIComponent(s)}`,
+            icon: statusIcon[s] ?? Clock,
+            active: !onSettings && f.status === s,
+            count: counts ? Number(counts[s] ?? 0) : undefined,
+        }));
 
     const categoryLinks: NavLink[] = (categories ?? DEFAULT_CATEGORIES).map(
         (c: string) => ({
