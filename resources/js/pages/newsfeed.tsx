@@ -212,6 +212,7 @@ export default function Dashboard({
                                 key={`c${item.c.id}`}
                                 c={item.c}
                                 isAdmin={isAdmin}
+                                statuses={statuses}
                                 categories={categories}
                             />
                         ),
