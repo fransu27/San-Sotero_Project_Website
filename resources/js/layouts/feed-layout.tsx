@@ -147,11 +147,14 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                   },
               ]),
     ];
-    const statusLinks: NavLink[] = [
-        ...(statuses ?? DEFAULT_STATUSES),
-        'Removed',
-    ].map((s: string) => ({
-        // Approval = the moderation queue: admins see "Approval queue", residents see their own "Awaiting approval" posts.
+
+const statusLinks: NavLink[] = (
+    statuses ?? DEFAULT_STATUSES
+)
+    .filter(
+        (s: string) => !['Rejected', 'Removed'].includes(s),
+    )
+    .map((s: string) => ({
         label: t(
             s === 'Approval' && isAdmin
                 ? 'status.ApprovalAdmin'
@@ -162,6 +165,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
         active: !onSettings && f.status === s,
         count: counts ? Number(counts[s] ?? 0) : undefined,
     }));
+
     const categoryLinks: NavLink[] = (categories ?? DEFAULT_CATEGORIES).map(
         (c: string) => ({
             label: t(`cat.${c}`),
