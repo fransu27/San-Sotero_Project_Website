@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\Complaint;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -51,14 +52,14 @@ class WelcomeController extends Controller
                 'created_at' => $announcement->created_at?->toIso8601String(),
             ]);
 
-        $complaints = \App\Models\Complaint::query()
+        $complaints = Complaint::query()
             ->where('visibility', 'public')
-            ->where('approval_status', \App\Models\Complaint::APPROVAL_APPROVED)
+            ->where('approval_status', Complaint::APPROVAL_APPROVED)
             ->whereNull('removed_at')
             ->latest()
             ->limit(30)
             ->get(['id', 'title', 'description', 'category', 'custom_category', 'location', 'status', 'image_path', 'created_at'])
-            ->map(fn (\App\Models\Complaint $complaint) => [
+            ->map(fn (Complaint $complaint) => [
                 'id' => $complaint->id,
                 'title' => $complaint->title,
                 'description' => $complaint->description,
@@ -77,5 +78,4 @@ class WelcomeController extends Controller
             'complaints' => $complaints,
         ]);
     }
-
 }

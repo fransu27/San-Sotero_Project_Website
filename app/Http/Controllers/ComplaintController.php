@@ -20,9 +20,9 @@ use Inertia\Inertia;
  * Complaint lifecycle:
  *
  *   resident files it ──► PUBLIC  : approval = pending  (only the author + admins can see it)
- *                    │              admin approves ──► shows in everyone's feed ──► admin moves the status along
- *                    │              admin declines (= "remove with reason") ──► author sees the reason
- *                    └──► PRIVATE : approval = approved immediately, but only the author + admins can ever see it
+ *                      │           admin approves ──► shows in everyone's feed ──► admin moves the status along
+ *                      │           admin declines (= "remove with reason") ──► author sees the reason
+ *                      └──► PRIVATE : approval = approved immediately, but only the author + admins can ever see it
  *
  * Every action that touches an EXISTING complaint starts with a policy check (see App\Policies\ComplaintPolicy).
  */
@@ -157,7 +157,7 @@ class ComplaintController extends Controller
         $data = $request->validate([
             'status' => ['required', Rule::in(array_values(array_diff(Complaint::STATUSES, ['Rejected'])))],
             'note' => ['nullable', 'string', 'min:5', 'max:300'],
-        ]); 
+        ]);
 
         if (! $complaint->isApproved()) {
             throw ValidationException::withMessages(['status' => 'Approve this report before changing its status.']);
@@ -208,9 +208,10 @@ class ComplaintController extends Controller
             $complaint->forceFill([
                 'removed_at' => now(),
                 'removed_reason' => $reason,
+                'status' => 'Rejected',
             ])->save();
 
-            $complaint->log('status', $request->user(), 'Removed', $reason);
+            $complaint->log('status', $request->user(), 'Rejected', $reason);
         });
 
         return back();

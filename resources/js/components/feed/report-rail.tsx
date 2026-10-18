@@ -65,7 +65,9 @@ export default function ReportRail({ links, settings, ariaLabel }: Props) {
                     onClick={() => setCollapsed((v) => !v)}
                     aria-expanded={!collapsed}
                     aria-label={
-                        collapsed ? 'Expand report panel' : 'Collapse report panel'
+                        collapsed
+                            ? 'Expand report panel'
+                            : 'Collapse report panel'
                     }
                     title={collapsed ? 'Expand report panel' : undefined}
                     className={cn(
@@ -118,7 +120,9 @@ export default function ReportRail({ links, settings, ariaLabel }: Props) {
                     </div>
                 )}
 
-                {collapsed && <div className="h-px w-8 bg-border" aria-hidden />}
+                {collapsed && (
+                    <div className="h-px w-8 bg-border" aria-hidden />
+                )}
 
                 <div className={cn(!collapsed && 'space-y-2.5')}>
                     {!collapsed && (
@@ -156,7 +160,9 @@ export default function ReportRail({ links, settings, ariaLabel }: Props) {
                     </nav>
                 </div>
 
-                {collapsed && <div className="h-px w-8 bg-border" aria-hidden />}
+                {collapsed && (
+                    <div className="h-px w-8 bg-border" aria-hidden />
+                )}
 
                 <Link
                     href={settings.href}

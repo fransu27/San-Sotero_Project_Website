@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Complaint;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +24,8 @@ class WalkInComplaintController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->isAdmin(), 403);
 
         $data = $request->validate([
             'reporter_name' => ['required', 'string', 'max:120'],
@@ -41,9 +42,9 @@ class WalkInComplaintController extends Controller
         ]);
 
         $pin = (string) random_int(100000, 999999);
-        $complaint = DB::transaction(function () use ($request, $data, $pin): Complaint {
+        $complaint = DB::transaction(function () use ($user, $data, $pin, $request): Complaint {
             $complaint = new Complaint([
-                'user_id' => $request->user()->id,
+                'user_id' => $user->id,
                 'title' => trim(strip_tags($data['title'])),
                 'description' => trim(strip_tags($data['description'])),
                 'location' => trim(strip_tags($data['location'])),
@@ -59,13 +60,13 @@ class WalkInComplaintController extends Controller
             $complaint->intake_channel = 'walk_in';
             $complaint->reporter_name = trim(strip_tags($data['reporter_name']));
             $complaint->reporter_contact = isset($data['reporter_contact']) ? trim(strip_tags($data['reporter_contact'])) : null;
-            $complaint->entered_by_user_id = $request->user()->id;
+            $complaint->entered_by_user_id = $user->id;
             $complaint->tracking_pin_hash = Hash::make($pin);
             $imagePath = $request->file('image')?->store('complaints', 'public');
             $complaint->image_path = $imagePath ?: null;
             $complaint->save();
-            $complaint->log('submitted', $request->user(), 'Pending', 'Received in person at the barangay desk.');
-            $complaint->syncAttachments($request->file('files', []), [], $request->user()->id);
+            $complaint->log('submitted', $user, 'Pending', 'Received in person at the barangay desk.');
+            $complaint->syncAttachments($request->file('files', []), [], $user->id);
 
             return $complaint;
         });

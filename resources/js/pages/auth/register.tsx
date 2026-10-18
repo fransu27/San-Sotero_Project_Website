@@ -32,6 +32,7 @@ const adultBirthdateLimit = () => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     date.setFullYear(date.getFullYear() - 18);
+
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
@@ -59,7 +60,9 @@ export default function Register({ passwordRules }: Props) {
                                 id="name"
                                 name="name"
                                 aria-invalid={Boolean(errors.name)}
-                                aria-describedby={errors.name ? 'name-error' : undefined}
+                                aria-describedby={
+                                    errors.name ? 'name-error' : undefined
+                                }
                                 required
                                 autoFocus
                                 tabIndex={1}
@@ -76,7 +79,11 @@ export default function Register({ passwordRules }: Props) {
                                     id="birthdate"
                                     name="birthdate"
                                     aria-invalid={Boolean(errors.birthdate)}
-                                    aria-describedby={errors.birthdate ? 'birthdate-help birthdate-error' : 'birthdate-help'}
+                                    aria-describedby={
+                                        errors.birthdate
+                                            ? 'birthdate-help birthdate-error'
+                                            : 'birthdate-help'
+                                    }
                                     type="date"
                                     required
                                     tabIndex={2}
@@ -85,10 +92,17 @@ export default function Register({ passwordRules }: Props) {
                                     autoComplete="bday"
                                     className="[color-scheme:light] dark:[color-scheme:dark]"
                                 />
-                                <p id="birthdate-help" className="text-xs text-muted-foreground">
-                                    You must be at least 18 years old to register.
+                                <p
+                                    id="birthdate-help"
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    You must be at least 18 years old to
+                                    register.
                                 </p>
-                                <InputError id="birthdate-error" message={errors.birthdate} />
+                                <InputError
+                                    id="birthdate-error"
+                                    message={errors.birthdate}
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="phone">Mobile number</Label>
@@ -96,7 +110,9 @@ export default function Register({ passwordRules }: Props) {
                                     id="phone"
                                     name="phone"
                                     aria-invalid={Boolean(errors.phone)}
-                                    aria-describedby={errors.phone ? 'phone-error' : undefined}
+                                    aria-describedby={
+                                        errors.phone ? 'phone-error' : undefined
+                                    }
                                     type="tel"
                                     inputMode="numeric"
                                     required
@@ -107,7 +123,10 @@ export default function Register({ passwordRules }: Props) {
                                     pattern="(09[0-9]{9}|\+639[0-9]{9})"
                                     title="Example: 09171234567"
                                 />
-                                <InputError id="phone-error" message={errors.phone} />
+                                <InputError
+                                    id="phone-error"
+                                    message={errors.phone}
+                                />
                             </div>
                         </div>
 
@@ -117,7 +136,9 @@ export default function Register({ passwordRules }: Props) {
                                 id="email"
                                 name="email"
                                 aria-invalid={Boolean(errors.email)}
-                                aria-describedby={errors.email ? 'email-error' : undefined}
+                                aria-describedby={
+                                    errors.email ? 'email-error' : undefined
+                                }
                                 type="email"
                                 required
                                 tabIndex={4}
@@ -126,7 +147,10 @@ export default function Register({ passwordRules }: Props) {
                                 spellCheck={false}
                                 placeholder="email@example.com"
                             />
-                            <InputError id="email-error" message={errors.email} />
+                            <InputError
+                                id="email-error"
+                                message={errors.email}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -135,7 +159,11 @@ export default function Register({ passwordRules }: Props) {
                                 id="password"
                                 name="password"
                                 aria-invalid={Boolean(errors.password)}
-                                aria-describedby={errors.password ? 'password-error' : undefined}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'password-error'
+                                        : undefined
+                                }
                                 required
                                 tabIndex={5}
                                 autoComplete="new-password"
@@ -145,7 +173,10 @@ export default function Register({ passwordRules }: Props) {
                                 onChange={(e) => setPw(e.target.value)}
                             />
                             <PasswordStrength password={pw} />
-                            <InputError id="password-error" message={errors.password} />
+                            <InputError
+                                id="password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -155,8 +186,14 @@ export default function Register({ passwordRules }: Props) {
                             <PasswordInput
                                 id="password_confirmation"
                                 name="password_confirmation"
-                                aria-invalid={Boolean(errors.password_confirmation)}
-                                aria-describedby={errors.password_confirmation ? 'password_confirmation-error' : undefined}
+                                aria-invalid={Boolean(
+                                    errors.password_confirmation,
+                                )}
+                                aria-describedby={
+                                    errors.password_confirmation
+                                        ? 'password_confirmation-error'
+                                        : undefined
+                                }
                                 required
                                 tabIndex={6}
                                 autoComplete="new-password"

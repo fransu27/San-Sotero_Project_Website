@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Carbon\CarbonImmutable;
 use App\Models\Concerns\HasAttachments;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;

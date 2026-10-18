@@ -101,24 +101,33 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                     <div className="flex h-full flex-col justify-between text-sm">
                                         <div className="flex flex-col space-y-4">
                                             {mainNavItems.map((item) => (
-                                                <SheetClose asChild key={item.title}>
+                                                <SheetClose
+                                                    asChild
+                                                    key={item.title}
+                                                >
                                                     <Link
                                                         href={item.href}
                                                         aria-current={
-                                                            isCurrentUrl(item.href)
+                                                            isCurrentUrl(
+                                                                item.href,
+                                                            )
                                                                 ? 'page'
                                                                 : undefined
                                                         }
                                                         className={cn(
                                                             'flex items-center space-x-2 rounded-md px-2 py-2 font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                                                            isCurrentUrl(item.href) &&
+                                                            isCurrentUrl(
+                                                                item.href,
+                                                            ) &&
                                                                 'bg-accent text-accent-foreground',
                                                         )}
                                                     >
                                                         {item.icon && (
                                                             <item.icon className="h-5 w-5" />
                                                         )}
-                                                        <span>{item.title}</span>
+                                                        <span>
+                                                            {item.title}
+                                                        </span>
                                                     </Link>
                                                 </SheetClose>
                                             ))}

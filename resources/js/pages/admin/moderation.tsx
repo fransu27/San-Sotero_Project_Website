@@ -384,7 +384,9 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                             {item.attachments.length > 0 && (
                                                 <span className="inline-flex items-center gap-1 font-medium text-[#0777bd] dark:text-[#4cb9f8]">
                                                     <Paperclip size={12} />
-                                                    {item.attachments.length}{' '}
+                                                    {
+                                                        item.attachments.length
+                                                    }{' '}
                                                     {item.attachments.length ===
                                                     1
                                                         ? 'file'
@@ -410,7 +412,9 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                             {item.removed && (
                                                 <button
                                                     type="button"
-                                                    disabled={busyId === item.id}
+                                                    disabled={
+                                                        busyId === item.id
+                                                    }
                                                     onClick={() =>
                                                         restorePost(item)
                                                     }
@@ -615,10 +619,23 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                             )}
                             {preview.intake_channel === 'walk_in' && (
                                 <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-3">
-                                    <p className="text-sm font-semibold">Assisted walk-in report</p>
-                                    <p className="mt-1 text-sm">Resident: {preview.reporter_name || 'Not provided'}</p>
-                                    <p className="text-sm">Contact: {preview.reporter_contact || 'Not provided'}</p>
-                                    <p className="mt-1 text-xs text-muted-foreground">Entered by staff account #{preview.entered_by_user_id ?? '—'}</p>
+                                    <p className="text-sm font-semibold">
+                                        Assisted walk-in report
+                                    </p>
+                                    <p className="mt-1 text-sm">
+                                        Resident:{' '}
+                                        {preview.reporter_name ||
+                                            'Not provided'}
+                                    </p>
+                                    <p className="text-sm">
+                                        Contact:{' '}
+                                        {preview.reporter_contact ||
+                                            'Not provided'}
+                                    </p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Entered by staff account #
+                                        {preview.entered_by_user_id ?? '—'}
+                                    </p>
                                 </div>
                             )}
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -916,7 +933,9 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                                             setConfirmingRemove(
                                                                 false,
                                                             );
-                                                            setRemovalReason('');
+                                                            setRemovalReason(
+                                                                '',
+                                                            );
                                                         }}
                                                         className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted"
                                                     >

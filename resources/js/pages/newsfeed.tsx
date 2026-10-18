@@ -1,5 +1,5 @@
 import { Head, Link, usePage, usePoll } from '@inertiajs/react';
-import { Lock, Building2, HardHat, Shield, Trash2, MoreHorizontal } from 'lucide-react';
+import { Lock, HardHat, Shield, Trash2, MoreHorizontal } from 'lucide-react';
 import BarangayBanner from '@/components/barangay-banner';
 import AnnouncementCard from '@/components/feed/announcement-card';
 import type { Notice } from '@/components/feed/announcement-card';
@@ -159,10 +159,27 @@ export default function Dashboard({
                     </div>
 
                     {/* 1. Pinned admin announcements sit above everything */}
-                    <section id="announcements" className="scroll-mt-20 space-y-3">
-                        <h2 className="flex items-center gap-2 px-1 text-sm font-bold uppercase tracking-[0.12em] text-[#0197F6]"><span className="h-px flex-1 bg-[#0197F6]/25" />Announcements<span className="h-px flex-1 bg-[#0197F6]/25" /></h2>
-                        {[...pinned, ...otherAnnouncements].map((a) => <AnnouncementCard key={a.id} a={a} isAdmin={isAdmin} />)}
-                        {announcements.length === 0 && <div className="rounded-xl border border-dashed border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground">No announcements have been posted yet.</div>}
+                    <section
+                        id="announcements"
+                        className="scroll-mt-20 space-y-3"
+                    >
+                        <h2 className="flex items-center gap-2 px-1 text-sm font-bold tracking-[0.12em] text-[#0197F6] uppercase">
+                            <span className="h-px flex-1 bg-[#0197F6]/25" />
+                            Announcements
+                            <span className="h-px flex-1 bg-[#0197F6]/25" />
+                        </h2>
+                        {[...pinned, ...otherAnnouncements].map((a) => (
+                            <AnnouncementCard
+                                key={a.id}
+                                a={a}
+                                isAdmin={isAdmin}
+                            />
+                        ))}
+                        {announcements.length === 0 && (
+                            <div className="rounded-xl border border-dashed border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground">
+                                No announcements have been posted yet.
+                            </div>
+                        )}
                     </section>
 
                     {/* 2. Post box: admin → announcement, resident → complaint */}
@@ -248,35 +265,38 @@ export default function Dashboard({
                                 <span>{t('widget.total')}</span>
                                 <span className="font-semibold">{total}</span>
                             </li>
-                            {statuses.filter((s) => s !== 'Rejected').map((s) => (
-                                <li
-                                    key={s}
-                                    className="flex items-center justify-between"
-                                >
-                                    <span className="flex items-center gap-2">
-                                        <span
-                                            className="size-2 rounded-full"
-                                            style={{
-                                                backgroundColor: statusColor[s],
-                                            }}
-                                        />
-                                        {t(`status.${s}`)}
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        {unseen(s) > 0 && (
+                            {statuses
+                                .filter((s) => s !== 'Rejected')
+                                .map((s) => (
+                                    <li
+                                        key={s}
+                                        className="flex items-center justify-between"
+                                    >
+                                        <span className="flex items-center gap-2">
                                             <span
-                                                className="rounded-full bg-[#0197F6] px-2 py-0.5 text-[11px] leading-none font-semibold text-white"
-                                                title={`${unseen(s)} new since you last checked`}
-                                            >
-                                                {unseen(s)} new
-                                            </span>
-                                        )}
-                                        <span className="font-semibold">
-                                            {counts[s] ?? 0}
+                                                className="size-2 rounded-full"
+                                                style={{
+                                                    backgroundColor:
+                                                        statusColor[s],
+                                                }}
+                                            />
+                                            {t(`status.${s}`)}
                                         </span>
-                                    </span>
-                                </li>
-                            ))}
+                                        <span className="flex items-center gap-2">
+                                            {unseen(s) > 0 && (
+                                                <span
+                                                    className="rounded-full bg-[#0197F6] px-2 py-0.5 text-[11px] leading-none font-semibold text-white"
+                                                    title={`${unseen(s)} new since you last checked`}
+                                                >
+                                                    {unseen(s)} new
+                                                </span>
+                                            )}
+                                            <span className="font-semibold">
+                                                {counts[s] ?? 0}
+                                            </span>
+                                        </span>
+                                    </li>
+                                ))}
                             <li className="flex items-center justify-between text-muted-foreground">
                                 <span className="flex items-center gap-2">
                                     <span

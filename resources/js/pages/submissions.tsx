@@ -206,7 +206,9 @@ export default function Submissions({
                                         key={chip}
                                         type="button"
                                         aria-pressed={active}
-                                        aria-current={active ? 'page' : undefined}
+                                        aria-current={
+                                            active ? 'page' : undefined
+                                        }
                                         onClick={() => go({ status: value })}
                                         className={cn(
                                             'nav-fill-link flex w-full gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium',
@@ -224,149 +226,161 @@ export default function Submissions({
                     </div>
                 </aside>
 
-            <div className="min-w-0 space-y-4">
-                <header>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        {t('sub.title')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('sub.desc')}
-                    </p>
-                </header>
-
-                <form onSubmit={search} role="search" className="flex gap-2">
-                    <div className="relative min-w-0 flex-1">
-                        <Search
-                            size={16}
-                            aria-hidden
-                            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
-                        />
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            maxLength={100}
-                            placeholder={t('sub.search')}
-                            aria-label={t('sub.search')}
-                            className="w-full rounded-lg border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus:border-[#0197F6] focus:ring-2 focus:ring-[#0197F6]/30"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:ring-offset-2 focus-visible:outline-none"
-                    >
-                        {t('sub.searchBtn')}
-                    </button>
-                </form>
-
-                <div className="flex flex-wrap items-center justify-between gap-2 lg:justify-end">
-                    {/* Phones and tablets keep the filter chips here; from laptop width they live in the left panel. */}
-                    <div
-                        role="group"
-                        aria-label={t('sub.title')}
-                        className="flex flex-wrap gap-2 px-1 pb-1 lg:hidden"
-                    >
-                        {CHIPS.map((chip) => {
-                            const value = chip === 'all' ? null : chip;
-                            const active = filters.status === value;
-
-                            return (
-                                <button
-                                    key={chip}
-                                    type="button"
-                                    aria-pressed={active}
-                                    onClick={() => go({ status: value })}
-                                    className={cn(
-                                        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
-                                        active
-                                            ? 'border-[#0678c5] bg-[#0678c5] text-white shadow-md shadow-[#0678c5]/30 dark:border-[#0a74c4] dark:bg-[#0a74c4]'
-                                            : 'border-border text-muted-foreground hover:border-[#0197F6]/50 hover:bg-[#0197F6]/10 hover:text-foreground',
-                                    )}
-                                >
-                                    {t(`sub.f.${chip}`)}
-                                    <span className="text-xs tabular-nums opacity-80">
-                                        {tally[chip] ?? 0}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {t('sub.sort')}
-                        <select
-                            value={filters.sort}
-                            onChange={(e) =>
-                                go({ sort: e.target.value as Filters['sort'] })
-                            }
-                            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0197F6]/30"
-                        >
-                            <option value="new">{t('sub.sort.new')}</option>
-                            <option value="reacted">
-                                {t('sub.sort.reacted')}
-                            </option>
-                        </select>
-                    </label>
-                </div>
-
-                {rows.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                <div className="min-w-0 space-y-4">
+                    <header>
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            {t('sub.title')}
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            {t(
-                                filtering
-                                    ? 'sub.emptyFiltered'
-                                    : 'sub.emptyAll',
-                            )}
+                            {t('sub.desc')}
                         </p>
-                        <Link
-                            href={filtering ? '/my-submissions' : '/dashboard'}
-                            className="mt-3 inline-block rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90"
-                        >
-                            {t(filtering ? 'sub.clear' : 'sub.emptyCta')}
-                        </Link>
-                    </div>
-                ) : (
-                    <ul className="space-y-3">
-                        {rows.map((r) => (
-                            <li key={r.id}>
-                                <SubmissionCard
-                                    r={r}
-                                    onPreview={() => setPreview(r)}
-                                />
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                    </header>
 
-                {pagination.last > 1 && (
-                    <nav
-                        className="flex items-center justify-between gap-3 pt-1 text-sm"
-                        aria-label="Pagination"
+                    <form
+                        onSubmit={search}
+                        role="search"
+                        className="flex gap-2"
                     >
+                        <div className="relative min-w-0 flex-1">
+                            <Search
+                                size={16}
+                                aria-hidden
+                                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <input
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                maxLength={100}
+                                placeholder={t('sub.search')}
+                                aria-label={t('sub.search')}
+                                className="w-full rounded-lg border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus:border-[#0197F6] focus:ring-2 focus:ring-[#0197F6]/30"
+                            />
+                        </div>
                         <button
-                            type="button"
-                            disabled={pagination.page <= 1}
-                            onClick={() => go({ page: pagination.page - 1 })}
-                            className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                            type="submit"
+                            className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:ring-offset-2 focus-visible:outline-none"
                         >
-                            {t('sub.prev')}
+                            {t('sub.searchBtn')}
                         </button>
-                        <span className="text-muted-foreground">
-                            {t('sub.page', {
-                                page: pagination.page,
-                                last: pagination.last,
-                            })}{' '}
-                            · {t('sub.total', { n: pagination.total })}
-                        </span>
-                        <button
-                            type="button"
-                            disabled={pagination.page >= pagination.last}
-                            onClick={() => go({ page: pagination.page + 1 })}
-                            className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                    </form>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 lg:justify-end">
+                        {/* Phones and tablets keep the filter chips here; from laptop width they live in the left panel. */}
+                        <div
+                            role="group"
+                            aria-label={t('sub.title')}
+                            className="flex flex-wrap gap-2 px-1 pb-1 lg:hidden"
                         >
-                            {t('sub.next')}
-                        </button>
-                    </nav>
-                )}
-            </div>
+                            {CHIPS.map((chip) => {
+                                const value = chip === 'all' ? null : chip;
+                                const active = filters.status === value;
+
+                                return (
+                                    <button
+                                        key={chip}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => go({ status: value })}
+                                        className={cn(
+                                            'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
+                                            active
+                                                ? 'border-[#0678c5] bg-[#0678c5] text-white shadow-md shadow-[#0678c5]/30 dark:border-[#0a74c4] dark:bg-[#0a74c4]'
+                                                : 'border-border text-muted-foreground hover:border-[#0197F6]/50 hover:bg-[#0197F6]/10 hover:text-foreground',
+                                        )}
+                                    >
+                                        {t(`sub.f.${chip}`)}
+                                        <span className="text-xs tabular-nums opacity-80">
+                                            {tally[chip] ?? 0}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {t('sub.sort')}
+                            <select
+                                value={filters.sort}
+                                onChange={(e) =>
+                                    go({
+                                        sort: e.target.value as Filters['sort'],
+                                    })
+                                }
+                                className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0197F6]/30"
+                            >
+                                <option value="new">{t('sub.sort.new')}</option>
+                                <option value="reacted">
+                                    {t('sub.sort.reacted')}
+                                </option>
+                            </select>
+                        </label>
+                    </div>
+
+                    {rows.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                {t(
+                                    filtering
+                                        ? 'sub.emptyFiltered'
+                                        : 'sub.emptyAll',
+                                )}
+                            </p>
+                            <Link
+                                href={
+                                    filtering ? '/my-submissions' : '/dashboard'
+                                }
+                                className="mt-3 inline-block rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90"
+                            >
+                                {t(filtering ? 'sub.clear' : 'sub.emptyCta')}
+                            </Link>
+                        </div>
+                    ) : (
+                        <ul className="space-y-3">
+                            {rows.map((r) => (
+                                <li key={r.id}>
+                                    <SubmissionCard
+                                        r={r}
+                                        onPreview={() => setPreview(r)}
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {pagination.last > 1 && (
+                        <nav
+                            className="flex items-center justify-between gap-3 pt-1 text-sm"
+                            aria-label="Pagination"
+                        >
+                            <button
+                                type="button"
+                                disabled={pagination.page <= 1}
+                                onClick={() =>
+                                    go({ page: pagination.page - 1 })
+                                }
+                                className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                            >
+                                {t('sub.prev')}
+                            </button>
+                            <span className="text-muted-foreground">
+                                {t('sub.page', {
+                                    page: pagination.page,
+                                    last: pagination.last,
+                                })}{' '}
+                                · {t('sub.total', { n: pagination.total })}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={pagination.page >= pagination.last}
+                                onClick={() =>
+                                    go({ page: pagination.page + 1 })
+                                }
+                                className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                            >
+                                {t('sub.next')}
+                            </button>
+                        </nav>
+                    )}
+                </div>
 
                 <aside
                     aria-label={t('sub.title')}
@@ -583,7 +597,12 @@ function SubmissionCard({ r, onPreview }: { r: Row; onPreview: () => void }) {
     );
     const eventLabel = (e: Row['events'][number]) =>
         e.type === 'status'
-            ? t('tl.status', { status: e.status === 'Rejected' || e.status === 'Removed' ? t('status.Removed') : t(`status.${e.status}`) })
+            ? t('tl.status', {
+                  status:
+                      e.status === 'Rejected' || e.status === 'Removed'
+                          ? t('status.Removed')
+                          : t(`status.${e.status}`),
+              })
             : t(`tl.${e.type}`);
 
     return (

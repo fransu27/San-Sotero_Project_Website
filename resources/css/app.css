@@ -214,7 +214,6 @@
     }
 }
 
-
 /*
  * San Sotero landing-page motion: restrained reveal, anchor feedback, and brand interaction.
  * These effects use CSS transforms/opacity only, and the existing reduced-motion rule above
@@ -279,11 +278,16 @@
     }
 }
 
-
 /* Cohesive visual refresh: deeper surfaces, clearer active states, and restrained movement. */
 @keyframes sotero-enter {
-    from { opacity: 0; transform: translate3d(0, 12px, 0); }
-    to { opacity: 1; transform: translate3d(0, 0, 0); }
+    from {
+        opacity: 0;
+        transform: translate3d(0, 12px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
 }
 
 .auth-form-card {
@@ -293,7 +297,10 @@
 .auth-form input,
 .auth-form textarea,
 .auth-form select {
-    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background-color 180ms ease;
 }
 
 .auth-form input:focus-visible,
@@ -302,14 +309,16 @@
     box-shadow: 0 0 0 4px rgb(1 151 246 / 0.12);
 }
 
-.auth-form button[type="submit"] {
+.auth-form button[type='submit'] {
     min-height: 2.85rem;
 }
 
 .dashboard-page > section,
 .dashboard-page .rounded-xl,
 .dashboard-page .rounded-2xl {
-    transition: border-color 220ms ease, box-shadow 220ms ease;
+    transition:
+        border-color 220ms ease,
+        box-shadow 220ms ease;
 }
 
 .dashboard-heading {
@@ -317,11 +326,14 @@
 }
 
 .newsfeed-page article,
-.newsfeed-page [data-slot="card"] {
-    transition: border-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
+.newsfeed-page [data-slot='card'] {
+    transition:
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        transform 220ms ease;
 }
 
-.w-theme nav a[aria-current="location"] {
+.w-theme nav a[aria-current='location'] {
     background: rgb(var(--w-accent) / 0.12);
     color: rgb(var(--w-accent) / 1);
     box-shadow: 0 8px 24px rgb(var(--w-accent) / 0.16);
@@ -335,13 +347,14 @@
     }
 }
 
-
 .w-theme header {
     box-shadow: 0 8px 28px rgb(var(--w-fg) / 0.035);
 }
 
 .w-theme section[id] {
-    transition: box-shadow 260ms ease, background-color 260ms ease;
+    transition:
+        box-shadow 260ms ease,
+        background-color 260ms ease;
 }
 
 .w-theme [data-reveal].is-visible {
@@ -358,7 +371,6 @@
         will-change: auto;
     }
 }
-
 
 .dashboard-page .rounded-2xl.border.border-border.bg-card,
 .newsfeed-page .rounded-2xl.border.border-border.bg-card {
@@ -378,7 +390,6 @@
     }
 }
 
-
 /* Shared surfaces used by submissions, moderation, settings, and other authenticated screens. */
 .bg-card.border,
 .bg-background.border {
@@ -391,7 +402,7 @@
     box-shadow: 0 14px 34px rgb(2 24 43 / 0.07);
 }
 
-input:not([type="checkbox"]):not([type="radio"]),
+input:not([type='checkbox']):not([type='radio']),
 textarea,
 select {
     border-radius: 0.75rem;
@@ -405,9 +416,11 @@ select {
 
 button,
 a {
-    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-property:
+        color, background-color, border-color, box-shadow, transform;
     transition-duration: 200ms, 200ms, 200ms, 240ms, 360ms;
-    transition-timing-function: ease-out, ease-out, ease-out, ease-out, var(--ease-spring);
+    transition-timing-function:
+        ease-out, ease-out, ease-out, ease-out, var(--ease-spring);
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -533,11 +546,21 @@ a {
 .stagger-children > * {
     animation: ss-page-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
 }
-.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
-.stagger-children > *:nth-child(3) { animation-delay: 110ms; }
-.stagger-children > *:nth-child(4) { animation-delay: 160ms; }
-.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-.stagger-children > *:nth-child(n + 6) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(2) {
+    animation-delay: 60ms;
+}
+.stagger-children > *:nth-child(3) {
+    animation-delay: 110ms;
+}
+.stagger-children > *:nth-child(4) {
+    animation-delay: 160ms;
+}
+.stagger-children > *:nth-child(5) {
+    animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(n + 6) {
+    animation-delay: 240ms;
+}
 
 .hover-lift {
     transition:
@@ -671,23 +694,50 @@ button:not(.nav-fill-link):not(:disabled):active,
 }
 @keyframes ss-ring {
     0% {
-        box-shadow: 0 0 0 0 rgb(1 151 246 / 0.5), 0 10px 24px -6px rgb(2 24 43 / 0.35);
+        box-shadow:
+            0 0 0 0 rgb(1 151 246 / 0.5),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
     }
     70% {
-        box-shadow: 0 0 0 16px rgb(1 151 246 / 0), 0 10px 24px -6px rgb(2 24 43 / 0.35);
+        box-shadow:
+            0 0 0 16px rgb(1 151 246 / 0),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
     }
     100% {
-        box-shadow: 0 0 0 0 rgb(1 151 246 / 0), 0 10px 24px -6px rgb(2 24 43 / 0.35);
+        box-shadow:
+            0 0 0 0 rgb(1 151 246 / 0),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
     }
 }
 
 /* Buttons: bounce up on hover, squash on press. Pill buttons (.nav-fill-link) have their own stronger version. */
 @media (hover: hover) and (pointer: fine) {
-    button:where(:not(:disabled, .nav-fill-link, .zoom-frame, .chat-fab, .chat-report-row, [role='menuitem'], [role='option'], [role='switch'], [role='checkbox'], [role='radio'])):hover {
+    button:where(
+            :not(
+                :disabled,
+                .nav-fill-link,
+                .zoom-frame,
+                .chat-fab,
+                .chat-report-row,
+                [role='menuitem'],
+                [role='option'],
+                [role='switch'],
+                [role='checkbox'],
+                [role='radio']
+            )
+        ):hover {
         transform: translateY(-1px) scale(1.03);
     }
 }
-button:where(:not(:disabled, .nav-fill-link, .chat-fab, [role='menuitem'], [role='option'])):active {
+button:where(
+        :not(
+            :disabled,
+            .nav-fill-link,
+            .chat-fab,
+            [role='menuitem'],
+            [role='option']
+        )
+    ):active {
     transform: scale(0.95);
     transition-duration: 200ms, 200ms, 200ms, 240ms, 110ms;
 }
@@ -732,7 +782,10 @@ article {
 }
 [data-slot='dropdown-menu-content'][data-state='open'] {
     animation: ss-pop-in 300ms var(--ease-spring) both;
-    transform-origin: var(--radix-dropdown-menu-content-transform-origin, top right);
+    transform-origin: var(
+        --radix-dropdown-menu-content-transform-origin,
+        top right
+    );
 }
 
 /* Chat assistant: the window springs out of the button, messages slide in, the button breathes. */

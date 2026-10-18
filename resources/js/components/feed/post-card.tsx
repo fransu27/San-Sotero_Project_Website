@@ -351,11 +351,7 @@ export default function PostCard({
             >
                 <ThumbsUp
                     size={18}
-                    fill={
-                        c.my_vote === 'satisfied'
-                            ? 'currentColor'
-                            : 'none'
-                    }
+                    fill={c.my_vote === 'satisfied' ? 'currentColor' : 'none'}
                 />
                 <span className="tabular-nums">{c.satisfied}</span>
             </button>
@@ -375,9 +371,7 @@ export default function PostCard({
                 <ThumbsDown
                     size={18}
                     fill={
-                        c.my_vote === 'not_satisfied'
-                            ? 'currentColor'
-                            : 'none'
+                        c.my_vote === 'not_satisfied' ? 'currentColor' : 'none'
                     }
                 />
                 <span className="tabular-nums">{c.not_satisfied}</span>
@@ -390,15 +384,11 @@ export default function PostCard({
                 title={t('post.comment')}
                 className={cn(
                     actionBtn,
-                    showComments
-                        ? 'text-[#0197F6]'
-                        : 'text-muted-foreground',
+                    showComments ? 'text-[#0197F6]' : 'text-muted-foreground',
                 )}
             >
                 <MessageCircle size={18} />
-                <span className="tabular-nums">
-                    {c.comments.length}
-                </span>
+                <span className="tabular-nums">{c.comments.length}</span>
             </button>
         </div>
     );
@@ -428,7 +418,9 @@ export default function PostCard({
                         {c.edited && (
                             <>
                                 <span aria-hidden>•</span>
-                                <span className="italic">{t('post.edited')}</span>
+                                <span className="italic">
+                                    {t('post.edited')}
+                                </span>
                             </>
                         )}
                         <span aria-hidden>•</span>
@@ -501,9 +493,7 @@ export default function PostCard({
                     <Ban size={16} className="mt-0.5 shrink-0" />
                     <p className="min-w-0 flex-1">
                         <span className="font-semibold">
-                            {t(
-                                'post.removedBanner',
-                            )}
+                            {t('post.removedBanner')}
                         </span>{' '}
                         {t('post.reason', { reason: c.removed_reason ?? '' })}
                     </p>
@@ -635,11 +625,13 @@ export default function PostCard({
                         style={{ color: statusColor[nextStatus ?? c.status] }}
                         onChange={(e) => pickStatus(e.target.value)}
                     >
-                        {statuses.filter((s) => s !== 'Rejected').map((s) => (
-                            <option key={s} value={s}>
-                                {t(`status.${s}`)}
-                            </option>
-                        ))}
+                        {statuses
+                            .filter((s) => s !== 'Rejected')
+                            .map((s) => (
+                                <option key={s} value={s}>
+                                    {t(`status.${s}`)}
+                                </option>
+                            ))}
                     </select>
                 ) : (
                     <span
@@ -1080,7 +1072,11 @@ export default function PostCard({
                     avg={c.rating_avg}
                     count={c.rating_count}
                     mine={c.my_rating}
-                    closedAs={c.removed || c.status === 'Rejected' ? 'Resolved' : 'Resolved'}
+                    closedAs={
+                        c.removed || c.status === 'Rejected'
+                            ? 'Resolved'
+                            : 'Resolved'
+                    }
                 />
             )}
 

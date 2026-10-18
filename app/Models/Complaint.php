@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $entered_by_user_id
  * @property string|null $ticket_code
  * @property string $title
  * @property string $description

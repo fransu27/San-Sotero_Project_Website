@@ -32,7 +32,10 @@ export default function AuthSimpleLayout({
 
     return (
         <div className="auth-shell relative min-h-svh overflow-hidden bg-background text-foreground lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-            <div aria-hidden className="pointer-events-none fixed -right-24 -top-24 size-80 rounded-full bg-[#68C5DB]/10 blur-3xl" />
+            <div
+                aria-hidden
+                className="pointer-events-none fixed -top-24 -right-24 size-80 rounded-full bg-[#68C5DB]/10 blur-3xl"
+            />
             {/* Brand panel */}
             <aside className="auth-brand-panel relative hidden min-h-svh flex-col justify-between overflow-hidden bg-gradient-to-br from-[#02182B] via-[#032a47] to-[#0a4a75] p-12 text-white lg:flex xl:p-16">
                 <div
@@ -48,7 +51,10 @@ export default function AuthSimpleLayout({
                 </Link>
 
                 <div className="relative max-w-md">
-                    <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold tracking-[0.14em] text-[#a7e7f7] uppercase"><span className="size-2 rounded-full bg-[#68C5DB]" /> Community-powered reporting</p>
+                    <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold tracking-[0.14em] text-[#a7e7f7] uppercase">
+                        <span className="size-2 rounded-full bg-[#68C5DB]" />{' '}
+                        Community-powered reporting
+                    </p>
                     <h2 className="text-4xl leading-tight font-semibold tracking-tight xl:text-5xl">
                         {t('auth.headline', { place: BRAND.place })}
                     </h2>

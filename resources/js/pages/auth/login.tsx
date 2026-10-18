@@ -59,7 +59,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                     type="email"
                                     name="email"
                                     aria-invalid={Boolean(errors.email)}
-                                    aria-describedby={errors.email ? 'email-error' : undefined}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                     required
                                     autoFocus
                                     tabIndex={1}
@@ -68,7 +70,10 @@ export default function Login({ status, canResetPassword }: Props) {
                                     spellCheck={false}
                                     placeholder="email@example.com"
                                 />
-                                <InputError id="email-error" message={errors.email} />
+                                <InputError
+                                    id="email-error"
+                                    message={errors.email}
+                                />
                             </div>
 
                             <div className="grid gap-2">
@@ -88,13 +93,20 @@ export default function Login({ status, canResetPassword }: Props) {
                                     id="password"
                                     name="password"
                                     aria-invalid={Boolean(errors.password)}
-                                    aria-describedby={errors.password ? 'password-error' : undefined}
+                                    aria-describedby={
+                                        errors.password
+                                            ? 'password-error'
+                                            : undefined
+                                    }
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
-                                <InputError id="password-error" message={errors.password} />
+                                <InputError
+                                    id="password-error"
+                                    message={errors.password}
+                                />
                             </div>
 
                             <div className="flex items-center space-x-3">

@@ -1,3 +1,4 @@
+﻿import type { FormDataConvertible } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import {
     Megaphone,
@@ -21,8 +22,8 @@ import { ZoomableImage } from '@/components/feed/image-lightbox';
 import PostModal from '@/components/feed/post-modal';
 import { useLocale } from '@/hooks/use-locale';
 import { LOCALE_NAMES, localizeAnnouncement, timeAgo } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import type { Locale } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 
 type Translations = Partial<
     Record<Locale, { title?: string; body?: string }>
@@ -116,7 +117,7 @@ export default function AnnouncementCard({
 
     const save = () => {
         setSaving(true);
-        const data: Record<string, string | boolean | File | null> = {
+        const data: Record<string, FormDataConvertible> = {
             title: draft.title,
             body: draft.body,
             image: newImage,
@@ -143,7 +144,7 @@ export default function AnnouncementCard({
     const set = (k: string) => (e: { target: { value: string } }) =>
         setDraft({ ...draft, [k]: e.target.value });
 
-    // Like · dislike · comment row (shared by the card and its pop-out)
+    // Like Â· dislike Â· comment row (shared by the card and its pop-out)
     const actionBar = (
         <div className="flex border-t border-border px-3 py-1.5">
             <button
@@ -180,9 +181,7 @@ export default function AnnouncementCard({
             >
                 <ThumbsDown
                     size={18}
-                    fill={
-                        a.my_vote === 'dislike' ? 'currentColor' : 'none'
-                    }
+                    fill={a.my_vote === 'dislike' ? 'currentColor' : 'none'}
                 />
                 <span className="tabular-nums">{a.dislikes ?? 0}</span>
             </button>
@@ -194,9 +193,7 @@ export default function AnnouncementCard({
                 title={t('post.comment')}
                 className={cn(
                     actionBtn,
-                    showComments
-                        ? 'text-[#0197F6]'
-                        : 'text-muted-foreground',
+                    showComments ? 'text-[#0197F6]' : 'text-muted-foreground',
                 )}
             >
                 <MessageCircle size={18} />
@@ -219,7 +216,7 @@ export default function AnnouncementCard({
                     </p>
                     <p className="text-xs leading-5 text-muted-foreground">
                         {timeAgo(a.ts, locale)}
-                        {a.edited && ` • ${t('post.edited')}`}
+                        {a.edited && ` â€¢ ${t('post.edited')}`}
                     </p>
                 </div>
             </div>
@@ -277,7 +274,7 @@ export default function AnnouncementCard({
                         <span>{timeAgo(a.ts, locale)}</span>
                         {a.edited && (
                             <>
-                                <span aria-hidden>•</span>
+                                <span aria-hidden>â€¢</span>
                                 <span className="italic">
                                     {t('post.edited')}
                                 </span>
@@ -485,14 +482,14 @@ export default function AnnouncementCard({
                 </>
             )}
 
-            {/* Like · dislike · comment (icons + counts only). Comment opens the pop-out. */}
+            {/* Like Â· dislike Â· comment (icons + counts only). Comment opens the pop-out. */}
             {!editing && actionBar}
 
             {!editing && (
                 <PostModal
                     open={showComments}
                     onOpenChange={setShowComments}
-                    title={`${a.author} · ${t('post.barangay')}`}
+                    title={`${a.author} Â· ${t('post.barangay')}`}
                     comments={comments}
                     onSend={send}
                 >

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 
 /**
  * "New since you last looked" markers for the Community reports widget on the Newsfeed.
@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
  */
 type SeenMap = Record<string, number[]>;
 
-const KEEP = 300; // remembered ids per status (keeps the stored list small)
+const KEEP = 300;
 
 const read = (key: string): SeenMap => {
     try {
@@ -39,57 +39,48 @@ export function useFeedSeen(
     activeStatuses: string | string[] | null,
 ) {
     const key = `ss:feed-seen:v1:${userId}`;
-    const [seen, setSeen] = useState<SeenMap>(() =>
+    const [seen] = useState<SeenMap>(() =>
         typeof window === 'undefined' ? {} : read(key),
     );
 
-    // Looking at a status (its filter is open) marks everything currently in it as seen, including posts that
-    // arrive while the person is watching it.
     const active = Array.isArray(activeStatuses)
         ? activeStatuses.join(',')
         : (activeStatuses ?? '');
 
-    useEffect(() => {
+    // Derive the currently seen ids during rendering instead of setting state inside an effect.
+    const effectiveSeen = useMemo(() => {
+        const next = { ...seen };
         const open = active ? active.split(',') : [];
 
-        if (open.length === 0) {
-            return;
-        }
+        open.forEach((status) => {
+            const ids = statusIds?.[status] ?? [];
+            const known = new Set(seen[status] ?? []);
 
-        setSeen((prev) => {
-            let changed = false;
-            const next = { ...prev };
-
-            open.forEach((status) => {
-                const ids = statusIds?.[status] ?? [];
-                const known = new Set(prev[status] ?? []);
-
-                if (ids.every((id) => known.has(id))) {
-                    return;
-                }
-
-                next[status] = [...new Set([...known, ...ids])].slice(-KEEP);
-                changed = true;
-            });
-
-            if (!changed) {
-                return prev;
+            if (ids.every((id) => known.has(id))) {
+                return;
             }
 
-            write(key, next);
-
-            return next;
+            next[status] = [...new Set([...known, ...ids])].slice(-KEEP);
         });
-    }, [active, statusIds, key]);
+
+        return next;
+    }, [seen, active, statusIds]);
+
+    // Persist ids for open statuses without updating React state inside the effect.
+    useEffect(() => {
+        if (active) {
+            write(key, effectiveSeen);
+        }
+    }, [active, key, effectiveSeen]);
 
     const unseen = useCallback(
         (status: string): number => {
-            const known = new Set(seen[status] ?? []);
+            const known = new Set(effectiveSeen[status] ?? []);
 
             return (statusIds?.[status] ?? []).filter((id) => !known.has(id))
                 .length;
         },
-        [seen, statusIds],
+        [effectiveSeen, statusIds],
     );
 
     return { unseen };

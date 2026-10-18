@@ -15,7 +15,14 @@ import {
 import { useEffect, useState } from 'react';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
-import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import Wordmark, { PaletteStripe } from '@/components/wordmark';
 import { useLocale } from '@/hooks/use-locale';
 import { BRAND } from '@/lib/brand';
@@ -132,6 +139,7 @@ export default function Welcome({
 
         if (!('IntersectionObserver' in window)) {
             targets.forEach((target) => target.classList.add('is-visible'));
+
             return;
         }
 
@@ -151,6 +159,7 @@ export default function Welcome({
         );
 
         targets.forEach((target) => observer.observe(target));
+
         return () => observer.disconnect();
     }, []);
 
@@ -179,11 +188,22 @@ export default function Welcome({
                             <Wordmark />
                         </Link>
                         <nav className="hidden items-center gap-6 text-[13px] text-[rgb(var(--w-fg-2))] md:flex">
-                            <Link href="/track-complaint" className="transition-colors hover:text-[rgb(var(--w-accent))]">Track a complaint</Link>
+                            <Link
+                                href="/track-complaint"
+                                className="transition-colors hover:text-[rgb(var(--w-accent))]"
+                            >
+                                Track a complaint
+                            </Link>
                             <a
                                 href="#how-it-works"
-                                onClick={() => setSelectedSection('how-it-works')}
-                                aria-current={selectedSection === 'how-it-works' ? 'location' : undefined}
+                                onClick={() =>
+                                    setSelectedSection('how-it-works')
+                                }
+                                aria-current={
+                                    selectedSection === 'how-it-works'
+                                        ? 'location'
+                                        : undefined
+                                }
                                 className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'how-it-works' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
                             >
                                 {t('w.nav.how')}
@@ -191,15 +211,25 @@ export default function Welcome({
                             <a
                                 href="#features"
                                 onClick={() => setSelectedSection('features')}
-                                aria-current={selectedSection === 'features' ? 'location' : undefined}
+                                aria-current={
+                                    selectedSection === 'features'
+                                        ? 'location'
+                                        : undefined
+                                }
                                 className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'features' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
                             >
                                 {t('w.nav.features')}
                             </a>
                             <a
                                 href="#announcements"
-                                onClick={() => setSelectedSection('announcements')}
-                                aria-current={selectedSection === 'announcements' ? 'location' : undefined}
+                                onClick={() =>
+                                    setSelectedSection('announcements')
+                                }
+                                aria-current={
+                                    selectedSection === 'announcements'
+                                        ? 'location'
+                                        : undefined
+                                }
                                 className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'announcements' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
                             >
                                 {t('w.nav.ann')}
@@ -215,27 +245,126 @@ export default function Welcome({
                             <div className="md:hidden">
                                 <Sheet>
                                     <SheetTrigger asChild>
-                                        <button type="button" aria-label="Open site navigation" className="inline-flex size-10 items-center justify-center rounded-xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] text-[rgb(var(--w-fg))] shadow-sm transition hover:border-[rgb(var(--w-accent)/0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgb(var(--w-accent))]">
+                                        <button
+                                            type="button"
+                                            aria-label="Open site navigation"
+                                            className="inline-flex size-10 items-center justify-center rounded-xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] text-[rgb(var(--w-fg))] shadow-sm transition hover:border-[rgb(var(--w-accent)/0.5)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--w-accent))] focus-visible:outline-none"
+                                        >
                                             <Menu size={20} />
                                         </button>
                                     </SheetTrigger>
-                                    <SheetContent side="left" className="w-[min(86vw,320px)] border-[rgb(var(--w-line))] bg-[rgb(var(--w-bg))] p-0 text-[rgb(var(--w-fg))]">
+                                    <SheetContent
+                                        side="left"
+                                        className="w-[min(86vw,320px)] border-[rgb(var(--w-line))] bg-[rgb(var(--w-bg))] p-0 text-[rgb(var(--w-fg))]"
+                                    >
                                         <SheetHeader className="border-b border-[rgb(var(--w-line))] px-5 py-4 text-left">
-                                            <SheetTitle className="text-[rgb(var(--w-fg))]">{place}</SheetTitle>
-                                            <p className="text-sm text-[rgb(var(--w-fg-2))]">{BRAND.product}</p>
+                                            <SheetTitle className="text-[rgb(var(--w-fg))]">
+                                                {place}
+                                            </SheetTitle>
+                                            <p className="text-sm text-[rgb(var(--w-fg-2))]">
+                                                {BRAND.product}
+                                            </p>
                                         </SheetHeader>
-                                        <nav className="grid gap-1 p-3" aria-label="Mobile site navigation">
-                                            <SheetClose asChild><a href="#how-it-works" onClick={() => setSelectedSection('how-it-works')} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"><CheckCircle2 size={18} />{t('w.nav.how')}</a></SheetClose>
-                                            <SheetClose asChild><a href="#features" onClick={() => setSelectedSection('features')} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"><ShieldCheck size={18} />{t('w.nav.features')}</a></SheetClose>
-                                            <SheetClose asChild><a href="#announcements" onClick={() => setSelectedSection('announcements')} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"><Bell size={18} />{t('w.nav.ann')}</a></SheetClose>
-                                            <SheetClose asChild><Link href="/track-complaint" className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"><FileText size={18} />Track a complaint</Link></SheetClose>
-                                            <SheetClose asChild><Link href={feedHref} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"><ArrowRight size={18} />Community feed</Link></SheetClose>
-                                            {auth.user ? <SheetClose asChild><Link href={dashboard()} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]">{t('w.dashboard')}</Link></SheetClose> : <><SheetClose asChild><Link href={login()} className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]">{t('w.login')}</Link></SheetClose><SheetClose asChild><Link href={register()} className="mt-2 flex min-h-12 items-center justify-center rounded-xl bg-[#D7263D] px-3 py-2 text-sm font-semibold text-white">{t('w.register')}</Link></SheetClose></>}
+                                        <nav
+                                            className="grid gap-1 p-3"
+                                            aria-label="Mobile site navigation"
+                                        >
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#how-it-works"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'how-it-works',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <CheckCircle2 size={18} />
+                                                    {t('w.nav.how')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#features"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'features',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <ShieldCheck size={18} />
+                                                    {t('w.nav.features')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#announcements"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'announcements',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <Bell size={18} />
+                                                    {t('w.nav.ann')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <Link
+                                                    href="/track-complaint"
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <FileText size={18} />
+                                                    Track a complaint
+                                                </Link>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <Link
+                                                    href={feedHref}
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <ArrowRight size={18} />
+                                                    Community feed
+                                                </Link>
+                                            </SheetClose>
+                                            {auth.user ? (
+                                                <SheetClose asChild>
+                                                    <Link
+                                                        href={dashboard()}
+                                                        className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                    >
+                                                        {t('w.dashboard')}
+                                                    </Link>
+                                                </SheetClose>
+                                            ) : (
+                                                <>
+                                                    <SheetClose asChild>
+                                                        <Link
+                                                            href={login()}
+                                                            className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                        >
+                                                            {t('w.login')}
+                                                        </Link>
+                                                    </SheetClose>
+                                                    <SheetClose asChild>
+                                                        <Link
+                                                            href={register()}
+                                                            className="mt-2 flex min-h-12 items-center justify-center rounded-xl bg-[#D7263D] px-3 py-2 text-sm font-semibold text-white"
+                                                        >
+                                                            {t('w.register')}
+                                                        </Link>
+                                                    </SheetClose>
+                                                </>
+                                            )}
                                         </nav>
                                     </SheetContent>
                                 </Sheet>
                             </div>
-                            <div className="hidden sm:block"><LanguageSwitcher tone="landing" /></div>
+                            <div className="hidden sm:block">
+                                <LanguageSwitcher tone="landing" />
+                            </div>
                             <ThemeToggle tone="landing" />
                             {auth.user ? (
                                 <Link
@@ -315,7 +444,10 @@ export default function Welcome({
                                     {t('w.lead')}
                                 </p>
                                 <div className="mt-9 flex flex-wrap gap-3">
-                                    <Link href={register()} className={primaryBtn}>
+                                    <Link
+                                        href={register()}
+                                        className={primaryBtn}
+                                    >
                                         {t('w.cta')}
                                     </Link>
                                     <Link
@@ -333,11 +465,17 @@ export default function Welcome({
                                 </div>
                                 <div className="mt-8 flex flex-wrap gap-6 text-[12px] text-[rgb(var(--w-fg-2))]">
                                     <span className="flex items-center gap-2">
-                                        <CheckCircle2 size={14} color="#448FA3" />{' '}
+                                        <CheckCircle2
+                                            size={14}
+                                            color="#448FA3"
+                                        />{' '}
                                         {t('w.trust1')}
                                     </span>
                                     <span className="flex items-center gap-2">
-                                        <ShieldCheck size={14} color="#0197F6" />{' '}
+                                        <ShieldCheck
+                                            size={14}
+                                            color="#0197F6"
+                                        />{' '}
                                         {t('w.trust2')}
                                     </span>
                                     <span className="flex items-center gap-2">
@@ -348,7 +486,10 @@ export default function Welcome({
                             </div>
 
                             {/* Recent complaints panel */}
-                            <div data-reveal className="relative rounded-3xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-band))] p-3 shadow-xl shadow-[#02182B]/10 sm:p-4">
+                            <div
+                                data-reveal
+                                className="relative rounded-3xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-band))] p-3 shadow-xl shadow-[#02182B]/10 sm:p-4"
+                            >
                                 <div className="rounded-2xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] p-5 shadow-sm sm:p-7">
                                     <div className="flex items-start justify-between border-b border-[rgb(var(--w-line))] pb-4">
                                         <div>
@@ -373,7 +514,8 @@ export default function Welcome({
                                                     {t(r.key)}
                                                 </p>
                                                 <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[rgb(var(--w-fg-3))]">
-                                                    <MapPin size={12} /> {r.place}
+                                                    <MapPin size={12} />{' '}
+                                                    {r.place}
                                                 </p>
                                                 <p className="mt-0.5 text-[12px] text-[rgb(var(--w-fg-3))]">
                                                     {r.ref}
@@ -382,14 +524,18 @@ export default function Welcome({
                                             <span
                                                 className="flex items-center gap-1.5 text-[12px]"
                                                 style={{
-                                                    color: statusColor[r.status],
+                                                    color: statusColor[
+                                                        r.status
+                                                    ],
                                                 }}
                                             >
                                                 <span
                                                     className="h-1.5 w-1.5 rounded-full"
                                                     style={{
                                                         backgroundColor:
-                                                            statusColor[r.status],
+                                                            statusColor[
+                                                                r.status
+                                                            ],
                                                     }}
                                                 />
                                                 {t(`status.${r.status}`)}
@@ -419,7 +565,11 @@ export default function Welcome({
                             </p>
                             <div className="mt-10 grid gap-5 text-left md:grid-cols-3">
                                 {steps.map(({ icon: Icon, color, key }) => (
-                                    <div key={key} data-reveal className={`${card} p-6`}>
+                                    <div
+                                        key={key}
+                                        data-reveal
+                                        className={`${card} p-6`}
+                                    >
                                         <span
                                             className="flex h-10 w-10 items-center justify-center rounded-lg"
                                             style={{
@@ -478,7 +628,11 @@ export default function Welcome({
                             </p>
                             <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                                 {features.map(({ icon: Icon, key }) => (
-                                    <div key={key} data-reveal className={`${card} p-6`}>
+                                    <div
+                                        key={key}
+                                        data-reveal
+                                        className={`${card} p-6`}
+                                    >
                                         <Icon size={18} color="#0197F6" />
                                         <h3 className="mt-4 text-[15px] font-semibold">
                                             {t(`${key}t`)}
@@ -517,7 +671,10 @@ export default function Welcome({
                         ) : (
                             <div className="mt-8 grid gap-5 md:grid-cols-2">
                                 {announcements.map((n) => {
-                                    const shown = localizeAnnouncement(n, locale);
+                                    const shown = localizeAnnouncement(
+                                        n,
+                                        locale,
+                                    );
 
                                     return (
                                         <div
@@ -569,7 +726,8 @@ export default function Welcome({
                         <span>{t('w.footer1')}</span>
                         <span>{t('w.footer2')}</span>
                         <span className="w-full pt-2 sm:w-auto sm:pt-0">
-                            © {new Date().getFullYear()} San Sotero — Report Concerns. All rights reserved.
+                            © {new Date().getFullYear()} San Sotero — Report
+                            Concerns. All rights reserved.
                         </span>
                     </div>
                 </footer>
