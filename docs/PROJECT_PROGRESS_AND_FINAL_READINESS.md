@@ -130,3 +130,18 @@ Implemented in the current working copy:
 - Added a feature test asserting period analytics are present and resident totals exclude other residents' submissions.
 
 Verification status: PHP syntax checks passed for the modified controller and dashboard test. The full Laravel feature suite and frontend TypeScript/build checks have not been run in this environment because Composer `vendor/` and npm `node_modules/` are absent. Run the project checks locally before treating this priority as fully verified.
+
+## New priority: non-smartphone access / assisted intake (17 Oct 2026)
+
+San Sotero now has an implementation path for hybrid intake: authorized staff can enter walk-in complaints into the same complaints table, issue a reference plus one-time PIN receipt, and residents can use a minimal public status lookup. This is intended to reduce smartphone/internet exclusion, not to claim that the site works offline. In outages, use a controlled paper intake form and encode it after service returns. See `San_Sotero_UI_Overhaul_Progress_2026-10-14.md` under “Accessibility and assisted walk-in implementation” for the full workflow, privacy rules, limitations, and acceptance checks.
+
+New files: `app/Http/Controllers/WalkInComplaintController.php`, `app/Http/Controllers/PublicTrackingController.php`, `resources/js/pages/admin/walk-in-complaint.tsx`, `resources/js/pages/track-complaint.tsx`, migration `2026_10_17_000000_add_assisted_intake_tracking_to_complaints.php`, and `tests/Feature/AssistedWalkInIntakeTest.php`.
+
+## Newsfeed responsive layout refinement (2026-10-18)
+
+- Replaced the clipped mobile status-filter chip strip with a responsive status grid. Each filter shows its icon, full status label, and count; active filters use a restrained outline/highlight instead of a permanent solid-blue fill.
+- Added a compact Philippines (UTC+8) time widget and total-record count to the mobile/tablet report controls.
+- Added mobile/tablet category shortcuts in a two-column grid, including Peace and Order, Infrastructure, Sanitation, and Others, so category filters remain available without a desktop right sidebar.
+- Moved the full desktop report summary/category column to extra-wide screens. At narrower desktop and tablet widths, the centre feed can use the available width instead of squeezing post cards between sidebars.
+- Aligned the guest community page's rail breakpoint with its grid breakpoint to avoid an empty narrow column.
+- Verification note: run the project locally and check phone, tablet, laptop, and wide desktop widths; browser visual verification was not available in this environment.

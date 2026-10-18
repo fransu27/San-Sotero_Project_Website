@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAttachments;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -71,6 +72,8 @@ use Illuminate\Support\Str;
  */
 class Complaint extends Model
 {
+    use HasAttachments;
+
     public const CATEGORIES = ['Infrastructure', 'Sanitation', 'Peace and Order', 'Others'];
 
     public const STATUSES = ['Pending', 'Under Review', 'In Progress', 'Resolved', 'Rejected'];
@@ -102,6 +105,8 @@ class Complaint extends Model
             'removed_at' => 'datetime',
             'edited_at' => 'datetime',
             'is_anonymous' => 'boolean',
+            // Contact data collected during assisted intake is encrypted at rest by Laravel's encrypted cast.
+            'reporter_contact' => 'encrypted',
         ];
     }
 

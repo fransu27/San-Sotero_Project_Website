@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -88,6 +89,19 @@ class SubmissionsTest extends TestCase
         $this->assertCount(2, $codes);
         $this->assertCount(2, $codes->unique());
         $codes->each(fn ($code) => $this->assertMatchesRegularExpression('/^SS-\d{4}-[A-Z2-9]{6}$/', $code));
+    }
+
+    public function test_complaint_upload_rejects_svg_files(): void
+    {
+        $resident = User::factory()->create();
+
+        $this->actingAs($resident)
+            ->post(route('complaints.store'), $this->payload([
+                'image' => UploadedFile::fake()->create('illustration.svg', 10, 'image/svg+xml'),
+            ]))
+            ->assertSessionHasErrors('image');
+
+        $this->assertDatabaseCount('complaints', 0);
     }
 
     public function test_a_ticket_code_stays_the_same_after_an_edit(): void

@@ -33,6 +33,7 @@ export const en = {
     'post.reasonMin': 'Please give a reason (at least 5 characters).',
     'post.cancel': 'Cancel',
     'post.rejectBtn': 'Reject post',
+    'post.deleteBtn': 'Delete post',
     'post.status': 'Update status',
     'post.noteLabel': 'Note for the resident (optional)',
     'post.noteRejected':
@@ -44,6 +45,7 @@ export const en = {
     'tl.status': 'Status changed to {status}',
     'tl.edited': 'Post edited',
     'tl.resubmitted': 'Edited and sent back for approval',
+    'tl.restored': 'Post restored by the barangay',
     'tl.staff': 'Barangay',
     'post.resolvedBar': 'Resolved by the barangay',
     'post.writeComment': 'Write a comment…',
@@ -111,6 +113,7 @@ export const tl: Record<keyof typeof en, string> = {
     'post.reasonMin': 'Magbigay ng dahilan (hindi bababa sa 5 titik).',
     'post.cancel': 'Kanselahin',
     'post.rejectBtn': 'Tanggihan ang post',
+    'post.deleteBtn': 'Burahin ang post',
     'post.status': 'I-update ang katayuan',
     'post.noteLabel': 'Tala para sa residente (opsyonal)',
     'post.noteRejected':
@@ -122,6 +125,7 @@ export const tl: Record<keyof typeof en, string> = {
     'tl.status': 'Ginawang {status} ang katayuan',
     'tl.edited': 'Na-edit ang post',
     'tl.resubmitted': 'Na-edit at ibinalik para sa pag-apruba',
+    'tl.restored': 'Ibinalik ng barangay ang post',
     'tl.staff': 'Barangay',
     'post.resolvedBar': 'Nalutas ng barangay',
     'post.writeComment': 'Magsulat ng komento…',
@@ -188,6 +192,7 @@ export const ceb: Record<keyof typeof en, string> = {
     'post.reasonMin': 'Hatagi og rason (labing menos 5 ka letra).',
     'post.cancel': 'Kanselahon',
     'post.rejectBtn': 'Isalikway ang post',
+    'post.deleteBtn': 'Papasa ang post',
     'post.status': 'I-update ang kahimtang',
     'post.noteLabel': 'Nota para sa residente (opsyonal)',
     'post.noteRejected':
@@ -199,6 +204,7 @@ export const ceb: Record<keyof typeof en, string> = {
     'tl.status': 'Gibag-o ang kahimtang ngadto sa {status}',
     'tl.edited': 'Gi-edit ang post',
     'tl.resubmitted': 'Gi-edit ug gibalik para maaprobahan',
+    'tl.restored': 'Gibalik sa barangay ang post',
     'tl.staff': 'Barangay',
     'post.resolvedBar': 'Gisulbad sa barangay',
     'post.writeComment': 'Pagsulat og komento…',
@@ -265,6 +271,7 @@ export const war: Record<keyof typeof en, string> = {
     'post.reasonMin': 'Hatagi hin rason (labing gutiay 5 ka letra).',
     'post.cancel': 'Kanselahon',
     'post.rejectBtn': 'Isalikway an post',
+    'post.deleteBtn': 'Papasa an post',
     'post.status': 'I-update an kahimtang',
     'post.noteLabel': 'Nota para ha residente (opsyonal)',
     'post.noteRejected':
@@ -276,6 +283,7 @@ export const war: Record<keyof typeof en, string> = {
     'tl.status': 'Ginbalyo an kahimtang ngadto ha {status}',
     'tl.edited': 'Na-edit an post',
     'tl.resubmitted': 'Na-edit ngan ginbalik basi maaprubahan',
+    'tl.restored': 'Ginbalik han barangay an post',
     'tl.staff': 'Barangay',
     'post.resolvedBar': 'Ginsulbad han barangay',
     'post.writeComment': 'Pagsurat hin komento…',

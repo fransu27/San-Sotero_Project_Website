@@ -31,9 +31,10 @@ export default function AuthSimpleLayout({
     const { t } = useLocale();
 
     return (
-        <div className="min-h-svh bg-background text-foreground lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+        <div className="auth-shell relative min-h-svh overflow-hidden bg-background text-foreground lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+            <div aria-hidden className="pointer-events-none fixed -right-24 -top-24 size-80 rounded-full bg-[#68C5DB]/10 blur-3xl" />
             {/* Brand panel */}
-            <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-[#02182B] via-[#032a47] to-[#0a4a75] p-12 text-white lg:flex">
+            <aside className="auth-brand-panel relative hidden min-h-svh flex-col justify-between overflow-hidden bg-gradient-to-br from-[#02182B] via-[#032a47] to-[#0a4a75] p-12 text-white lg:flex xl:p-16">
                 <div
                     aria-hidden
                     className="pointer-events-none absolute -right-24 -bottom-24 size-96 rounded-full bg-[#0197F6]/15 blur-3xl"
@@ -47,7 +48,8 @@ export default function AuthSimpleLayout({
                 </Link>
 
                 <div className="relative max-w-md">
-                    <h2 className="text-4xl leading-tight font-semibold tracking-tight">
+                    <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold tracking-[0.14em] text-[#a7e7f7] uppercase"><span className="size-2 rounded-full bg-[#68C5DB]" /> Community-powered reporting</p>
+                    <h2 className="text-4xl leading-tight font-semibold tracking-tight xl:text-5xl">
                         {t('auth.headline', { place: BRAND.place })}
                     </h2>
                     <ul className="mt-8 space-y-5">
@@ -93,15 +95,15 @@ export default function AuthSimpleLayout({
                     </div>
                 </header>
 
-                <main className="flex flex-1 items-center justify-center px-6 pb-12">
-                    <div className="w-full max-w-md">
-                        <h1 className="text-3xl font-semibold tracking-tight">
+                <main className="relative flex flex-1 items-center justify-center px-5 pb-12 sm:px-8 lg:px-10">
+                    <div className="auth-form-card w-full max-w-md rounded-[1.75rem] border border-border/70 bg-card/85 p-5 shadow-[0_24px_80px_rgba(2,24,43,0.08)] backdrop-blur-sm sm:p-8">
+                        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                             {title}
                         </h1>
                         <p className="mt-2 text-sm leading-relaxed text-foreground/65">
                             {description}
                         </p>
-                        <div className="mt-8">{children}</div>
+                        <div className="auth-form-content mt-7">{children}</div>
                     </div>
                 </main>
             </div>

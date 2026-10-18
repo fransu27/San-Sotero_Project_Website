@@ -28,7 +28,7 @@ trait ProfileValidationRules
      */
     protected function nameRules(): array
     {
-        return ['required', 'string', 'max:255'];
+        return ['required', 'string', 'max:255', 'regex:/^[\p{L}\p{M}]+(?:[ \x{27}\x{2019}-][\p{L}\p{M}]+)*$/u'];
     }
 
     /**

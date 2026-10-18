@@ -8,7 +8,8 @@ import {
     Pin,
     X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { AttachmentPicker } from '@/components/feed/attachments';
 import { Avatar } from '@/components/feed/avatar';
 import TicketCode from '@/components/feed/ticket-code';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ type FormData = {
     is_anonymous: boolean;
     pinned: boolean;
     image: File | null;
+    files: File[];
     tl_title: string;
     tl_body: string;
     ceb_title: string;
@@ -100,6 +102,7 @@ export default function Composer({
         }
     ).user;
     const [open, setOpen] = useState(false);
+    const formRef = useRef<HTMLFormElement>(null);
     const [fileError, setFileError] = useState<string | null>(null);
     const [ticket, setTicket] = useState<{
         code: string;
@@ -117,6 +120,7 @@ export default function Composer({
         is_anonymous: Boolean(authUser.anonymous_default),
         pinned: false,
         image: null,
+        files: [],
         tl_title: '',
         tl_body: '',
         ceb_title: '',
@@ -124,6 +128,48 @@ export default function Composer({
         war_title: '',
         war_body: '',
     });
+
+    // Collapse the expanded box when the person clicks elsewhere (or presses Escape), like a social-feed composer.
+    // What they typed is kept in the form state, so expanding it again shows it. Never collapses mid-upload.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const onPointerDown = (e: PointerEvent) => {
+            const target = e.target as Element | null;
+
+            if (!target || formRef.current?.contains(target)) {
+                return;
+            }
+
+            // Clicks inside dialogs / popovers rendered outside the form should not count as "outside".
+            if (
+                target.closest?.(
+                    '[role="dialog"],[role="listbox"],[data-radix-popper-content-wrapper]',
+                )
+            ) {
+                return;
+            }
+
+            if (!form.processing) {
+                setOpen(false);
+            }
+        };
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !form.processing) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('pointerdown', onPointerDown);
+        document.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            document.removeEventListener('pointerdown', onPointerDown);
+            document.removeEventListener('keydown', onKeyDown);
+        };
+    }, [open, form.processing]);
 
     // Instant preview of the chosen photo (a temporary local URL, freed when it changes). Nothing uploads until "Post".
     const previewUrl = useMemo(
@@ -179,6 +225,7 @@ export default function Composer({
                     visibility: d.visibility,
                     is_anonymous: d.is_anonymous,
                     image: d.image,
+                    files: d.files,
                 };
             }
 
@@ -187,6 +234,7 @@ export default function Composer({
                 body: d.body,
                 pinned: d.pinned,
                 image: d.image,
+                files: d.files,
             };
             TRANSLATED.forEach(([k]) => {
                 const ti = d[`${k}_title` as keyof FormData] as string;
@@ -235,6 +283,7 @@ export default function Composer({
 
     return (
         <form
+            ref={formRef}
             onSubmit={submit}
             className="rounded-xl border border-border bg-card p-4 shadow-sm"
         >
@@ -594,6 +643,16 @@ export default function Composer({
                                     </button>
                                 </div>
                             )}
+                            {/* PDF / Office files: the barangay (or the resident) can preview them right on the post */}
+                            <AttachmentPicker
+                                files={form.data.files}
+                                onFiles={(f) => form.setData('files', f)}
+                                error={
+                                    Object.entries(err).find(([k]) =>
+                                        k.startsWith('files'),
+                                    )?.[1]
+                                }
+                            />
                             {(fileError || err.image) && (
                                 <p
                                     role="alert"

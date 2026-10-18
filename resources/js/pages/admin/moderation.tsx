@@ -5,11 +5,16 @@ import {
     Eye,
     FileText,
     Image as ImageIcon,
+    Paperclip,
+    RotateCcw,
     Search,
     ShieldCheck,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { AttachmentList } from '@/components/feed/attachments';
+import type { Attachment } from '@/components/feed/attachments';
+import { ZoomableImage } from '@/components/feed/image-lightbox';
 
 type Event = {
     id: number;
@@ -34,7 +39,12 @@ type Complaint = {
     created_at: string | null;
     author: string;
     author_email: string | null;
+    intake_channel?: 'online' | 'walk_in';
+    reporter_name?: string | null;
+    reporter_contact?: string | null;
+    entered_by_user_id?: number | null;
     image_url: string | null;
+    attachments: Attachment[];
     removed: boolean;
     removed_reason: string | null;
     events: Event[];
@@ -66,12 +76,14 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
     const [statusDraft, setStatusDraft] = useState('Under Review');
     const [statusNote, setStatusNote] = useState('');
     const [removalReason, setRemovalReason] = useState('');
+    const [confirmingRemove, setConfirmingRemove] = useState(false);
 
     const openPreview = (item: Complaint) => {
         setPreview(item);
         setStatusDraft(item.status);
         setStatusNote('');
         setRemovalReason('');
+        setConfirmingRemove(false);
         setError(null);
     };
 
@@ -125,6 +137,23 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                         (errors.reason as string) ??
                             'Unable to remove this post. Please try again.',
                     ),
+                onFinish: () => setBusyId(null),
+            },
+        );
+    };
+
+    /** Undo a removal (for example the wrong post was removed). The post returns exactly as it was. */
+    const restorePost = (item: Complaint) => {
+        setBusyId(item.id);
+        setError(null);
+        router.patch(
+            `/complaints/${item.id}/restore`,
+            {},
+            {
+                preserveScroll: true,
+                onSuccess: () => setPreview(null),
+                onError: () =>
+                    setError('Unable to restore this post. Please try again.'),
                 onFinish: () => setBusyId(null),
             },
         );
@@ -352,6 +381,16 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                                     : item.category}
                                             </span>
                                             <span>{item.location}</span>
+                                            {item.attachments.length > 0 && (
+                                                <span className="inline-flex items-center gap-1 font-medium text-[#0777bd] dark:text-[#4cb9f8]">
+                                                    <Paperclip size={12} />
+                                                    {item.attachments.length}{' '}
+                                                    {item.attachments.length ===
+                                                    1
+                                                        ? 'file'
+                                                        : 'files'}
+                                                </span>
+                                            )}
                                             <span>
                                                 Submitted{' '}
                                                 {dateLabel(item.created_at)}
@@ -368,6 +407,21 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                                 <Eye size={16} /> Preview
                                                 submission
                                             </button>
+                                            {item.removed && (
+                                                <button
+                                                    type="button"
+                                                    disabled={busyId === item.id}
+                                                    onClick={() =>
+                                                        restorePost(item)
+                                                    }
+                                                    className="inline-flex items-center gap-2 rounded-lg bg-[#0197F6] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#087bc2] disabled:opacity-50"
+                                                >
+                                                    <RotateCcw size={16} />{' '}
+                                                    {busyId === item.id
+                                                        ? 'Restoring…'
+                                                        : 'Restore post'}
+                                                </button>
+                                            )}
                                             {item.approval === 'pending' &&
                                                 !item.removed && (
                                                     <button
@@ -541,7 +595,7 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                         </div>
                         <div className="space-y-5 p-5">
                             {preview.image_url ? (
-                                <img
+                                <ZoomableImage
                                     src={preview.image_url}
                                     alt={`Attachment for ${preview.title}`}
                                     className="max-h-[420px] w-full rounded-xl border border-border bg-muted object-contain"
@@ -550,6 +604,21 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                 <div className="flex items-center gap-3 rounded-xl bg-muted p-5 text-sm text-muted-foreground">
                                     <FileText size={24} /> No image attached to
                                     this submission.
+                                </div>
+                            )}
+                            {preview.attachments.length > 0 ? (
+                                <AttachmentList files={preview.attachments} />
+                            ) : (
+                                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Paperclip size={14} /> No files attached.
+                                </p>
+                            )}
+                            {preview.intake_channel === 'walk_in' && (
+                                <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-3">
+                                    <p className="text-sm font-semibold">Assisted walk-in report</p>
+                                    <p className="mt-1 text-sm">Resident: {preview.reporter_name || 'Not provided'}</p>
+                                    <p className="text-sm">Contact: {preview.reporter_contact || 'Not provided'}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">Entered by staff account #{preview.entered_by_user_id ?? '—'}</p>
                                 </div>
                             )}
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -786,39 +855,97 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                             This is a recorded removal, not a
                                             permanent database deletion. The
                                             resident can still see the decision
-                                            and reason in their history.
+                                            and reason in their history, and you
+                                            can restore the post later if it was
+                                            removed by mistake.
                                         </p>
-                                        <label className="mt-3 block text-sm">
-                                            Reason for removal (required)
-                                            <textarea
-                                                value={removalReason}
-                                                onChange={(e) =>
-                                                    setRemovalReason(
-                                                        e.target.value,
-                                                    )
-                                                }
-                                                maxLength={300}
-                                                rows={2}
-                                                className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2"
-                                                placeholder="Explain why this post must be removed"
-                                            />
-                                        </label>
-                                        <button
-                                            type="button"
-                                            disabled={busyId === preview.id}
-                                            onClick={() => removePost(preview)}
-                                            className="mt-3 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
-                                        >
-                                            Remove post with reason
-                                        </button>
+                                        {!confirmingRemove ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setConfirmingRemove(true);
+                                                    setError(null);
+                                                }}
+                                                className="mt-3 rounded-lg border border-red-500/50 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-500/10 dark:text-red-300"
+                                            >
+                                                Remove post…
+                                            </button>
+                                        ) : (
+                                            <div className="mt-3 space-y-3">
+                                                <label className="block text-sm">
+                                                    Reason for removal
+                                                    (required)
+                                                    <textarea
+                                                        value={removalReason}
+                                                        onChange={(e) => {
+                                                            setRemovalReason(
+                                                                e.target.value,
+                                                            );
+                                                            setError(null);
+                                                        }}
+                                                        maxLength={300}
+                                                        rows={3}
+                                                        autoFocus
+                                                        aria-required="true"
+                                                        className="mt-1 w-full rounded-lg border border-red-500/40 bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-red-500/20"
+                                                        placeholder="Explain why this post must be removed (at least 5 characters)"
+                                                    />
+                                                </label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {/* Disabled until a reason is typed: a post can never be removed without one. */}
+                                                    <button
+                                                        type="button"
+                                                        disabled={
+                                                            busyId ===
+                                                                preview.id ||
+                                                            removalReason.trim()
+                                                                .length < 5
+                                                        }
+                                                        onClick={() =>
+                                                            removePost(preview)
+                                                        }
+                                                        className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                    >
+                                                        {busyId === preview.id
+                                                            ? 'Deleting…'
+                                                            : 'Delete post'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setConfirmingRemove(
+                                                                false,
+                                                            );
+                                                            setRemovalReason('');
+                                                        }}
+                                                        className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium hover:bg-muted"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                                 {preview.removed && (
-                                    <p className="rounded-lg bg-muted p-3 text-sm">
-                                        This post is already removed. Reason:{' '}
-                                        {preview.removed_reason ??
-                                            'No reason recorded.'}
-                                    </p>
+                                    <div className="space-y-3 rounded-lg bg-muted p-4 text-sm">
+                                        <p>
+                                            This post is removed. Reason:{' '}
+                                            {preview.removed_reason ??
+                                                'No reason recorded.'}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            disabled={busyId === preview.id}
+                                            onClick={() => restorePost(preview)}
+                                            className="inline-flex items-center gap-2 rounded-lg bg-[#0197F6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#087bc2] disabled:opacity-50"
+                                        >
+                                            <RotateCcw size={16} />{' '}
+                                            {busyId === preview.id
+                                                ? 'Restoring…'
+                                                : 'Restore post'}
+                                        </button>
+                                    </div>
                                 )}
                                 {error && (
                                     <p

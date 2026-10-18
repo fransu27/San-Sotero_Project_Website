@@ -32,6 +32,41 @@ class MediaController extends Controller
         return $this->stream($path, 'private, max-age=86400');
     }
 
+    /**
+     * Guest-safe photo for the public community feed.
+     * SECURITY: only serves a complaint photo when the report is public, approved and not removed;
+     * anything else (private, pending, removed, unknown file) is a plain 404 so nothing is revealed.
+     */
+    public function publicComplaint(string $file): StreamedResponse
+    {
+        $path = "complaints/$file";
+
+        abort_unless(
+            Complaint::where('image_path', $path)
+                ->where('visibility', 'public')
+                ->where('approval_status', Complaint::APPROVAL_APPROVED)
+                ->whereNull('removed_at')
+                ->exists(),
+            404,
+        );
+
+        return $this->stream($path, 'public, max-age=300');
+    }
+
+    /**
+     * Guest-safe photo for announcements on the public community feed.
+     * SECURITY: announcements are public by design, but only a file that really belongs to an announcement is
+     * served (any other name is a plain 404), and only from the announcements folder.
+     */
+    public function publicAnnouncement(string $file): StreamedResponse
+    {
+        $path = "announcements/$file";
+
+        abort_unless(Announcement::where('image_path', $path)->exists(), 404);
+
+        return $this->stream($path, 'public, max-age=300');
+    }
+
     public function branding(string $file): StreamedResponse
     {
         // @phpstan-ignore function.alreadyNarrowedType

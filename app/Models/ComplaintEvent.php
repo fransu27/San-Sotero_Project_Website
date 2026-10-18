@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * One line of a complaint's progress timeline. Append-only: there is no update endpoint.
  *
- * type: submitted | approved | status | edited | resubmitted  (the UI translates these; only `note` is free text from staff)
+ * type: submitted | approved | status | edited | resubmitted | restored  (the UI translates these; only `note` is free text from staff)
  *
  * @property int $id
  * @property int $complaint_id

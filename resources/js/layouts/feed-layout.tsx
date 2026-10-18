@@ -1,30 +1,34 @@
 import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 import {
     Ban,
-    Building2,
-    ChevronDown,
+    Megaphone,
     ChartNoAxesCombined,
     CheckCircle2,
     ClipboardCheck,
     ClipboardList,
     Clock,
     Eye,
-    HardHat,
     Home,
     Loader,
-    MoreHorizontal,
+    Menu,
     Search,
     Settings,
     Shield,
+    HardHat,
     Trash2,
+    MoreHorizontal,
     XCircle,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useState } from 'react';
 import AssistantChat from '@/components/assistant-chat';
 import BrandMark from '@/components/brand-mark';
 import { Avatar } from '@/components/feed/avatar';
+import ReportRail from '@/components/feed/report-rail';
+import TimeWidget from '@/components/feed/time-widget';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
 import {
@@ -33,8 +37,18 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import { useLocale } from '@/hooks/use-locale';
 import { BRAND } from '@/lib/brand';
+import { asList, feedHref } from '@/lib/feed-filters';
+import type { FilterValue } from '@/lib/feed-filters';
 import { cn } from '@/lib/utils';
 import { edit } from '@/routes/profile';
 
@@ -48,7 +62,12 @@ import { edit } from '@/routes/profile';
  *  - The top bar holds the language picker (EN / TL / CEB) and the Dark / Light switch; both are remembered.
  *  - Sidebar links only change query strings the server re-validates against fixed lists.
  */
-type Filters = { q: string; category: string | null; status: string | null };
+type Filters = {
+    q: string;
+    category: FilterValue;
+    status: FilterValue;
+    sort?: string | null;
+};
 type NavLink = {
     label: string;
     href: string;
@@ -66,7 +85,7 @@ const statusIcon: Record<string, LucideIcon> = {
     Approval: ClipboardCheck,
     Removed: Ban,
 };
-// Settings pages don't receive these props from the server, so fall back to the same fixed lists.
+// Fallback list used if the server did not send `statuses` (same fixed values the server validates).
 const DEFAULT_STATUSES = [
     'Pending',
     'Under Review',
@@ -74,27 +93,19 @@ const DEFAULT_STATUSES = [
     'Resolved',
     'Rejected',
 ];
-const DEFAULT_CATEGORIES = [
-    'Infrastructure',
-    'Sanitation',
-    'Peace and Order',
-    'Others',
-];
-const categoryIcon: Record<string, LucideIcon> = {
-    Infrastructure: HardHat,
-    Sanitation: Trash2,
-    'Peace and Order': Shield,
-    Others: MoreHorizontal,
-};
 
 export default function FeedLayout({ children }: { children: ReactNode }) {
     const page = usePage();
     const { t } = useLocale();
-    const { auth, filters, counts, statuses, categories } = page.props as any;
+    const { auth, filters, counts, statuses } = page.props as any;
+    const [timeExpanded, setTimeExpanded] = useState(false);
+    const [reportsExpanded, setReportsExpanded] = useState(false);
+    const [categoriesExpanded, setCategoriesExpanded] = useState(false);
     const isAdmin = auth.user.role === 'admin'; // display only; the server enforces every admin action
     const onSettings = page.url.startsWith('/settings');
     const onSubs = page.url.startsWith('/my-submissions');
     const onModeration = page.url.startsWith('/admin/moderation');
+    const onAnnouncements = page.url.startsWith('/announcements');
     // my-submissions has its own `filters` prop; the feed's filter highlighting must ignore it
     const f: Filters = (!onSubs && filters) || {
         q: '',
@@ -104,50 +115,15 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
     const onDashboard =
         page.url === '/dashboard' || page.url.startsWith('/dashboard?');
     const onNewsfeed = page.url.startsWith('/newsfeed');
-    const [reportsOpen, setReportsOpen] = useState(false);
-    const noFilter =
-        onNewsfeed &&
-        !onSettings &&
-        !onSubs &&
-        !onModeration &&
-        !f.category &&
-        !f.status &&
-        !f.q;
-
-    // Build the left navigation from the same fixed lists the server validates against.
-    const feedLinks: NavLink[] = [
-        {
-            label: 'Dashboard',
-            href: '/dashboard',
-            icon: ChartNoAxesCombined,
-            active: onDashboard,
-        },
-        {
-            label: t('nav.newsfeed'),
-            href: '/newsfeed',
-            icon: Home,
-            active: noFilter,
-        },
-        // Residents track their own reports here (admins don't file reports, so no link for them)
-        ...(isAdmin
-            ? [
-                  {
-                      label: 'Submission moderation',
-                      href: '/admin/moderation',
-                      icon: ClipboardCheck,
-                      active: onModeration,
-                  },
-              ]
-            : [
-                  {
-                      label: t('nav.submissions'),
-                      href: '/my-submissions',
-                      icon: ClipboardList,
-                      active: onSubs,
-                  },
-              ]),
-    ];
-
+    const showTimeColumn = !onNewsfeed && !onSettings && !onSubs;
+    const activeStatuses = asList(f.status);
+    const activeCategories = asList(f.category);
+    // Status links keep the active category / search / sort, so "Pending" + "Under Review" + "Peace and Order" can be combined.
+    // Pressing a selected status again turns just that one filter off.
+    const totalReportCount = Object.values(counts ?? {}).reduce<number>(
+        (sum, value) => sum + Number(value ?? 0),
+        0,
+    );
     const statusLinks: NavLink[] = (statuses ?? DEFAULT_STATUSES)
         .filter((s: string) => !['Rejected', 'Removed'].includes(s))
         .map((s: string) => ({
@@ -156,48 +132,74 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                     ? 'status.ApprovalAdmin'
                     : `status.${s}`,
             ),
-            href: `/newsfeed?status=${encodeURIComponent(s)}`,
+            href: feedHref(f, { status: s }, { toggle: true }),
             icon: statusIcon[s] ?? Clock,
-            active: !onSettings && f.status === s,
+            active: activeStatuses.includes(s),
             count: counts ? Number(counts[s] ?? 0) : undefined,
         }));
 
-    const categoryLinks: NavLink[] = (categories ?? DEFAULT_CATEGORIES).map(
-        (c: string) => ({
-            label: t(`cat.${c}`),
-            href: `/newsfeed?category=${encodeURIComponent(c)}`,
-            icon: categoryIcon[c] ?? Building2,
-            active: !onSettings && f.category === c,
-        }),
-    );
+    const navItems: NavLink[] = [
+        {
+            label: 'Dashboard',
+            href: '/dashboard',
+            icon: ChartNoAxesCombined,
+            active: onDashboard,
+        },
+        {
+            label: 'Newsfeed',
+            href: '/newsfeed',
+            icon: Home,
+            active: onNewsfeed,
+        },
+        {
+            label: 'Announcements',
+            href: '/announcements',
+            icon: Megaphone,
+            active: onAnnouncements,
+        },
+        isAdmin
+            ? {
+                  label: 'Submission moderation',
+                  href: '/admin/moderation',
+                  icon: ClipboardCheck,
+                  active: onModeration,
+              }
+            : {
+                  label: 'My submissions',
+                  href: '/my-submissions',
+                  icon: ClipboardList,
+                  active: onSubs,
+              },
+    ];
 
-    const renderLink = (l: NavLink) => (
-        <Link
-            key={l.label}
-            href={l.href}
-            preserveScroll
-            className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                l.active
-                    ? 'bg-[#0197F6]/10 text-[#0197F6]'
-                    : 'text-foreground hover:bg-muted',
-            )}
-        >
-            <l.icon size={18} />
-            <span className="flex-1">{l.label}</span>
-            {l.count !== undefined && (
-                <span className="text-xs text-muted-foreground">{l.count}</span>
-            )}
-        </Link>
-    );
+    if (isAdmin) {
+        navItems.push({
+            label: 'Walk-in intake',
+            href: '/admin/walk-in-complaints/create',
+            icon: ClipboardList,
+            active: page.url.startsWith('/admin/walk-in-complaints'),
+        });
+    }
+
+    // Settings belongs at the bottom of the collapsible navigation drawer for every role,
+    // rather than taking space in the compact All reports filter card.
+    const drawerNavItems: NavLink[] = [
+        ...navItems,
+        {
+            label: t('nav.settings'),
+            href: edit().url,
+            icon: Settings,
+            active: onSettings,
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-[#F0F2F5] dark:bg-background">
             {/* ── Top bar ── */}
-            <header className="sticky top-0 z-30 border-b border-border bg-card">
-                <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-3">
+            <header className="sticky top-0 z-40 border-b border-border bg-card">
+                <div className="mx-auto flex h-14 max-w-[1320px] items-center gap-3 px-3">
                     <Link
-                        href="/dashboard"
+                        href="/"
                         className="flex items-center gap-2 font-semibold"
                     >
                         <BrandMark size={40} />
@@ -222,6 +224,24 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                             size={16}
                             className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
                         />
+                        {/* keep the other active filters while searching */}
+                        {activeCategories.length > 0 && (
+                            <input
+                                type="hidden"
+                                name="category"
+                                value={activeCategories.join(',')}
+                            />
+                        )}
+                        {activeStatuses.length > 0 && (
+                            <input
+                                type="hidden"
+                                name="status"
+                                value={activeStatuses.join(',')}
+                            />
+                        )}
+                        {f.sort && f.sort !== 'new' && (
+                            <input type="hidden" name="sort" value={f.sort} />
+                        )}
                         <input
                             name="q"
                             defaultValue={f.q}
@@ -233,25 +253,25 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                     </form>
 
                     <nav
-                        className="hidden items-center gap-1 xl:flex"
-                        aria-label={t('nav.categories')}
+                        className="hidden items-center gap-1.5 lg:flex"
+                        aria-label={t('nav.main')}
                     >
-                        {categoryLinks.map((l) => (
+                        {navItems.map((item) => (
                             <Link
-                                key={l.label}
-                                href={l.href}
-                                preserveScroll
+                                key={item.href}
+                                href={item.href}
+                                aria-current={item.active ? 'page' : undefined}
                                 className={cn(
-                                    'rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors',
-                                    l.active
-                                        ? 'bg-[#0197F6] text-white'
-                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                                    'nav-fill-link rounded-full px-3.5 py-2 text-sm font-medium',
+                                    item.active && 'is-active',
                                 )}
                             >
-                                {l.label}
+                                <item.icon size={16} />
+                                {item.label}
                             </Link>
                         ))}
                     </nav>
+
                     <div className="flex shrink-0 items-center gap-1 sm:gap-2">
                         <LanguageSwitcher className="hidden sm:inline-flex" />
                         <ThemeToggle />
@@ -262,7 +282,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                             aria-label={t('nav.account')}
                             className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]"
                         >
-                            <Avatar name={auth.user.name} staff={isAdmin} />
+                            <Avatar name={auth.user.name} src={auth.user.avatar ?? null} staff={isAdmin} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="min-w-56">
                             <UserMenuContent user={auth.user} />
@@ -271,125 +291,165 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                 </div>
             </header>
 
-            <div className="border-b border-border bg-card/90 xl:hidden">
-                <nav
-                    className="mx-auto flex max-w-[1400px] gap-2 overflow-x-auto px-3 py-2"
-                    aria-label={t('nav.categories')}
-                >
-                    {categoryLinks.map((l) => (
-                        <Link
-                            key={l.label}
-                            href={l.href}
-                            preserveScroll
-                            className={cn(
-                                'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium',
-                                l.active
-                                    ? 'bg-[#0197F6] text-white'
-                                    : 'bg-muted text-foreground hover:bg-muted/70',
-                            )}
-                        >
-                            {l.label}
-                        </Link>
-                    ))}
-                </nav>
-            </div>
-            <div className="mx-auto grid max-w-[1400px] gap-4 px-3 py-4 lg:grid-cols-[250px_minmax(0,1fr)]">
-                {/* ── Left sidebar (desktop) ── */}
-                <aside
-                    className="sticky top-[72px] hidden h-fit space-y-4 lg:block"
-                    aria-label={t('nav.main')}
-                >
-                    <nav className="space-y-0.5">
-                        {feedLinks.map(renderLink)}
-                    </nav>
-                    <div>
-                        <button
-                            type="button"
-                            onClick={() => setReportsOpen(!reportsOpen)}
-                            className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted"
-                        >
-                            <span>
-                                {t(
-                                    isAdmin
-                                        ? 'nav.reportsAdmin'
-                                        : 'nav.reportsResident',
-                                )}
-                            </span>
-                            <ChevronDown
-                                size={16}
-                                className={cn(
-                                    'transition-transform',
-                                    reportsOpen && 'rotate-180',
-                                )}
-                            />
-                        </button>
-                        {reportsOpen && (
-                            <nav className="space-y-0.5">
-                                {statusLinks.map(renderLink)}
+            {/* Mobile-first navigation: keep the header compact and reveal links in a familiar
+                Laravel-style drawer instead of forcing a second horizontal navigation row. */}
+            <div className="sticky top-14 z-30 border-b border-border bg-card/95 px-3 py-2 shadow-sm backdrop-blur lg:hidden">
+                <div className="mx-auto flex max-w-[1320px] items-center gap-3">
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <button
+                                type="button"
+                                aria-label="Open navigation menu"
+                                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+                            >
+                                <Menu size={20} />
+                            </button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[min(86vw,320px)] bg-card p-0">
+                            <SheetHeader className="border-b border-border px-5 py-4 text-left">
+                                <SheetTitle>{(page.props as any).barangay?.name || BRAND.place}</SheetTitle>
+                                <p className="text-sm text-muted-foreground">{BRAND.product}</p>
+                            </SheetHeader>
+                            <nav className="grid gap-1 p-3" aria-label={t('nav.main')}>
+                                {drawerNavItems.map((item) => (
+                                    <SheetClose asChild key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            aria-current={item.active ? 'page' : undefined}
+                                            className={cn(
+                                                'flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
+                                                item.active && 'bg-accent text-accent-foreground',
+                                            )}
+                                        >
+                                            <item.icon size={18} />
+                                            <span>{item.label}</span>
+                                        </Link>
+                                    </SheetClose>
+                                ))}
                             </nav>
-                        )}
+                        </SheetContent>
+                    </Sheet>
+                    <span className="min-w-0 truncate text-sm font-medium text-muted-foreground">
+                        {navItems.find((item) => item.active)?.label || BRAND.product}
+                    </span>
+                    <span className="ml-auto text-xs text-muted-foreground">{BRAND.place}</span>
+                </div>
+            </div>
+
+            {/* The report rail (clock + status filters) belongs to the Newsfeed. Dashboard, Announcements and
+                Submission moderation get the same time widget in the same left spot; My submissions places it
+                inside its own filter column. */}
+            <div
+                className={cn(
+                    'mx-auto grid max-w-[1320px] gap-5 px-3 py-4',
+                    onNewsfeed
+                        ? 'xl:grid-cols-[auto_minmax(0,1fr)]'
+                        : showTimeColumn
+                          ? 'lg:grid-cols-[272px_minmax(0,1fr)]'
+                          : 'grid-cols-1',
+                )}
+            >
+                {showTimeColumn && (
+                    <aside className="sticky top-[76px] hidden h-fit self-start lg:block">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                            <TimeWidget />
+                        </div>
+                    </aside>
+                )}
+
+                {onNewsfeed && (
+                    <div className="hidden xl:block">
+                        <ReportRail
+                            ariaLabel={t('nav.filters')}
+                            links={statusLinks}
+                            settings={{
+                                label: t('nav.settings'),
+                                href: edit().url,
+                            }}
+                        />
                     </div>
-                    <Link
-                        href={edit()}
-                        className={cn(
-                            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium',
-                            onSettings
-                                ? 'bg-[#0197F6]/10 text-[#0197F6]'
-                                : 'hover:bg-muted',
-                        )}
-                    >
-                        <Settings size={18} /> {t('nav.settings')}
-                    </Link>
-                </aside>
+                )}
 
-                {/* ── Mobile / tablet: the same links as a scrollable chip row ── */}
-                <nav
-                    className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 lg:hidden"
-                    aria-label={t('nav.filters')}
+                {/* Responsive report controls: use a grid instead of a clipped horizontal chip row.
+                    Counts and category shortcuts remain visible on phones and tablets. */}
+                {onNewsfeed && (
+                    <section className="space-y-3 xl:hidden" aria-label={t('nav.filters')}>
+                        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                            <button type="button" onClick={() => setTimeExpanded((value) => !value)} aria-expanded={timeExpanded} className="flex min-h-11 w-full items-center justify-between px-3 py-2 text-left text-sm font-semibold">
+                                <span>Philippines · UTC+8</span>{timeExpanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+                            </button>
+                            {timeExpanded && <div className="px-2 pb-2"><TimeWidget className="p-3 [&>p:nth-child(2)]:mt-1 [&>p:nth-child(2)]:text-lg [&>p:nth-child(3)]:mt-0.5 [&>p:nth-child(3)]:text-[11px]" /></div>}
+                        </div>
+                        <div className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
+                            <div className="mb-1 flex items-center gap-2">
+                                <button type="button" onClick={() => setReportsExpanded((value) => !value)} aria-expanded={reportsExpanded} className="flex min-h-10 min-w-0 flex-1 items-center justify-between gap-3 text-left">
+                                    <span><span className="block text-sm font-semibold">All reports</span><span className="block text-xs text-muted-foreground">{totalReportCount} total records · filter by status</span></span>
+                                    {reportsExpanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+                                </button>
+                            </div>
+                            {reportsExpanded && <nav className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3" aria-label="Report status filters">
+                                {statusLinks.filter((l) => !['Approval'].includes(l.label)).map((l) => (
+                                    <Link
+                                        key={l.label}
+                                        href={l.href}
+                                        preserveScroll
+                                        aria-current={l.active ? 'page' : undefined}
+                                        className={cn(
+                                            'flex min-h-[58px] min-w-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
+                                            l.active
+                                                ? 'border-[#0197F6] bg-[#0197F6]/10 text-foreground ring-1 ring-[#0197F6]/20'
+                                                : 'border-border bg-background hover:border-[#0197F6]/50 hover:bg-accent/50',
+                                        )}
+                                    >
+                                        <l.icon size={17} className="shrink-0 text-[#0197F6]" />
+                                        <span className="min-w-0 flex-1 text-xs font-medium leading-tight sm:text-sm">{l.label}</span>
+                                        <span className="min-w-6 rounded-full bg-muted px-1.5 py-0.5 text-center text-xs font-semibold tabular-nums">{l.count ?? 0}</span>
+                                    </Link>
+                                ))}
+                            </nav>}
+                        </div>
+                        <div className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
+                            <button type="button" onClick={() => setCategoriesExpanded((value) => !value)} aria-expanded={categoriesExpanded} className="flex min-h-10 w-full items-center justify-between text-left text-sm font-semibold"><span>Browse by category</span>{categoriesExpanded ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button>
+                            {categoriesExpanded && <nav className="mt-3 grid grid-cols-2 gap-2" aria-label="Report categories">
+                                {[
+                                    { label: 'Peace and Order', icon: Shield },
+                                    { label: 'Infrastructure', icon: HardHat },
+                                    { label: 'Sanitation', icon: Trash2 },
+                                    { label: 'Others', icon: MoreHorizontal },
+                                ].map(({ label, icon: Icon }) => (
+                                    <Link
+                                        key={label}
+                                        href={feedHref(f, { category: label }, { toggle: true })}
+                                        preserveScroll
+                                        aria-current={activeCategories.includes(label) ? 'page' : undefined}
+                                        className={cn(
+                                            'nav-fill-link flex min-h-11 min-w-0 items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium sm:text-sm',
+                                            activeCategories.includes(label) && 'is-active',
+                                        )}
+                                    >
+                                        <Icon size={16} className="shrink-0" />
+                                        <span className="truncate">{label}</span>
+                                    </Link>
+                                ))}
+                            </nav>}
+                        </div>
+                        <LanguageSwitcher className="sm:hidden" />
+                    </section>
+                )}
+
+                <main
+                    className={cn('min-w-0', onSettings && 'settings-workspace')}
                 >
-                    {[
-                        ...feedLinks,
-                        {
-                            label: t(
-                                isAdmin
-                                    ? 'nav.reportsAdmin'
-                                    : 'nav.reportsResident',
-                            ),
-                            href: '/newsfeed',
-                            icon: ClipboardList,
-                            active: false,
-                        },
-                        {
-                            label: t('nav.settings'),
-                            href: edit().url,
-                            icon: Settings,
-                            active: onSettings,
-                        },
-                    ].map((l) => (
-                        <Link
-                            key={l.label}
-                            href={l.href}
-                            preserveScroll
-                            className={cn(
-                                'shrink-0 rounded-full px-3 py-1.5 text-sm',
-                                l.active
-                                    ? 'bg-[#0197F6] text-white'
-                                    : 'bg-card text-foreground',
-                            )}
-                        >
-                            {l.label}
-                        </Link>
-                    ))}
-                    <LanguageSwitcher className="shrink-0 sm:hidden" />
-                </nav>
-
-                <main className="min-w-0">
                     {onSettings ? (
-                        <div className="mx-auto max-w-4xl rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                        <div className="settings-content mx-auto w-full max-w-5xl rounded-xl border border-border bg-card p-4 shadow-sm sm:p-6 lg:p-7">
                             {children}
                         </div>
                     ) : (
-                        children
+                        // key = page component: Dashboard → Newsfeed → Submissions replays a short fade/slide,
+                        // while polling or filter changes on the same page do not.
+                        <div key={page.component} className="page-enter">
+                            {children}
+                        </div>
                     )}
                 </main>
             </div>

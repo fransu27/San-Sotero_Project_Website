@@ -56,6 +56,9 @@ class HandleInertiaRequests extends Middleware
                 'logo_is_default' => ! SiteSetting::read('logo_path'),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                'walk_in_receipt' => fn () => $request->session()->get('walk_in_receipt'),
+            ],
         ];
     }
 }

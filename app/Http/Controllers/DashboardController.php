@@ -21,6 +21,54 @@ class DashboardController extends Controller
     }
 
     /**
+     * Announcements with everything the card needs: files, like/dislike counts, this viewer's vote and the comments.
+     * Used by both the newsfeed and the Announcements page so they can never drift apart.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    private function announcementsFor(User $viewer, int $limit)
+    {
+        return Announcement::with([
+            'user:id,name,avatar_path',
+            'attachments',
+            'comments.user:id,name,role,avatar_path',
+            'reactions' => fn ($q) => $q->where('user_id', $viewer->id)->select('id', 'announcement_id', 'type'),
+        ])
+            ->withCount([
+                'reactions as likes_count' => fn ($q) => $q->where('type', 'like'),
+                'reactions as dislikes_count' => fn ($q) => $q->where('type', 'dislike'),
+            ])
+            ->latest()->limit($limit)->get()
+            ->map(function (Announcement $a): array {
+                /** @var Announcement&object{likes_count?: int, dislikes_count?: int} $a */
+                return [
+                    'id' => $a->id,
+                    'title' => $a->title,
+                    'body' => $a->body,
+                    'pinned' => $a->pinned,
+                    'translations' => $a->translations, // {"tl": {...}, "ceb": {...}} or null
+                    'image_url' => $this->photo($a->image_path),
+                    'edited' => $a->edited_at !== null,
+                    'author' => $a->user->name,
+                    'author_avatar' => $a->user->avatarUrl(),
+                    'time' => $a->created_at?->diffForHumans(),
+                    'ts' => $a->created_at?->timestamp ?? 0,
+                    'attachments' => $a->presentAttachments(),
+                    'likes' => (int) ($a->likes_count ?? 0),
+                    'dislikes' => (int) ($a->dislikes_count ?? 0),
+                    'my_vote' => $a->reactions->first()?->type,
+                    'comments' => $a->comments->map(fn ($m) => [
+                        'id' => $m->id,
+                        'body' => $m->body,
+                        'staff' => $m->user->isAdmin(),
+                        'author' => $m->user->name,
+                        'avatar' => $m->user->avatarUrl(),
+                    ])->values()->all(),
+                ];
+            });
+    }
+
+    /**
      * The newsfeed.
      *
      * WHO SEES WHAT (single rule, enforced in the SQL by Complaint::visibleTo):
@@ -121,6 +169,55 @@ class DashboardController extends Controller
         return Inertia::render('dashboard', ['isAdmin' => $user->isAdmin(), 'analytics' => $analytics, 'statusCounts' => $statusCounts, 'series' => $series, 'reports' => $reports]);
     }
 
+    /** Dedicated announcements page; all admin posts appear here whether pinned or not. */
+    public function announcements(Request $request): Response
+    {
+        $user = $request->user();
+        if ($user === null) {
+            abort(401);
+        }
+
+        return Inertia::render('announcements', [
+            'isAdmin' => $user->isAdmin(),
+            'announcements' => $this->announcementsFor($user, 100),
+        ]);
+    }
+
+    /**
+     * Everything one post card needs (author, comments, timeline, files, vote + rating numbers, THIS viewer's own vote).
+     * Shared by the newsfeed and by the assistant's "Open report" pop-out so both show identical data.
+     *
+     * @param  Builder<Complaint>  $query
+     */
+    private function withFeedData(Builder $query, User $user): void
+    {
+        $query
+            ->with(['user:id,name,avatar_path', 'comments.user:id,name,role,avatar_path', 'events.user:id,role', 'attachments'])
+            ->withCount([
+                'reactions as satisfied_count' => fn ($q) => $q->where('type', 'satisfied'),
+                'reactions as not_satisfied_count' => fn ($q) => $q->where('type', 'not_satisfied'),
+            ])
+            ->withCount('ratings')
+            ->withAvg('ratings', 'rating')
+            ->with(['reactions' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'type')])
+            ->with(['ratings' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'rating')]);
+    }
+
+    /**
+     * One post in the exact shape the feed uses, for the assistant pop-out.
+     * Callers must have already authorised `view` for this viewer; every privacy rule (anonymous author, removed
+     * content, no ticket code) is applied by present().
+     *
+     * @return array<string, mixed>
+     */
+    public function reportPayload(Complaint $complaint, User $viewer): array
+    {
+        $query = Complaint::query()->whereKey($complaint->getKey());
+        $this->withFeedData($query, $viewer);
+
+        return $this->present($query->firstOrFail(), $viewer);
+    }
+
     public function newsfeed(Request $request): Response
     {
         $user = $request->user();
@@ -130,40 +227,66 @@ class DashboardController extends Controller
 
         $isAdmin = $user->isAdmin();
 
-        /** @var array{q?: string|null, category?: string|null, status?: string|null, sort?: 'new'|'best'|'hot'|null} $filters */
+        // ?status= and ?category= each accept ONE value or a comma-separated list ("Pending,Under Review"), so the
+        // sidebar can combine several. Anything that is not a plain string is rejected by the rules below.
+        $split = fn ($value): array => is_string($value)
+            ? collect(explode(',', $value))->map(fn ($v) => trim($v))->filter()->unique()->values()->all()
+            : [];
+        $request->merge([
+            'status_list' => $split($request->query('status')),
+            'category_list' => $split($request->query('category')),
+        ]);
+
+        /** @var array{q?: string|null, category_list?: list<string>, status_list?: list<string>, sort?: 'new'|'best'|'hot'|null} $filters */
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
-            'category' => ['nullable', Rule::in(Complaint::CATEGORIES)],
-            'status' => ['nullable', Rule::in([...Complaint::STATUSES, 'Removed'])],
+            'category' => ['nullable', 'string', 'max:200'],
+            'category_list' => ['array', 'max:'.count(Complaint::CATEGORIES)],
+            'category_list.*' => [Rule::in(Complaint::CATEGORIES)],
+            'status' => ['nullable', 'string', 'max:200'],
+            'status_list' => ['array', 'max:'.(count(Complaint::STATUSES) + 1)],
+            'status_list.*' => [Rule::in([...Complaint::STATUSES, 'Removed'])],
             'sort' => ['nullable', Rule::in(['new', 'best', 'hot'])],
         ]);
+        $categoryList = $filters['category_list'] ?? [];
+        $statusList = $filters['status_list'] ?? [];
+        // "Removed" is an admin-only view of removed posts; the other statuses only ever match approved, live posts.
+        $wantsRemoved = in_array('Removed', $statusList, true) && $isAdmin;
+        $liveStatuses = array_values(array_diff($statusList, ['Removed']));
 
         $visible = fn () => Complaint::visibleTo($user);
 
         $sort = $filters['sort'] ?? 'new';
         $feed = $visible()
-            ->when(($filters['status'] ?? null) === 'Removed' && $isAdmin, fn ($q) => $q->whereNotNull('removed_at'), fn ($q) => $q->where('approval_status', Complaint::APPROVAL_APPROVED)->whereNull('removed_at'))
-            ->when($filters['category'] ?? null, fn ($q, $v) => $q->where('category', $v))
-            ->when($filters['status'] ?? null, fn ($q, $v) => match ($v) {
-                'Removed' => $q->whereNotNull('removed_at'),
-                default => $q->where('status', $v)->where('approval_status', Complaint::APPROVAL_APPROVED)->whereNull('removed_at'),
-            })
+            ->when(
+                $statusList !== [],
+                fn ($q) => $q->where(function ($w) use ($liveStatuses, $wantsRemoved) {
+                    if ($liveStatuses !== []) {
+                        $w->orWhere(fn ($live) => $live->whereIn('status', $liveStatuses)
+                            ->where('approval_status', Complaint::APPROVAL_APPROVED)
+                            ->whereNull('removed_at'));
+                    }
+                    if ($wantsRemoved) {
+                        $w->orWhereNotNull('removed_at');
+                    }
+                    if ($liveStatuses === [] && ! $wantsRemoved) {
+                        $w->whereRaw('1 = 0'); // a resident asking only for "Removed" gets nothing, as before
+                    }
+                }),
+                fn ($q) => $q->where('approval_status', Complaint::APPROVAL_APPROVED)->whereNull('removed_at'),
+            )
+            ->when($categoryList !== [], fn ($q) => $q->whereIn('category', $categoryList))
             ->when($filters['q'] ?? null, function ($q, $term) {
-                $like = '\%'.addcslashes((string) $term, '%_\\').'%';
-                $q->where(fn ($w) => $w->where('title', 'like', $like)
-                    ->orWhere('description', 'like', $like)
-                    ->orWhere('location', 'like', $like)
-                    ->orWhere('custom_category', 'like', $like));
+                // Use an explicit, database-independent escape character so user-supplied % and _
+                // are searched literally rather than being treated as LIKE wildcards.
+                $escapedTerm = str_replace(['!', '%', '_'], ['!!', '!%', '!_'], (string) $term);
+                $like = '%'.$escapedTerm.'%';
+                $q->where(fn ($w) => $w->whereRaw("title LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("description LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("location LIKE ? ESCAPE '!'", [$like])
+                    ->orWhereRaw("custom_category LIKE ? ESCAPE '!'", [$like]));
             })
-            ->with(['user:id,name,avatar_path', 'comments.user:id,name,role,avatar_path', 'events.user:id,role'])
-            ->withCount([
-                'reactions as satisfied_count' => fn ($q) => $q->where('type', 'satisfied'),
-                'reactions as not_satisfied_count' => fn ($q) => $q->where('type', 'not_satisfied'),
-            ])
-            ->withCount('ratings')
-            ->withAvg('ratings', 'rating')
-            ->with(['reactions' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'type')])
-            ->with(['ratings' => fn ($q) => $q->where('user_id', $user->id)->select('id', 'complaint_id', 'rating')])
+            ->tap(fn ($q) => $this->withFeedData($q, $user))
             ->when($sort === 'best', fn ($q) => $q->orderByDesc('ratings_avg_rating')->orderByDesc('satisfied_count'))
             ->when($sort === 'hot', fn ($q) => $q->orderByRaw('(satisfied_count + ratings_count) DESC')->orderByDesc('created_at'))
             ->when($sort === 'new', fn ($q) => $q->latest())
@@ -174,6 +297,16 @@ class DashboardController extends Controller
         $counts = $visible()->where('approval_status', Complaint::APPROVAL_APPROVED)
             ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
         $counts['Removed'] = $visible()->whereNotNull('removed_at')->count();
+
+        // Ids of the newest posts per status (other people's only). The browser remembers which ones this person
+        // has already looked at and shows "N new" in the right-hand widget for the rest; opening a status clears it.
+        $statusIds = $visible()
+            ->where('approval_status', Complaint::APPROVAL_APPROVED)
+            ->whereNull('removed_at')
+            ->where('user_id', '!=', $user->id)
+            ->latest('id')->limit(400)->get(['id', 'status'])
+            ->groupBy('status')
+            ->map(fn ($rows) => $rows->pluck('id')->take(100)->values()->all());
         // Pending submissions are intentionally managed only on the dedicated moderation page.
 
         // Period analytics are based on submission creation date. Residents only see their own records;
@@ -192,23 +325,11 @@ class DashboardController extends Controller
         return Inertia::render('newsfeed', [
             'isAdmin' => $isAdmin,
             'counts' => $counts,
+            'statusIds' => $statusIds,
             'analytics' => $analytics,
             'complaints' => $feed,
-            'announcements' => Announcement::with('user:id,name,avatar_path')->latest()->limit(20)->get()
-                ->map(fn (Announcement $a) => [
-                    'id' => $a->id,
-                    'title' => $a->title,
-                    'body' => $a->body,
-                    'pinned' => $a->pinned,
-                    'translations' => $a->translations, // {"tl": {...}, "ceb": {...}} or null
-                    'image_url' => $this->photo($a->image_path),
-                    'edited' => $a->edited_at !== null,
-                    'author' => $a->user->name,
-                    'author_avatar' => $a->user->avatarUrl(),
-                    'time' => $a->created_at?->diffForHumans(),
-                    'ts' => $a->created_at?->timestamp,
-                ]),
-            'filters' => ['q' => $filters['q'] ?? '', 'category' => $filters['category'] ?? null, 'status' => $filters['status'] ?? null, 'sort' => $sort],
+            'announcements' => $this->announcementsFor($user, 20),
+            'filters' => ['q' => $filters['q'] ?? '', 'category' => $categoryList, 'status' => $statusList, 'sort' => $sort],
             'categories' => Complaint::CATEGORIES,
             'statuses' => Complaint::STATUSES,
         ]);
@@ -272,6 +393,7 @@ class DashboardController extends Controller
             'removed' => $c->isRemoved(),
             'removed_reason' => $c->removed_reason,
             'image_url' => $hide ? null : $this->photo($c->image_path),
+            'attachments' => $hide ? [] : $c->presentAttachments(),
             'satisfied' => (int) ($c->satisfied_count ?? 0),
             'not_satisfied' => (int) ($c->not_satisfied_count ?? 0),
             'my_vote' => $c->reactions->first()?->type,

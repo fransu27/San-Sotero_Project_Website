@@ -166,13 +166,13 @@ export default function Dashboard({
     return (
         <>
             <Head title="Dashboard" />
-            <div className="mx-auto max-w-6xl space-y-6 pb-8">
-                <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="dashboard-page mx-auto max-w-[1180px] space-y-5 pb-8">
+                <div className="dashboard-heading relative flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-3xl border border-[#0197F6]/15 bg-gradient-to-r from-[#0197F6]/[0.09] via-card to-[#68C5DB]/[0.10] p-4 sm:p-5">
                     <div>
                         <p className="text-sm font-semibold tracking-[0.16em] text-[#0197F6] uppercase">
                             {isAdmin ? 'Administration' : 'My activity'}
                         </p>
-                        <h1 className="mt-1 text-3xl font-bold tracking-tight">
+                        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
                             Dashboard
                         </h1>
                         <p className="mt-2 text-sm text-muted-foreground">

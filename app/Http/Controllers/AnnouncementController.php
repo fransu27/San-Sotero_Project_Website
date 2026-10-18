@@ -18,7 +18,7 @@ class AnnouncementController extends Controller
     {
         $imagePath = $request->file('image')?->store('announcements', 'public');
 
-        Announcement::create([
+        $announcement = Announcement::create([
             'user_id' => (int) $request->user()?->id,
             'title' => $request->validated('title'),
             'body' => $request->validated('body'),
@@ -26,6 +26,8 @@ class AnnouncementController extends Controller
             'pinned' => $request->boolean('pinned'),
             'image_path' => $imagePath !== false ? $imagePath : null,
         ]);
+
+        $announcement->syncAttachments($request->file('files', []), [], $request->user()?->id);
 
         return back();
     }
@@ -49,6 +51,7 @@ class AnnouncementController extends Controller
         }
 
         $announcement->fill($fields)->forceFill(['edited_at' => now()])->save();
+        $announcement->syncAttachments($request->file('files', []), (array) $request->input('remove_files', []), $request->user()?->id);
 
         return back();
     }

@@ -55,6 +55,7 @@ class ComplaintController extends Controller
             // random filename
             $complaint->forceFill(['approval_status' => $needsApproval ? Complaint::APPROVAL_PENDING : Complaint::APPROVAL_APPROVED])->save();
             $complaint->log('submitted', $user);
+            $complaint->syncAttachments($request->file('files', []), [], $user?->id);
 
             return $complaint;
         });
@@ -109,6 +110,7 @@ class ComplaintController extends Controller
             }
 
             $complaint->forceFill(['edited_at' => now()])->save();
+            $complaint->syncAttachments($request->file('files', []), (array) $request->input('remove_files', []), $user?->id);
             $complaint->log($sentBackToQueue ? 'resubmitted' : 'edited', $user); // 'resubmitted' = back in the approval queue
         });
 
@@ -143,8 +145,8 @@ class ComplaintController extends Controller
 
     /**
      * Change the status (admin) and write it to the timeline so the resident can follow along.
-     * - Only the five allowed statuses are accepted.
-     * - A note is optional, except for "Rejected": the resident is owed a reason.
+     * - Public lifecycle statuses exclude rejection; declining a submission happens in moderation via remove().
+     * - A note is optional for ordinary status updates.
      * - A post still waiting for approval can't be moved along (the resident/community haven't seen it yet).
      */
     public function updateStatus(Request $request, Complaint $complaint): RedirectResponse
@@ -153,9 +155,9 @@ class ComplaintController extends Controller
 
         /** @var array{status: string, note?: string|null} $data */
         $data = $request->validate([
-            'status' => ['required', Rule::in(Complaint::STATUSES)],
-            'note' => ['nullable', 'string', 'min:5', 'max:300', 'required_if:status,Rejected'],
-        ], ['note.required_if' => 'Please give the resident a reason for rejecting this report.']);
+            'status' => ['required', Rule::in(array_values(array_diff(Complaint::STATUSES, ['Rejected'])))],
+            'note' => ['nullable', 'string', 'min:5', 'max:300'],
+        ]); 
 
         if (! $complaint->isApproved()) {
             throw ValidationException::withMessages(['status' => 'Approve this report before changing its status.']);
@@ -206,21 +208,30 @@ class ComplaintController extends Controller
             $complaint->forceFill([
                 'removed_at' => now(),
                 'removed_reason' => $reason,
-                'status' => 'Rejected',
             ])->save();
 
-            $complaint->log('status', $request->user(), 'Rejected', $reason);
+            $complaint->log('status', $request->user(), 'Removed', $reason);
         });
 
         return back();
     }
 
-    /** Admin: undo a removal. */
-    public function restore(Complaint $complaint): RedirectResponse
+    /**
+     * Admin: undo a removal (e.g. the wrong post was removed). The post comes back exactly as it was before,
+     * and a "restored" line is added to the timeline so the decision history stays honest.
+     */
+    public function restore(Request $request, Complaint $complaint): RedirectResponse
     {
         Gate::authorize('moderate', $complaint);
 
-        $complaint->forceFill(['removed_at' => null, 'removed_reason' => null])->save();
+        if ($complaint->isRemoved()) {
+            DB::transaction(function () use ($complaint, $request): void {
+                $complaint->forceFill(['removed_at' => null, 'removed_reason' => null])->save();
+                $complaint->log('restored', $request->user());
+            });
+        }
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Post restored.']);
 
         return back();
     }

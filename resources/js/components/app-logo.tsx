@@ -8,9 +8,9 @@ export default function AppLogo() {
 
     return (
         <>
-            <BrandMark size={32} />
+            <BrandMark size={32} className="transition-transform duration-500 ease-out group-hover:rotate-[-5deg] group-hover:scale-110" />
             <div className="ml-1 grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
+                <span className="truncate font-semibold transition-colors duration-300 group-hover:text-primary">
                     {page.barangay?.name || BRAND.place}
                 </span>
                 <span className="truncate text-xs opacity-60">

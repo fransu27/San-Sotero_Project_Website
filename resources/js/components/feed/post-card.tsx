@@ -12,16 +12,21 @@ import {
     MoreHorizontal,
     Pencil,
     RotateCcw,
-    Send,
     ThumbsDown,
     ThumbsUp,
     Trash2,
-    Volume2,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import {
+    AttachmentList,
+    AttachmentPicker,
+} from '@/components/feed/attachments';
+import type { Attachment } from '@/components/feed/attachments';
 import { Avatar } from '@/components/feed/avatar';
 import { fieldClass, PhotoEditor } from '@/components/feed/edit-fields';
+import { ZoomableImage } from '@/components/feed/image-lightbox';
+import PostModal from '@/components/feed/post-modal';
 import { StarRating } from '@/components/feed/star-rating';
 import {
     DropdownMenu,
@@ -46,7 +51,13 @@ type Comment = {
 };
 type TimelineEvent = {
     id: number;
-    type: 'submitted' | 'approved' | 'status' | 'edited' | 'resubmitted';
+    type:
+        | 'submitted'
+        | 'approved'
+        | 'status'
+        | 'edited'
+        | 'resubmitted'
+        | 'restored';
     status: string | null;
     note: string | null;
     ts: number;
@@ -79,6 +90,7 @@ export type Complaint = {
     removed: boolean;
     removed_reason: string | null;
     image_url: string | null;
+    attachments?: Attachment[];
     comments: Comment[];
     events: TimelineEvent[];
 };
@@ -93,11 +105,6 @@ export const statusColor: Record<Status | 'Approval' | 'Removed', string> = {
     Removed: '#8A94A0',
 };
 
-/** Text → voice with the browser's speech synthesis. Runs locally; nothing is sent to any server. */
-const speak = (text: string) => {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-};
 const today = () => new Date().toISOString().slice(0, 10);
 const actionBtn =
     'flex flex-1 items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-medium transition-colors hover:bg-muted';
@@ -139,16 +146,17 @@ export default function PostCard({
     isAdmin,
     statuses,
     categories,
+    allowStatusEdit = true,
 }: {
     c: Complaint;
     isAdmin: boolean;
     statuses: Status[];
     categories: string[];
+    allowStatusEdit?: boolean;
 }) {
     const { t, locale } = useLocale();
-    const [showComments, setShowComments] = useState(c.comments.length > 0);
+    const [showComments, setShowComments] = useState(false); // opens the pop-out with the post and its comments
     const [showTimeline, setShowTimeline] = useState(false);
-    const [body, setBody] = useState('');
 
     // reject / remove with a reason
     const [rejecting, setRejecting] = useState(false);
@@ -166,6 +174,8 @@ export default function PostCard({
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [newImage, setNewImage] = useState<File | null>(null);
     const [dropImage, setDropImage] = useState(false);
+    const [newFiles, setNewFiles] = useState<File[]>([]);
+    const [removeFileIds, setRemoveFileIds] = useState<number[]>([]);
     const fresh = () => ({
         title: c.title,
         description: c.description,
@@ -193,12 +203,11 @@ export default function PostCard({
         { year: 'numeric', month: 'short', day: 'numeric' },
     );
 
-    const send = () =>
-        body.trim() &&
+    const send = (body: string, done: () => void) =>
         router.post(
             `/complaints/${c.id}/comments`,
             { body },
-            { preserveScroll: true, onSuccess: () => setBody('') },
+            { preserveScroll: true, onSuccess: done },
         );
     const vote = (type: Vote) =>
         router.post(
@@ -267,6 +276,8 @@ export default function PostCard({
         setDraft(fresh());
         setNewImage(null);
         setDropImage(false);
+        setNewFiles([]);
+        setRemoveFileIds([]);
         setErrors({});
         setEditing(true);
     };
@@ -289,6 +300,8 @@ export default function PostCard({
                 is_anonymous: draft.anonymous,
                 image: newImage,
                 remove_image: dropImage,
+                files: newFiles,
+                remove_files: removeFileIds,
             },
             {
                 forceFormData: true,
@@ -320,6 +333,158 @@ export default function PostCard({
           ? t('status.Removed')
           : t(`status.${c.status}`);
 
+    // Like · dislike · comment row (shared by the card and its pop-out). Votes and comments need an approved post.
+    const actionBar = (
+        <div className="flex border-t border-border px-3 py-1.5">
+            <button
+                type="button"
+                onClick={() => vote('satisfied')}
+                aria-pressed={c.my_vote === 'satisfied'}
+                aria-label={`${t('post.satisfied')}: ${c.satisfied}`}
+                title={t('post.satisfied')}
+                className={cn(
+                    actionBtn,
+                    c.my_vote === 'satisfied'
+                        ? 'bg-[#0197F6]/10 text-[#0197F6]'
+                        : 'text-muted-foreground',
+                )}
+            >
+                <ThumbsUp
+                    size={18}
+                    fill={
+                        c.my_vote === 'satisfied'
+                            ? 'currentColor'
+                            : 'none'
+                    }
+                />
+                <span className="tabular-nums">{c.satisfied}</span>
+            </button>
+            <button
+                type="button"
+                onClick={() => vote('not_satisfied')}
+                aria-pressed={c.my_vote === 'not_satisfied'}
+                aria-label={`${t('post.notSatisfied')}: ${c.not_satisfied}`}
+                title={t('post.notSatisfied')}
+                className={cn(
+                    actionBtn,
+                    c.my_vote === 'not_satisfied'
+                        ? 'bg-[#D7263D]/10 text-[#D7263D]'
+                        : 'text-muted-foreground',
+                )}
+            >
+                <ThumbsDown
+                    size={18}
+                    fill={
+                        c.my_vote === 'not_satisfied'
+                            ? 'currentColor'
+                            : 'none'
+                    }
+                />
+                <span className="tabular-nums">{c.not_satisfied}</span>
+            </button>
+            <button
+                type="button"
+                onClick={() => setShowComments(true)}
+                aria-haspopup="dialog"
+                aria-label={`${t('post.comment')}: ${c.comments.length}`}
+                title={t('post.comment')}
+                className={cn(
+                    actionBtn,
+                    showComments
+                        ? 'text-[#0197F6]'
+                        : 'text-muted-foreground',
+                )}
+            >
+                <MessageCircle size={18} />
+                <span className="tabular-nums">
+                    {c.comments.length}
+                </span>
+            </button>
+        </div>
+    );
+
+    // The post as shown inside the pop-out (admin tools and the edit form stay on the card itself).
+    const postBody = (
+        <div>
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+                <Avatar
+                    name={name}
+                    src={c.author_avatar}
+                    anonymous={c.author === null}
+                />
+                <div className="min-w-0 flex-1">
+                    <p className="flex flex-wrap items-center gap-x-1.5 text-sm leading-5 font-semibold">
+                        <span className="truncate">{name}</span>
+                        {resolved && (
+                            <BadgeCheck
+                                size={16}
+                                className="shrink-0 text-[#0197F6]"
+                                aria-label={t('status.Resolved')}
+                            />
+                        )}
+                    </p>
+                    <p className="flex flex-wrap items-center gap-x-1.5 text-xs leading-5 text-muted-foreground">
+                        <span>{timeAgo(c.ts, locale)}</span>
+                        {c.edited && (
+                            <>
+                                <span aria-hidden>•</span>
+                                <span className="italic">{t('post.edited')}</span>
+                            </>
+                        )}
+                        <span aria-hidden>•</span>
+                        <span>{categoryLabel}</span>
+                        <span aria-hidden>•</span>
+                        <span className="inline-flex items-center gap-1">
+                            <MapPin size={11} />
+                            {c.location}
+                        </span>
+                    </p>
+                </div>
+                <span
+                    className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
+                    style={{
+                        color: chipColor,
+                        backgroundColor: `${chipColor}22`,
+                    }}
+                >
+                    {resolved ? (
+                        <BadgeCheck size={13} />
+                    ) : (
+                        <span
+                            className="size-1.5 rounded-full"
+                            style={{ backgroundColor: chipColor }}
+                        />
+                    )}
+                    {chipText}
+                </span>
+            </div>
+            <div className="px-4 pb-3">
+                <h3 className="text-base leading-6 font-semibold">{c.title}</h3>
+                <p className="mt-1 text-sm leading-6 whitespace-pre-line">
+                    {c.description}
+                </p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                    {t('post.happened', { date: prettyDate })}
+                </p>
+            </div>
+            {c.image_url && (
+                <div className="px-4 pb-3">
+                    <ZoomableImage
+                        src={c.image_url}
+                        alt={c.title}
+                        className="max-h-[420px] w-full rounded-lg border border-border object-contain"
+                    />
+                </div>
+            )}
+            {(c.attachments?.length ?? 0) > 0 && (
+                <AttachmentList
+                    files={c.attachments ?? []}
+                    className="px-4 pb-3"
+                />
+            )}
+        </div>
+    );
+
     return (
         <article
             className={cn(
@@ -332,24 +497,37 @@ export default function PostCard({
             )}
         >
             {c.removed && (
-                <div className="flex items-start gap-2 bg-[#D7263D]/15 px-5 py-2.5 text-sm text-[#ff6b7f]">
+                <div className="flex flex-wrap items-start gap-2 bg-[#D7263D]/15 px-4 py-2.5 text-sm text-[#b3182c] dark:text-[#ff6b7f]">
                     <Ban size={16} className="mt-0.5 shrink-0" />
-                    <p>
+                    <p className="min-w-0 flex-1">
                         <span className="font-semibold">
                             {t(
-                                c.status === 'Rejected'
-                                    ? 'post.rejectedBanner'
-                                    : 'post.removedBanner',
+                                'post.removedBanner',
                             )}
                         </span>{' '}
                         {t('post.reason', { reason: c.removed_reason ?? '' })}
                     </p>
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            onClick={() =>
+                                router.patch(
+                                    `/complaints/${c.id}/restore`,
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
+                            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-[#D7263D]/50 bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
+                        >
+                            <RotateCcw size={14} /> {t('post.restore')}
+                        </button>
+                    )}
                 </div>
             )}
 
             {/* Waiting for approval: the resident is told; the admin gets Approve / Reject */}
             {waiting && (
-                <div className="flex flex-wrap items-center gap-3 bg-[#E0A100]/15 px-5 py-3 text-sm">
+                <div className="flex flex-wrap items-center gap-3 bg-[#E0A100]/15 px-4 py-3 text-sm">
                     <ClipboardCheck
                         size={18}
                         className="shrink-0 text-[#E0A100]"
@@ -383,7 +561,7 @@ export default function PostCard({
             )}
 
             {/* Header */}
-            <div className="flex items-center gap-3 px-5 pt-4 pb-3">
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3">
                 <Avatar
                     name={name}
                     src={c.author_avatar}
@@ -449,7 +627,7 @@ export default function PostCard({
                     </p>
                 </div>
 
-                {isAdmin && live ? (
+                {isAdmin && live && allowStatusEdit ? (
                     <select
                         value={nextStatus ?? c.status}
                         aria-label={t('post.status')}
@@ -457,7 +635,7 @@ export default function PostCard({
                         style={{ color: statusColor[nextStatus ?? c.status] }}
                         onChange={(e) => pickStatus(e.target.value)}
                     >
-                        {statuses.map((s) => (
+                        {statuses.filter((s) => s !== 'Rejected').map((s) => (
                             <option key={s} value={s}>
                                 {t(`status.${s}`)}
                             </option>
@@ -540,7 +718,7 @@ export default function PostCard({
             </div>
 
             {/* Admin: confirm a status change, with an optional note (required for Rejected) */}
-            {nextStatus && (
+            {allowStatusEdit && nextStatus && (
                 <div className="mx-5 mb-3 space-y-2 rounded-lg border border-input bg-muted/40 p-3">
                     <p className="text-sm font-medium">
                         {t('tl.status', { status: t(`status.${nextStatus}`) })}
@@ -599,8 +777,12 @@ export default function PostCard({
                         rows={2}
                         maxLength={300}
                         value={reason}
-                        onChange={(e) => setReason(e.target.value)}
+                        onChange={(e) => {
+                            setReason(e.target.value);
+                            setReasonError(null);
+                        }}
                         placeholder={t('post.rejectPh')}
+                        aria-required="true"
                         className={fieldClass}
                     />
                     {reasonError && (
@@ -619,12 +801,14 @@ export default function PostCard({
                         >
                             {t('post.cancel')}
                         </button>
+                        {/* The button stays disabled until a reason is typed, so a post can never be removed without one. */}
                         <button
                             type="button"
                             onClick={confirmReject}
-                            className="rounded-lg bg-[#D7263D] px-3 py-1.5 text-sm font-medium text-white"
+                            disabled={reason.trim().length < 5}
+                            className="rounded-lg bg-[#D7263D] px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {t('post.rejectBtn')}
+                            {t(live ? 'post.deleteBtn' : 'post.rejectBtn')}
                         </button>
                     </div>
                 </div>
@@ -632,7 +816,7 @@ export default function PostCard({
 
             {/* Body: edit form OR the post */}
             {editing ? (
-                <div className="space-y-3 px-5 pb-4">
+                <div className="space-y-3 px-4 pb-3">
                     <input
                         className={fieldClass}
                         maxLength={150}
@@ -810,6 +994,18 @@ export default function PostCard({
                         onRemove={setDropImage}
                         error={errors.image}
                     />
+                    <AttachmentPicker
+                        files={newFiles}
+                        onFiles={setNewFiles}
+                        existing={c.attachments ?? []}
+                        removedIds={removeFileIds}
+                        onRemoveExisting={setRemoveFileIds}
+                        error={
+                            Object.entries(errors).find(([k]) =>
+                                k.startsWith('files'),
+                            )?.[1]
+                        }
+                    />
                     <div className="flex justify-end gap-2 pt-1">
                         <button
                             type="button"
@@ -830,7 +1026,7 @@ export default function PostCard({
                 </div>
             ) : (
                 <>
-                    <div className="px-5 pb-4">
+                    <div className="px-4 pb-3">
                         <h3
                             className={cn(
                                 'text-base leading-6 font-semibold',
@@ -854,20 +1050,25 @@ export default function PostCard({
                         </p>
                     </div>
                     {c.image_url && (
-                        <div className="px-5 pb-4">
-                            <img
+                        <div className="px-4 pb-3">
+                            <ZoomableImage
                                 src={c.image_url}
                                 alt={c.title}
-                                loading="lazy"
-                                className="max-h-[520px] w-full rounded-lg border border-border object-cover"
+                                className="post-media max-h-[300px] w-full rounded-lg border border-border object-cover"
                             />
                         </div>
+                    )}
+                    {!hiddenFromMe && (c.attachments?.length ?? 0) > 0 && (
+                        <AttachmentList
+                            files={c.attachments ?? []}
+                            className="px-4 pb-3"
+                        />
                     )}
                 </>
             )}
 
             {resolved && !editing && (
-                <div className="flex items-center gap-2 border-t border-border bg-[#0197F6]/10 px-5 py-2.5 text-sm font-medium text-[#0197F6]">
+                <div className="flex items-center gap-2 border-t border-border bg-[#0197F6]/10 px-4 py-2.5 text-sm font-medium text-[#0197F6]">
                     <BadgeCheck size={16} /> {t('post.resolvedBar')}
                 </div>
             )}
@@ -879,13 +1080,13 @@ export default function PostCard({
                     avg={c.rating_avg}
                     count={c.rating_count}
                     mine={c.my_rating}
-                    closedAs={c.status === 'Rejected' ? 'Rejected' : 'Resolved'}
+                    closedAs={c.removed || c.status === 'Rejected' ? 'Resolved' : 'Resolved'}
                 />
             )}
 
             {/* Progress timeline: every submit / approval / status change, so the resident can follow along */}
             {!hiddenFromMe && !editing && c.events.length > 0 && (
-                <div className="border-t border-border px-5 py-3">
+                <div className="border-t border-border px-4 py-3">
                     <button
                         type="button"
                         onClick={() => setShowTimeline((v) => !v)}
@@ -935,125 +1136,21 @@ export default function PostCard({
                 </div>
             )}
 
-            {/* Action bar: Satisfied · Not satisfied · Listen · Comment (votes and comments only on approved posts) */}
-            {!hiddenFromMe && !editing && (
-                <div className="flex flex-wrap border-t border-border px-3 py-1.5">
-                    {live && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={() => vote('satisfied')}
-                                aria-pressed={c.my_vote === 'satisfied'}
-                                className={cn(
-                                    actionBtn,
-                                    c.my_vote === 'satisfied'
-                                        ? 'bg-[#0197F6]/10 text-[#0197F6]'
-                                        : 'text-muted-foreground',
-                                )}
-                            >
-                                <ThumbsUp
-                                    size={16}
-                                    fill={
-                                        c.my_vote === 'satisfied'
-                                            ? 'currentColor'
-                                            : 'none'
-                                    }
-                                />{' '}
-                                {t('post.satisfied')}{' '}
-                                <span className="tabular-nums">
-                                    {c.satisfied}
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => vote('not_satisfied')}
-                                aria-pressed={c.my_vote === 'not_satisfied'}
-                                className={cn(
-                                    actionBtn,
-                                    c.my_vote === 'not_satisfied'
-                                        ? 'bg-[#D7263D]/10 text-[#D7263D]'
-                                        : 'text-muted-foreground',
-                                )}
-                            >
-                                <ThumbsDown
-                                    size={16}
-                                    fill={
-                                        c.my_vote === 'not_satisfied'
-                                            ? 'currentColor'
-                                            : 'none'
-                                    }
-                                />{' '}
-                                {t('post.notSatisfied')}{' '}
-                                <span className="tabular-nums">
-                                    {c.not_satisfied}
-                                </span>
-                            </button>
-                        </>
-                    )}
-                    <button
-                        type="button"
-                        onClick={() => speak(`${c.title}. ${c.description}`)}
-                        className={cn(actionBtn, 'text-muted-foreground')}
-                    >
-                        <Volume2 size={16} /> {t('post.listen')}
-                    </button>
-                    {live && (
-                        <button
-                            type="button"
-                            onClick={() => setShowComments((v) => !v)}
-                            className={cn(actionBtn, 'text-muted-foreground')}
-                        >
-                            <MessageCircle size={16} /> {t('post.comment')}
-                            {c.comments.length > 0 && ` (${c.comments.length})`}
-                        </button>
-                    )}
-                </div>
-            )}
+            {/* Action bar: like · dislike · comment. Icons + counts only (names stay as accessible labels/tooltips).
+                Votes and comments are only possible on approved posts. Comment opens the pop-out. */}
+            {!hiddenFromMe && !editing && live && actionBar}
 
-            {live && showComments && !editing && (
-                <div className="space-y-3 border-t border-border px-5 py-4">
-                    {c.comments.map((m) => (
-                        <div key={m.id} className="flex gap-2">
-                            <Avatar
-                                name={m.author ?? t('post.anon')}
-                                src={m.avatar}
-                                anonymous={m.author === null}
-                                staff={m.staff}
-                                size={28}
-                            />
-                            <div className="rounded-2xl bg-[#F0F2F5] px-3 py-1.5 text-[13px] leading-5 dark:bg-muted">
-                                <span className="font-semibold">
-                                    {m.author ?? t('post.anon')}
-                                </span>
-                                {m.staff && (
-                                    <span className="ml-1 rounded bg-[#0197F6] px-1.5 py-0.5 text-[10px] text-white">
-                                        {t('post.barangay')}
-                                    </span>
-                                )}
-                                <p>{m.body}</p>
-                            </div>
-                        </div>
-                    ))}
-                    <div className="flex gap-2">
-                        <input
-                            value={body}
-                            maxLength={1000}
-                            onChange={(e) => setBody(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && send()}
-                            placeholder={t('post.writeComment')}
-                            aria-label={t('post.writeComment')}
-                            className="w-full rounded-full bg-[#F0F2F5] px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0197F6]/40 dark:bg-muted"
-                        />
-                        <button
-                            type="button"
-                            onClick={send}
-                            aria-label={t('post.sendComment')}
-                            className="rounded-full bg-[#0197F6] p-2.5 text-white"
-                        >
-                            <Send size={15} />
-                        </button>
-                    </div>
-                </div>
+            {live && !editing && (
+                <PostModal
+                    open={showComments}
+                    onOpenChange={setShowComments}
+                    title={name}
+                    comments={c.comments}
+                    onSend={send}
+                >
+                    {postBody}
+                    {actionBar}
+                </PostModal>
             )}
         </article>
     );

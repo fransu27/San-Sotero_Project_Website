@@ -39,7 +39,7 @@ export default function Login({ status, canResetPassword }: Props) {
             <PasskeyVerify />
 
             {status && (
-                <div className="mb-4 rounded-lg bg-[#448FA3]/15 p-3 text-center text-sm font-medium text-chart-3">
+                <div className="mb-5 rounded-xl border border-[#448FA3]/25 bg-[#448FA3]/10 p-3.5 text-center text-sm font-medium text-chart-3">
                     {status}
                 </div>
             )}
@@ -47,17 +47,19 @@ export default function Login({ status, canResetPassword }: Props) {
             <Form
                 {...store.form()}
                 resetOnSuccess={['password']}
-                className="flex flex-col gap-5"
+                className="auth-form flex flex-col gap-5"
             >
                 {({ processing, errors }) => (
                     <>
-                        <div className="grid gap-6">
+                        <div className="grid gap-5">
                             <div className="grid gap-2">
                                 <Label htmlFor="email">Email address</Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     name="email"
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby={errors.email ? 'email-error' : undefined}
                                     required
                                     autoFocus
                                     tabIndex={1}
@@ -66,7 +68,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     spellCheck={false}
                                     placeholder="email@example.com"
                                 />
-                                <InputError message={errors.email} />
+                                <InputError id="email-error" message={errors.email} />
                             </div>
 
                             <div className="grid gap-2">
@@ -85,12 +87,14 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <PasswordInput
                                     id="password"
                                     name="password"
+                                    aria-invalid={Boolean(errors.password)}
+                                    aria-describedby={errors.password ? 'password-error' : undefined}
                                     required
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
                                 />
-                                <InputError message={errors.password} />
+                                <InputError id="password-error" message={errors.password} />
                             </div>
 
                             <div className="flex items-center space-x-3">
@@ -105,7 +109,7 @@ export default function Login({ status, canResetPassword }: Props) {
                             <Button
                                 type="submit"
                                 size="lg"
-                                className="mt-2 w-full"
+                                className="mt-2 w-full rounded-xl bg-[#0197F6] font-semibold shadow-lg shadow-[#0197F6]/20 transition duration-300 hover:-translate-y-0.5 hover:bg-[#087fd0]"
                                 tabIndex={4}
                                 disabled={processing}
                                 data-test="login-button"
