@@ -75,6 +75,16 @@ class PasswordResetTest extends TestCase
                 ->assertSessionHasNoErrors()
                 ->assertRedirect(route('login'));
 
+            $this->assertTrue(password_verify('Password123', $user->fresh()->password));
+
+            // A reset token must not be reusable after the broker has consumed it.
+            $this->post(route('password.update'), [
+                'token' => $notification->token,
+                'email' => $user->email,
+                'password' => 'AnotherPassword123',
+                'password_confirmation' => 'AnotherPassword123',
+            ])->assertSessionHasErrors('email');
+
             return true;
         });
     }

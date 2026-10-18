@@ -44,7 +44,7 @@ class SubmissionController extends Controller
                 $q->where(fn (Builder $w) => $w->where('ticket_code', 'like', $like)
                     ->orWhere('title', 'like', $like));
             })
-            ->with('events.user:id,role')
+            ->with(['events.user:id,role', 'attachments'])
             ->withCount(['reactions', 'comments'])
             ->when($sort === 'reacted', fn (Builder $q) => $q->orderByDesc('reactions_count'))
             ->latest()
@@ -128,6 +128,7 @@ class SubmissionController extends Controller
             'removed' => $removed,
             'feedback' => $c->removed_reason ?: $staffNote,
             'image_url' => ($c->image_path && ! $removed) ? '/media/'.ltrim($c->image_path, '/') : null,
+            'attachments' => $removed ? [] : $c->presentAttachments(),
             'reactions' => (int) $c->reactions_count,
             'comments' => (int) $c->comments_count,
             'events' => $c->events->map(fn ($e) => [

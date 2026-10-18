@@ -54,6 +54,8 @@ class ComplaintRequest extends FormRequest
             'is_anonymous' => ['boolean'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['boolean'],
+            // PDF / Office files so the barangay can review them before approving
+            ...Complaint::attachmentRules(),
         ];
     }
 

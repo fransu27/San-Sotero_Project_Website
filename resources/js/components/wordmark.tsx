@@ -8,12 +8,17 @@ export default function Wordmark() {
 
     return (
         <span className="flex items-center gap-3">
-            <BrandMark size={40} />
+            <BrandMark
+                size={40}
+                className="transition-transform duration-500 ease-out group-hover:scale-110 group-hover:rotate-[-5deg]"
+            />
             <span className="grid leading-tight">
-                <span className="text-[14px] font-semibold">
+                <span className="text-[14px] font-semibold transition-colors duration-300 group-hover:text-[rgb(var(--w-accent)/1)]">
                     {barangay?.name || BRAND.place}
                 </span>
-                <span className="text-[11px] opacity-60">{BRAND.product}</span>
+                <span className="text-[11px] opacity-60 transition-opacity duration-300 group-hover:opacity-90">
+                    {BRAND.product}
+                </span>
             </span>
         </span>
     );

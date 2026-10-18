@@ -15,11 +15,15 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'public-newsfeed': // guest page draws its own header/rail; never wrap it in the app sidebar
+            case name === 'track-complaint': // public PIN lookup has its own compact responsive layout
                 return null;
             case name === 'dashboard':
             case name === 'newsfeed':
+            case name === 'announcements':
             case name === 'submissions':
             case name === 'admin/moderation':
+            case name === 'admin/walk-in-complaint':
                 return FeedLayout; // Facebook-style shell (top bar + left nav)
             case name.startsWith('auth/'):
                 return AuthLayout;

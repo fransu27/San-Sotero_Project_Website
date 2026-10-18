@@ -15,7 +15,7 @@ class ProfileUpdateRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'name' => trim(strip_tags((string) $this->input('name'))),
+            'name' => preg_replace('/\s+/u', ' ', trim(strip_tags((string) $this->input('name')))) ?? '',
             'phone' => preg_replace('/[\s\-().]/', '', (string) $this->input('phone')),
             // the switch posts "1"/"0" (or nothing at all when it is not on the form, e.g. for admins)
             'anonymous_default' => $this->boolean('anonymous_default'),

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasAttachments;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -37,6 +39,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Announcement extends Model
 {
+    use HasAttachments;
+
     /** Languages an announcement can be written in (order = fallback order). */
     public const LOCALES = ['en', 'tl', 'ceb', 'war'];
 
@@ -72,5 +76,17 @@ class Announcement extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** @return HasMany<AnnouncementReaction, $this> */
+    public function reactions(): HasMany
+    {
+        return $this->hasMany(AnnouncementReaction::class);
+    }
+
+    /** @return HasMany<AnnouncementComment, $this> */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(AnnouncementComment::class)->oldest();
     }
 }

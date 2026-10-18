@@ -1,22 +1,34 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    Ban,
+    BadgeCheck,
     CalendarDays,
+    CheckCircle2,
     ChevronDown,
+    ClipboardCheck,
     Eye,
     Globe,
+    LayoutList,
+    Loader,
     Lock,
     MapPin,
     MessageCircle,
     Search,
     Tag,
     X,
+    XCircle,
     ThumbsUp,
     UserRound,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { AttachmentList } from '@/components/feed/attachments';
+import type { Attachment } from '@/components/feed/attachments';
+import { ZoomableImage } from '@/components/feed/image-lightbox';
 import { statusColor } from '@/components/feed/post-card';
 import TicketCode from '@/components/feed/ticket-code';
+import TimeWidget from '@/components/feed/time-widget';
 import { useLocale } from '@/hooks/use-locale';
 import { DATE_LOCALE, timeAgo } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -43,6 +55,7 @@ type Row = {
     removed: boolean;
     feedback: string | null;
     image_url: string | null;
+    attachments?: Attachment[];
     reactions: number;
     comments: number;
     events: {
@@ -77,6 +90,28 @@ const CHIPS = [
     'rejected',
     'removed',
 ] as const;
+
+// Icon + dot colour of every state, used by the left filter list and the right summary widget.
+const CHIP_ICON: Record<(typeof CHIPS)[number], LucideIcon> = {
+    all: LayoutList,
+    awaiting: ClipboardCheck,
+    approved: CheckCircle2,
+    under_review: Eye,
+    in_progress: Loader,
+    resolved: BadgeCheck,
+    rejected: XCircle,
+    removed: Ban,
+};
+const CHIP_COLOR: Record<(typeof CHIPS)[number], string> = {
+    all: '#0197F6',
+    awaiting: statusColor.Approval,
+    approved: '#2E8B57',
+    under_review: statusColor['Under Review'],
+    in_progress: statusColor['In Progress'],
+    resolved: statusColor.Resolved,
+    rejected: statusColor.Rejected,
+    removed: statusColor.Removed,
+};
 
 export default function Submissions({
     rows,
@@ -146,147 +181,239 @@ export default function Submissions({
     return (
         <>
             <Head title={t('sub.title')} />
-            <div className="mx-auto max-w-3xl space-y-4">
-                <header>
-                    <h1 className="text-2xl font-semibold tracking-tight">
-                        {t('sub.title')}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        {t('sub.desc')}
-                    </p>
-                </header>
-
-                <form onSubmit={search} role="search" className="flex gap-2">
-                    <div className="relative min-w-0 flex-1">
-                        <Search
-                            size={16}
-                            aria-hidden
-                            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
-                        />
-                        <input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            maxLength={100}
-                            placeholder={t('sub.search')}
-                            aria-label={t('sub.search')}
-                            className="w-full rounded-lg border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus:border-[#0197F6] focus:ring-2 focus:ring-[#0197F6]/30"
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:ring-offset-2 focus-visible:outline-none"
-                    >
-                        {t('sub.searchBtn')}
-                    </button>
-                </form>
-
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div
-                        role="group"
-                        aria-label={t('sub.title')}
-                        className="flex flex-wrap gap-2 px-1 pb-1"
-                    >
-                        {CHIPS.map((chip) => {
-                            const value = chip === 'all' ? null : chip;
-                            const active = filters.status === value;
-
-                            return (
-                                <button
-                                    key={chip}
-                                    type="button"
-                                    aria-pressed={active}
-                                    onClick={() => go({ status: value })}
-                                    className={cn(
-                                        'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
-                                        active
-                                            ? 'border-[#0197F6] bg-[#0197F6]/10 text-[#0197F6]'
-                                            : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground',
-                                    )}
-                                >
-                                    {t(`sub.f.${chip}`)}
-                                    <span className="text-xs tabular-nums opacity-80">
-                                        {tally[chip] ?? 0}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {t('sub.sort')}
-                        <select
-                            value={filters.sort}
-                            onChange={(e) =>
-                                go({ sort: e.target.value as Filters['sort'] })
-                            }
-                            className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0197F6]/30"
+            {/* Same three-column shape as the Newsfeed: filters + time on the left, the list in the middle, the numbers on the right. */}
+            <div className="grid gap-4 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[272px_minmax(0,720px)_280px] xl:justify-center">
+                <aside
+                    aria-label={t('sub.title')}
+                    className="sticky top-[76px] hidden h-fit max-h-[calc(100vh-92px)] space-y-4 self-start overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm lg:block"
+                >
+                    <TimeWidget />
+                    <div className="space-y-2.5">
+                        <p className="px-1 text-xs font-bold tracking-wider text-muted-foreground uppercase">
+                            {t('sub.title')}
+                        </p>
+                        <nav
+                            className="flex flex-col gap-2"
+                            aria-label={t('sub.title')}
                         >
-                            <option value="new">{t('sub.sort.new')}</option>
-                            <option value="reacted">
-                                {t('sub.sort.reacted')}
-                            </option>
-                        </select>
-                    </label>
+                            {CHIPS.map((chip) => {
+                                const value = chip === 'all' ? null : chip;
+                                const active = filters.status === value;
+                                const Icon = CHIP_ICON[chip];
+
+                                return (
+                                    <button
+                                        key={chip}
+                                        type="button"
+                                        aria-pressed={active}
+                                        aria-current={
+                                            active ? 'page' : undefined
+                                        }
+                                        onClick={() => go({ status: value })}
+                                        className={cn(
+                                            'nav-fill-link flex w-full gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium',
+                                            active && 'is-active',
+                                        )}
+                                    >
+                                        <Icon size={18} className="shrink-0" />
+                                        <span className="flex-1 text-left">
+                                            {t(`sub.f.${chip}`)}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </div>
+                </aside>
+
+                <div className="min-w-0 space-y-4">
+                    <header>
+                        <h1 className="text-2xl font-semibold tracking-tight">
+                            {t('sub.title')}
+                        </h1>
+                        <p className="text-sm text-muted-foreground">
+                            {t('sub.desc')}
+                        </p>
+                    </header>
+
+                    <form
+                        onSubmit={search}
+                        role="search"
+                        className="flex gap-2"
+                    >
+                        <div className="relative min-w-0 flex-1">
+                            <Search
+                                size={16}
+                                aria-hidden
+                                className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+                            />
+                            <input
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                maxLength={100}
+                                placeholder={t('sub.search')}
+                                aria-label={t('sub.search')}
+                                className="w-full rounded-lg border border-input bg-background py-2 pr-3 pl-9 text-sm outline-none focus:border-[#0197F6] focus:ring-2 focus:ring-[#0197F6]/30"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:ring-offset-2 focus-visible:outline-none"
+                        >
+                            {t('sub.searchBtn')}
+                        </button>
+                    </form>
+
+                    <div className="flex flex-wrap items-center justify-between gap-2 lg:justify-end">
+                        {/* Phones and tablets keep the filter chips here; from laptop width they live in the left panel. */}
+                        <div
+                            role="group"
+                            aria-label={t('sub.title')}
+                            className="flex flex-wrap gap-2 px-1 pb-1 lg:hidden"
+                        >
+                            {CHIPS.map((chip) => {
+                                const value = chip === 'all' ? null : chip;
+                                const active = filters.status === value;
+
+                                return (
+                                    <button
+                                        key={chip}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => go({ status: value })}
+                                        className={cn(
+                                            'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#0197F6]',
+                                            active
+                                                ? 'border-[#0678c5] bg-[#0678c5] text-white shadow-md shadow-[#0678c5]/30 dark:border-[#0a74c4] dark:bg-[#0a74c4]'
+                                                : 'border-border text-muted-foreground hover:border-[#0197F6]/50 hover:bg-[#0197F6]/10 hover:text-foreground',
+                                        )}
+                                    >
+                                        {t(`sub.f.${chip}`)}
+                                        <span className="text-xs tabular-nums opacity-80">
+                                            {tally[chip] ?? 0}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {t('sub.sort')}
+                            <select
+                                value={filters.sort}
+                                onChange={(e) =>
+                                    go({
+                                        sort: e.target.value as Filters['sort'],
+                                    })
+                                }
+                                className="rounded-lg border border-input bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0197F6]/30"
+                            >
+                                <option value="new">{t('sub.sort.new')}</option>
+                                <option value="reacted">
+                                    {t('sub.sort.reacted')}
+                                </option>
+                            </select>
+                        </label>
+                    </div>
+
+                    {rows.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                {t(
+                                    filtering
+                                        ? 'sub.emptyFiltered'
+                                        : 'sub.emptyAll',
+                                )}
+                            </p>
+                            <Link
+                                href={
+                                    filtering ? '/my-submissions' : '/dashboard'
+                                }
+                                className="mt-3 inline-block rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90"
+                            >
+                                {t(filtering ? 'sub.clear' : 'sub.emptyCta')}
+                            </Link>
+                        </div>
+                    ) : (
+                        <ul className="space-y-3">
+                            {rows.map((r) => (
+                                <li key={r.id}>
+                                    <SubmissionCard
+                                        r={r}
+                                        onPreview={() => setPreview(r)}
+                                    />
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+
+                    {pagination.last > 1 && (
+                        <nav
+                            className="flex items-center justify-between gap-3 pt-1 text-sm"
+                            aria-label="Pagination"
+                        >
+                            <button
+                                type="button"
+                                disabled={pagination.page <= 1}
+                                onClick={() =>
+                                    go({ page: pagination.page - 1 })
+                                }
+                                className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                            >
+                                {t('sub.prev')}
+                            </button>
+                            <span className="text-muted-foreground">
+                                {t('sub.page', {
+                                    page: pagination.page,
+                                    last: pagination.last,
+                                })}{' '}
+                                · {t('sub.total', { n: pagination.total })}
+                            </span>
+                            <button
+                                type="button"
+                                disabled={pagination.page >= pagination.last}
+                                onClick={() =>
+                                    go({ page: pagination.page + 1 })
+                                }
+                                className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
+                            >
+                                {t('sub.next')}
+                            </button>
+                        </nav>
+                    )}
                 </div>
 
-                {rows.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-                        <p className="text-sm text-muted-foreground">
-                            {t(
-                                filtering
-                                    ? 'sub.emptyFiltered'
-                                    : 'sub.emptyAll',
-                            )}
-                        </p>
-                        <Link
-                            href={filtering ? '/my-submissions' : '/dashboard'}
-                            className="mt-3 inline-block rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#0197F6]/90"
-                        >
-                            {t(filtering ? 'sub.clear' : 'sub.emptyCta')}
-                        </Link>
+                <aside
+                    aria-label={t('sub.title')}
+                    className="hidden h-fit xl:sticky xl:top-[72px] xl:block"
+                >
+                    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                        <h2 className="mb-3 text-sm font-semibold">
+                            {t('sub.title')}
+                        </h2>
+                        <ul className="space-y-2 text-sm">
+                            {CHIPS.map((chip) => (
+                                <li
+                                    key={chip}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <span
+                                            className="size-2 rounded-full"
+                                            style={{
+                                                backgroundColor:
+                                                    CHIP_COLOR[chip],
+                                            }}
+                                        />
+                                        {t(`sub.f.${chip}`)}
+                                    </span>
+                                    <span className="font-semibold tabular-nums">
+                                        {tally[chip] ?? 0}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                ) : (
-                    <ul className="space-y-3">
-                        {rows.map((r) => (
-                            <li key={r.id}>
-                                <SubmissionCard
-                                    r={r}
-                                    onPreview={() => setPreview(r)}
-                                />
-                            </li>
-                        ))}
-                    </ul>
-                )}
-
-                {pagination.last > 1 && (
-                    <nav
-                        className="flex items-center justify-between gap-3 pt-1 text-sm"
-                        aria-label="Pagination"
-                    >
-                        <button
-                            type="button"
-                            disabled={pagination.page <= 1}
-                            onClick={() => go({ page: pagination.page - 1 })}
-                            className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
-                        >
-                            {t('sub.prev')}
-                        </button>
-                        <span className="text-muted-foreground">
-                            {t('sub.page', {
-                                page: pagination.page,
-                                last: pagination.last,
-                            })}{' '}
-                            · {t('sub.total', { n: pagination.total })}
-                        </span>
-                        <button
-                            type="button"
-                            disabled={pagination.page >= pagination.last}
-                            onClick={() => go({ page: pagination.page + 1 })}
-                            className="rounded-lg border border-border px-3 py-1.5 transition-colors hover:bg-muted disabled:opacity-40"
-                        >
-                            {t('sub.next')}
-                        </button>
-                    </nav>
-                )}
+                </aside>
             </div>
             {preview && (
                 <div
@@ -343,10 +470,11 @@ export default function Submissions({
                             </span>
                         </div>
                         {preview.image_url && (
-                            <img
+                            <ZoomableImage
                                 src={preview.image_url}
                                 alt={`Attachment for ${preview.title}`}
-                                className="mt-4 max-h-80 w-full rounded-xl border border-border object-contain"
+                                wrapperClassName="mt-4"
+                                className="max-h-80 w-full rounded-xl border border-border object-contain"
                             />
                         )}
                         <p className="mt-4 text-sm leading-6 whitespace-pre-wrap">
@@ -354,6 +482,12 @@ export default function Submissions({
                                 preview.excerpt ||
                                 'No description provided.'}
                         </p>
+                        {(preview.attachments?.length ?? 0) > 0 && (
+                            <AttachmentList
+                                files={preview.attachments ?? []}
+                                className="mt-4"
+                            />
+                        )}
                         <div className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
                             <div className="flex items-start gap-2 text-sm">
                                 <Tag
@@ -441,18 +575,16 @@ function SubmissionCard({ r, onPreview }: { r: Row; onPreview: () => void }) {
     const { t, locale } = useLocale();
     const [open, setOpen] = useState(false);
 
-    const rejected = r.removed || r.status === 'Rejected';
+    const rejected = r.removed;
     const waiting = r.approval === 'pending' && !r.removed;
     const color = waiting
         ? statusColor.Approval
         : rejected
-          ? r.status === 'Rejected'
-              ? statusColor.Rejected
-              : statusColor.Removed
+          ? statusColor.Removed
           : statusColor[r.status as keyof typeof statusColor];
     const label = waiting
         ? t('status.Approval')
-        : r.removed && r.status !== 'Rejected'
+        : r.removed
           ? t('status.Removed')
           : t(`status.${r.status}`);
     const category =
@@ -465,7 +597,12 @@ function SubmissionCard({ r, onPreview }: { r: Row; onPreview: () => void }) {
     );
     const eventLabel = (e: Row['events'][number]) =>
         e.type === 'status'
-            ? t('tl.status', { status: t(`status.${e.status}`) })
+            ? t('tl.status', {
+                  status:
+                      e.status === 'Rejected' || e.status === 'Removed'
+                          ? t('status.Removed')
+                          : t(`status.${e.status}`),
+              })
             : t(`tl.${e.type}`);
 
     return (
@@ -521,11 +658,11 @@ function SubmissionCard({ r, onPreview }: { r: Row; onPreview: () => void }) {
                     </p>
                 </div>
                 {r.image_url && (
-                    <img
+                    <ZoomableImage
                         src={r.image_url}
-                        alt=""
-                        loading="lazy"
-                        className="size-20 shrink-0 rounded-lg border border-border object-cover"
+                        alt={r.title}
+                        wrapperClassName="size-20 shrink-0"
+                        className="size-20 rounded-lg border border-border object-cover"
                     />
                 )}
             </div>

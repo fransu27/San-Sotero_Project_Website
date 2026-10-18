@@ -26,7 +26,7 @@ class ModerationController extends Controller
         $view = $filters['view'] ?? 'queue';
 
         $query = Complaint::query()
-            ->with(['user:id,name,email,avatar_path', 'events' => fn ($q) => $q->oldest('created_at')->oldest('id')])
+            ->with(['user:id,name,email,avatar_path', 'attachments', 'events' => fn ($q) => $q->oldest('created_at')->oldest('id')])
             ->when($view === 'queue', fn ($q) => $q->where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at'))
             ->when($view === 'reviewed', fn ($q) => $q->where(fn ($w) => $w->where('approval_status', Complaint::APPROVAL_APPROVED)->orWhereNotNull('removed_at')))
             ->when($filters['q'] ?? null, function ($q, $term) {
@@ -34,6 +34,8 @@ class ModerationController extends Controller
                 $q->where(fn ($w) => $w->where('ticket_code', 'like', $like)
                     ->orWhere('title', 'like', $like)
                     ->orWhere('description', 'like', $like)
+                    ->orWhere('reporter_name', 'like', $like)
+                    ->orWhere('reporter_contact', 'like', $like)
                     ->orWhereHas('user', fn ($u) => $u->where('name', 'like', $like)));
             })
             ->latest();
@@ -55,7 +57,12 @@ class ModerationController extends Controller
                 'created_at' => $c->created_at->toIso8601String(),
                 'author' => $c->user->name,
                 'author_email' => $c->user->email,
+                'intake_channel' => $c->intake_channel ?? 'online',
+                'reporter_name' => $c->reporter_name,
+                'reporter_contact' => $c->reporter_contact,
+                'entered_by_user_id' => $c->entered_by_user_id,
                 'image_url' => $this->photo($c->image_path),
+                'attachments' => $c->presentAttachments(),
                 'removed' => $c->isRemoved(),
                 'removed_reason' => $c->removed_reason,
                 'events' => $c->events->map(fn ($e) => [

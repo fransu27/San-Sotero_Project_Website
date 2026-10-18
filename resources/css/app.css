@@ -156,16 +156,666 @@
 }
 
 /*
- * Landing-page palette. The Welcome page used to be hard-coded dark; these three colours (as "R G B" triplets so
- * opacity works: rgb(var(--w-bg) / 0.5)) now follow the Dark / Light switch. Blue, red and teal accents stay the same.
+ * Landing-page palette. The Welcome page follows the Dark / Light switch through these "R G B" triplets
+ * (so opacity still works: rgb(var(--w-bg) / 0.5)). Blue, red and teal accents stay the same.
+ *
+ * LIGHT MODE is tuned for comfort: a soft neutral page (not glaring white or pale blue), pure-white cards that
+ * stand out with a visible border, a slightly deeper band colour for alternating sections, and dark slate text
+ * (secondary text >= 7:1, tertiary >= 5.5:1 contrast) instead of thin, semi-transparent grey.
  */
 .w-theme {
-    --w-bg: 244 249 252;
+    --w-bg: 245 247 250;
+    --w-card: 255 255 255;
+    --w-band: 233 239 245;
     --w-fg: 2 24 43;
+    --w-fg-2: 38 55 74; /* body copy */
+    --w-fg-3: 62 80 99; /* captions, footer */
+    --w-line: 203 213 224; /* card / section borders */
+    --w-line-strong: 134 154 173; /* buttons and inputs */
     --w-accent: 7 105 150;
+    --w-brand: 0 112 190; /* headline accent: readable blue on light */
+    --w-hero-a: 0.97;
+    --w-hero-b: 0.95;
+    --w-hero-c: 0.92;
 }
 .dark .w-theme {
     --w-bg: 2 24 43;
+    --w-card: 2 24 43;
+    --w-band: 2 30 52;
     --w-fg: 241 248 251;
+    --w-fg-2: 174 185 193;
+    --w-fg-3: 133 147 157;
+    --w-line: 20 58 80;
+    --w-line-strong: 28 67 87;
     --w-accent: 104 197 219;
+    --w-brand: 1 151 246;
+    --w-hero-a: 0.97;
+    --w-hero-b: 0.84;
+    --w-hero-c: 0.6;
+}
+
+/* Accessibility defaults: visible keyboard focus and reduced-motion support. */
+
+@layer base {
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+/*
+ * San Sotero landing-page motion: restrained reveal, anchor feedback, and brand interaction.
+ * These effects use CSS transforms/opacity only, and the existing reduced-motion rule above
+ * keeps them effectively disabled for visitors who request less motion.
+ */
+@keyframes sotero-reveal-in {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 22px, 0) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@keyframes sotero-target-glow {
+    0% {
+        box-shadow: 0 0 0 0 rgb(var(--w-accent) / 0);
+    }
+    35% {
+        box-shadow:
+            0 0 0 1px rgb(var(--w-accent) / 0.24),
+            0 20px 56px rgb(var(--w-accent) / 0.15);
+    }
+    100% {
+        box-shadow:
+            0 0 0 1px rgb(var(--w-accent) / 0.2),
+            0 14px 40px rgb(var(--w-accent) / 0.1);
+    }
+}
+
+.w-theme [data-reveal].reveal-pending:not(.is-visible) {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0) scale(0.99);
+}
+
+.w-theme [data-reveal].is-visible {
+    animation: sotero-reveal-in 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.w-theme section[id]:target {
+    border-radius: 1.25rem;
+    animation: sotero-target-glow 900ms ease-out both;
+    scroll-margin-top: 6rem;
+}
+
+.w-theme a,
+.w-theme button {
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .w-theme [data-reveal].reveal-pending:not(.is-visible) {
+        opacity: 1;
+        transform: none;
+    }
+
+    .w-theme [data-reveal].is-visible,
+    .w-theme section[id]:target {
+        animation: none;
+    }
+}
+
+/* Cohesive visual refresh: deeper surfaces, clearer active states, and restrained movement. */
+@keyframes sotero-enter {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 12px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+.auth-form-card {
+    animation: sotero-enter 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.auth-form input,
+.auth-form textarea,
+.auth-form select {
+    transition:
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        background-color 180ms ease;
+}
+
+.auth-form input:focus-visible,
+.auth-form textarea:focus-visible,
+.auth-form select:focus-visible {
+    box-shadow: 0 0 0 4px rgb(1 151 246 / 0.12);
+}
+
+.auth-form button[type='submit'] {
+    min-height: 2.85rem;
+}
+
+.dashboard-page > section,
+.dashboard-page .rounded-xl,
+.dashboard-page .rounded-2xl {
+    transition:
+        border-color 220ms ease,
+        box-shadow 220ms ease;
+}
+
+.dashboard-heading {
+    box-shadow: 0 18px 50px rgb(2 24 43 / 0.035);
+}
+
+.newsfeed-page article,
+.newsfeed-page [data-slot='card'] {
+    transition:
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        transform 220ms ease;
+}
+
+.w-theme nav a[aria-current='location'] {
+    background: rgb(var(--w-accent) / 0.12);
+    color: rgb(var(--w-accent) / 1);
+    box-shadow: 0 8px 24px rgb(var(--w-accent) / 0.16);
+    outline: 1px solid rgb(var(--w-accent) / 0.2);
+    outline-offset: -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-form-card {
+        animation: none;
+    }
+}
+
+.w-theme header {
+    box-shadow: 0 8px 28px rgb(var(--w-fg) / 0.035);
+}
+
+.w-theme section[id] {
+    transition:
+        box-shadow 260ms ease,
+        background-color 260ms ease;
+}
+
+.w-theme [data-reveal].is-visible {
+    will-change: opacity, transform;
+}
+
+.w-theme .rounded-3xl,
+.w-theme .rounded-2xl {
+    transition-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .w-theme [data-reveal].is-visible {
+        will-change: auto;
+    }
+}
+
+.dashboard-page .rounded-2xl.border.border-border.bg-card,
+.newsfeed-page .rounded-2xl.border.border-border.bg-card {
+    box-shadow: 0 8px 26px rgb(2 24 43 / 0.035);
+}
+
+.dashboard-page .rounded-2xl.border.border-border.bg-card:hover,
+.newsfeed-page .rounded-2xl.border.border-border.bg-card:hover {
+    border-color: rgb(1 151 246 / 0.28);
+    box-shadow: 0 16px 36px rgb(2 24 43 / 0.075);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-page *,
+    .newsfeed-page * {
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Shared surfaces used by submissions, moderation, settings, and other authenticated screens. */
+.bg-card.border,
+.bg-background.border {
+    border-color: color-mix(in srgb, var(--border) 82%, #68c5db 18%);
+    box-shadow: 0 8px 28px rgb(2 24 43 / 0.035);
+}
+
+.bg-card.border:has(button:hover),
+.bg-card.border:has(a:hover) {
+    box-shadow: 0 14px 34px rgb(2 24 43 / 0.07);
+}
+
+input:not([type='checkbox']):not([type='radio']),
+textarea,
+select {
+    border-radius: 0.75rem;
+}
+
+/* One springy curve for the whole app: it overshoots a little, so hovers and presses feel bouncy. */
+:root {
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+button,
+a {
+    transition-property:
+        color, background-color, border-color, box-shadow, transform;
+    transition-duration: 200ms, 200ms, 200ms, 240ms, 360ms;
+    transition-timing-function:
+        ease-out, ease-out, ease-out, ease-out, var(--ease-spring);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+ * Pill buttons  (.nav-fill-link) — same look as the "Show: New | Best | Hot" filter
+ *
+ *   rest    : quiet neutral pill (subtle border, normal text colour, no glow)
+ *   hover   : a soft blue tint FILLS in from the left, border turns blue
+ *   active  : filled tint + blue outline + faint glow (aria-current / .is-active)
+ *
+ * The fill is a background-size transition, so nothing is ever solid blue.
+ * Layout props live in @layer components (Tailwind utilities such as flex, size-12, px-3 can still override
+ * them); the visual props are un-layered so the generic `a, button` transition rule above cannot cancel
+ * the fill animation.
+ * ═════════════════════════════════════════════════════════════════════════ */
+:root {
+    --nav-accent: #0670b3; /* AA contrast on white */
+    --nav-fill: rgb(1 151 246 / 0.14);
+    --nav-fill-active: rgb(1 151 246 / 0.12);
+    /* Selected (clicked) buttons: solid blue with white text. Both pairs keep white text at AA contrast. */
+    --nav-selected: #0678c5;
+    --nav-selected-hover: #0568a8;
+    --nav-selected-glow: rgb(6 120 197 / 0.38);
+}
+.dark {
+    --nav-accent: #5cc0fa; /* AA contrast on the navy surface */
+    --nav-fill: rgb(1 151 246 / 0.22);
+    --nav-fill-active: rgb(1 151 246 / 0.2);
+    --nav-selected: #0a74c4;
+    --nav-selected-hover: #0e86de;
+    --nav-selected-glow: rgb(14 134 222 / 0.4);
+}
+
+@layer components {
+    .nav-fill-link {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+}
+
+.nav-fill-link {
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+    color: var(--foreground);
+    background-color: transparent;
+    background-image: linear-gradient(var(--nav-fill), var(--nav-fill));
+    background-repeat: no-repeat;
+    background-position: left center;
+    background-size: 0% 100%;
+    transition:
+        background-size 380ms var(--ease-smooth),
+        background-color 260ms ease,
+        color 200ms ease,
+        border-color 200ms ease,
+        box-shadow 280ms ease,
+        transform 420ms var(--ease-spring);
+}
+.nav-fill-link:hover {
+    background-size: 100% 100%;
+    border-color: rgb(1 151 246 / 0.55);
+    color: var(--nav-accent);
+    transform: translateY(-2px) scale(1.04);
+}
+.nav-fill-link:active {
+    transform: translateY(0) scale(0.95);
+    transition-duration: 380ms, 120ms, 120ms, 120ms, 120ms, 120ms;
+}
+.nav-fill-link:focus-visible {
+    background-size: 100% 100%;
+    outline: 2px solid #0197f6;
+    outline-offset: 2px;
+}
+/* Selected = solid blue + white text, so it is obvious which filter / page is on. */
+.nav-fill-link.is-active,
+.nav-fill-link[aria-current='page'],
+.nav-fill-link[aria-pressed='true'] {
+    background-image: none;
+    background-color: var(--nav-selected);
+    border-color: var(--nav-selected);
+    color: #fff;
+    box-shadow: 0 8px 18px -6px var(--nav-selected-glow);
+}
+.nav-fill-link.is-active:hover,
+.nav-fill-link[aria-current='page']:hover,
+.nav-fill-link[aria-pressed='true']:hover {
+    background-color: var(--nav-selected-hover);
+    border-color: var(--nav-selected-hover);
+    color: #fff;
+}
+
+/* Count bubble on the corner of an icon-only (collapsed) rail button. */
+.rail-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    min-width: 1.1rem;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: #0670b3;
+    color: #fff;
+    font-size: 0.625rem;
+    font-weight: 700;
+    line-height: 1.1rem;
+    text-align: center;
+}
+
+/* ── Motion: page-to-page and card entrances ──────────────────────────────
+ * "backwards" fill (not "both") so an animation never pins a transform after it ends,
+ * which would block hover-lift effects on the same element. */
+@keyframes ss-page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.page-enter {
+    animation: ss-page-enter 380ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.stagger-children > * {
+    animation: ss-page-enter 420ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+.stagger-children > *:nth-child(2) {
+    animation-delay: 60ms;
+}
+.stagger-children > *:nth-child(3) {
+    animation-delay: 110ms;
+}
+.stagger-children > *:nth-child(4) {
+    animation-delay: 160ms;
+}
+.stagger-children > *:nth-child(5) {
+    animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(n + 6) {
+    animation-delay: 240ms;
+}
+
+.hover-lift {
+    transition:
+        transform 220ms cubic-bezier(0.2, 0.7, 0.2, 1),
+        box-shadow 220ms ease,
+        border-color 220ms ease;
+}
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgb(2 24 43 / 0.09);
+}
+
+/* ── Sizing at 100% zoom: keep posts proportioned instead of filling the viewport ── */
+.newsfeed-page {
+    align-items: start;
+    gap: 1rem;
+}
+.newsfeed-page .post-media {
+    width: 100%;
+    max-height: min(34vh, 300px);
+    object-fit: cover;
+}
+@media (max-width: 1280px) {
+    .newsfeed-page .post-media {
+        max-height: min(30vh, 260px);
+    }
+}
+.dashboard-page {
+    max-width: 1080px;
+    font-size: 0.9rem;
+}
+.dashboard-page .dashboard-heading h1 {
+    font-size: clamp(1.6rem, 2vw, 2rem);
+}
+.dashboard-page .dashboard-heading {
+    padding: clamp(0.85rem, 1.3vw, 1.2rem);
+}
+.announcements-page {
+    min-width: 0;
+}
+
+/* Settings is a focused full-width workspace (no side panel). */
+.settings-workspace {
+    grid-column: 1 / -1;
+    width: 100%;
+}
+.settings-content {
+    animation: ss-page-enter 380ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+}
+
+/* Subtle press feedback for ordinary buttons (colour variants stay with the Button component). */
+button:not(.nav-fill-link):not(:disabled):active,
+[role='button']:not(.nav-fill-link):active {
+    transform: translateY(1px) scale(0.99);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-enter,
+    .stagger-children > *,
+    .settings-content,
+    .hover-lift,
+    .nav-fill-link {
+        animation: none !important;
+        transition: none !important;
+    }
+    .hover-lift:hover {
+        transform: none;
+    }
+    button:not(.nav-fill-link):not(:disabled):active,
+    [role='button']:not(.nav-fill-link):active {
+        transform: none;
+    }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+ * Motion system — smooth, springy and interactive everywhere.
+ *
+ *   • buttons lift and bounce on hover, squash a little when pressed
+ *   • cards float up under the pointer; photos zoom gently inside their frame
+ *   • dialogs, menus and the chat window spring open instead of just appearing
+ *   • a pressed like / dislike / filter icon pops
+ *
+ * Everything uses transform / opacity only (cheap for the GPU). The reduced-motion rule in @layer base above
+ * shrinks every animation and transition to ~0 ms for people who ask for less movement.
+ * ═════════════════════════════════════════════════════════════════════════ */
+@keyframes ss-pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(8px);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(1.02) translateY(-1px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+@keyframes ss-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+@keyframes ss-pop {
+    0% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.45) rotate(-8deg);
+    }
+    70% {
+        transform: scale(0.92);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+@keyframes ss-msg-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+@keyframes ss-ring {
+    0% {
+        box-shadow:
+            0 0 0 0 rgb(1 151 246 / 0.5),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
+    }
+    70% {
+        box-shadow:
+            0 0 0 16px rgb(1 151 246 / 0),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
+    }
+    100% {
+        box-shadow:
+            0 0 0 0 rgb(1 151 246 / 0),
+            0 10px 24px -6px rgb(2 24 43 / 0.35);
+    }
+}
+
+/* Buttons: bounce up on hover, squash on press. Pill buttons (.nav-fill-link) have their own stronger version. */
+@media (hover: hover) and (pointer: fine) {
+    button:where(
+            :not(
+                :disabled,
+                .nav-fill-link,
+                .zoom-frame,
+                .chat-fab,
+                .chat-report-row,
+                [role='menuitem'],
+                [role='option'],
+                [role='switch'],
+                [role='checkbox'],
+                [role='radio']
+            )
+        ):hover {
+        transform: translateY(-1px) scale(1.03);
+    }
+}
+button:where(
+        :not(
+            :disabled,
+            .nav-fill-link,
+            .chat-fab,
+            [role='menuitem'],
+            [role='option']
+        )
+    ):active {
+    transform: scale(0.95);
+    transition-duration: 200ms, 200ms, 200ms, 240ms, 110ms;
+}
+
+/* A like / dislike / selected filter icon pops when it turns on. */
+button[aria-pressed='true'] > svg:first-child,
+.nav-fill-link.is-active > svg:first-child {
+    animation: ss-pop 520ms var(--ease-spring);
+}
+
+/* Cards float up a little under the pointer. */
+article {
+    transition:
+        transform 380ms var(--ease-spring),
+        box-shadow 320ms ease,
+        border-color 240ms ease;
+}
+@media (hover: hover) and (pointer: fine) {
+    article:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 38px -14px rgb(2 24 43 / 0.2);
+    }
+}
+
+/* Photos zoom softly inside their rounded frame (click-to-enlarge buttons). */
+.zoom-frame {
+    overflow: hidden;
+}
+.zoom-frame > img {
+    transition: transform 600ms var(--ease-smooth);
+}
+.zoom-frame:hover > img {
+    transform: scale(1.04);
+}
+
+/* Dialogs and menus spring open. */
+[data-slot='dialog-overlay'][data-state='open'] {
+    animation: ss-fade-in 260ms ease-out both;
+}
+[data-slot='dialog-content'][data-state='open'] {
+    animation: ss-pop-in 440ms var(--ease-spring) both;
+}
+[data-slot='dropdown-menu-content'][data-state='open'] {
+    animation: ss-pop-in 300ms var(--ease-spring) both;
+    transform-origin: var(
+        --radix-dropdown-menu-content-transform-origin,
+        top right
+    );
+}
+
+/* Chat assistant: the window springs out of the button, messages slide in, the button breathes. */
+.chat-panel-enter {
+    animation: ss-pop-in 420ms var(--ease-spring) both;
+    transform-origin: bottom right;
+}
+.chat-msg-enter {
+    animation: ss-msg-in 340ms var(--ease-smooth) both;
+}
+.chat-fab {
+    animation: ss-ring 2.8s ease-out infinite;
+    transition:
+        transform 420ms var(--ease-spring),
+        background-color 200ms ease;
+}
+.chat-fab:hover {
+    animation-play-state: paused;
+    transform: scale(1.14) rotate(-8deg);
+}
+.chat-fab:active {
+    transform: scale(0.92);
+}
+.chat-report-row {
+    transition:
+        transform 320ms var(--ease-spring),
+        border-color 200ms ease,
+        box-shadow 240ms ease;
+}
+.chat-report-row:hover {
+    transform: translateX(4px);
+    box-shadow: 0 6px 16px -8px rgb(2 24 43 / 0.3);
 }

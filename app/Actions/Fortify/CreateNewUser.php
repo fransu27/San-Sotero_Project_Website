@@ -28,7 +28,7 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input): User
     {
         // (1) Normalise first so 'required' also catches tag-only or symbol-only input.
-        $input['name'] = trim(strip_tags((string) ($input['name'] ?? '')));
+        $input['name'] = preg_replace('/\s+/u', ' ', trim(strip_tags((string) ($input['name'] ?? '')))) ?? '';
         $input['phone'] = preg_replace('/[\s\-().]/', '', (string) ($input['phone'] ?? ''));
 
         // (2) Throws ValidationException -> Inertia shows each message under its field.
@@ -36,11 +36,12 @@ class CreateNewUser implements CreatesNewUsers
             ...$this->profileRules(),
             // Philippine mobile: 09XXXXXXXXX or +639XXXXXXXXX
             'phone' => ['required', 'string', 'regex:/^(09\d{9}|\+639\d{9})$/', 'unique:users,phone'],
-            'birthdate' => ['required', 'date', 'before:today', 'after:1900-01-01'],
+            'birthdate' => ['required', 'date', 'before_or_equal:18 years ago', 'after:1900-01-01'],
             'password' => $this->passwordRules(),
         ], [
             'phone.regex' => 'Enter a valid mobile number, like 09171234567.',
-            'birthdate.before' => 'Date of birth must be in the past.',
+            'name.regex' => 'Enter a name using letters, spaces, hyphens, or apostrophes only.',
+            'birthdate.before_or_equal' => 'You must be at least 18 years old to register.',
         ])->validate();
 
         // (3) + (4)

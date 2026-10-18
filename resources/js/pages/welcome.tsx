@@ -9,10 +9,20 @@ import {
     Megaphone,
     Building2,
     ShieldCheck,
+    Menu,
+    ArrowRight,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LanguageSwitcher from '@/components/language-switcher';
 import ThemeToggle from '@/components/theme-toggle';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import Wordmark, { PaletteStripe } from '@/components/wordmark';
 import { useLocale } from '@/hooks/use-locale';
 import { BRAND } from '@/lib/brand';
@@ -90,10 +100,10 @@ const categories: [string, string][] = [
 ];
 
 const card =
-    'rounded-xl border border-[rgb(var(--w-accent)/0.15)] bg-[#0197F6]/[0.05]';
-const wrap = 'mx-auto max-w-5xl px-6';
+    'rounded-3xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] shadow-[0_1px_2px_rgb(var(--w-fg)/0.06),0_8px_24px_rgb(var(--w-fg)/0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[rgb(var(--w-accent)/0.45)] hover:shadow-[0_22px_55px_rgb(var(--w-accent)/0.14)]';
+const wrap = 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8';
 const primaryBtn =
-    'rounded-lg bg-[#D7263D] px-5 py-2.5 text-[14px] font-medium text-white hover:bg-[#D7263D]/90';
+    'rounded-xl bg-[#D7263D] px-5 py-3 text-[14px] font-semibold text-white shadow-lg shadow-[#D7263D]/20 transition hover:-translate-y-0.5 hover:bg-[#bd2034] focus-visible:outline-offset-4';
 
 /** Small uppercase label above each section heading. */
 const Eyebrow = ({ children }: { children: string }) => (
@@ -116,45 +126,250 @@ export default function Welcome({
         };
     };
     const { t, locale } = useLocale();
+    // Signed-in residents/admins go straight to their real newsfeed; guests only get the read-only community feed.
+    const feedHref = auth.user ? '/newsfeed' : '/community';
     const [photoFailed, setPhotoFailed] = useState(false);
+    const [selectedSection, setSelectedSection] = useState('');
     const place = barangay.name || BRAND.place;
+
+    useEffect(() => {
+        const targets = Array.from(
+            document.querySelectorAll<HTMLElement>('[data-reveal]'),
+        );
+
+        if (!('IntersectionObserver' in window)) {
+            targets.forEach((target) => target.classList.add('is-visible'));
+
+            return;
+        }
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    const target = entry.target as HTMLElement;
+                    target.classList.add('reveal-pending');
+
+                    if (entry.isIntersecting) {
+                        target.classList.add('is-visible');
+                        observer.unobserve(target);
+                    }
+                });
+            },
+            { threshold: 0.12, rootMargin: '0px 0px -36px 0px' },
+        );
+
+        targets.forEach((target) => observer.observe(target));
+
+        return () => observer.disconnect();
+    }, []);
 
     return (
         <>
             <Head title={t('w.footer1')} />
-            <div className="w-theme min-h-screen scroll-smooth bg-[rgb(var(--w-bg))] text-[rgb(var(--w-fg))]">
+            <div className="w-theme page-enter min-h-screen scroll-smooth bg-[rgb(var(--w-bg))] text-[rgb(var(--w-fg))]">
                 <PaletteStripe />
+                <a
+                    href="#main-content"
+                    className="sr-only z-50 rounded-md bg-[rgb(var(--w-bg))] px-4 py-3 font-medium text-[rgb(var(--w-fg))] shadow focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:outline-2 focus:outline-offset-2 focus:outline-[rgb(var(--w-accent))]"
+                >
+                    Skip to main content
+                </a>
 
                 {/* Header */}
-                <header className="sticky top-0 z-10 border-b border-[rgb(var(--w-accent)/0.15)] bg-[rgb(var(--w-bg)/0.95)] backdrop-blur">
+                <header className="sticky top-0 z-10 border-b border-[rgb(var(--w-line))] bg-[rgb(var(--w-bg)/0.95)] backdrop-blur">
                     <div
-                        className={`${wrap} flex items-center justify-between py-3`}
+                        className={`${wrap} flex items-center justify-between py-4`}
                     >
-                        <Wordmark />
-                        <nav className="hidden items-center gap-6 text-[13px] text-[rgb(var(--w-fg)/0.75)] md:flex">
+                        <Link
+                            href="/"
+                            aria-label={`${place} — ${BRAND.product}, home`}
+                            className="group inline-flex rounded-xl transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-offset-4"
+                        >
+                            <Wordmark />
+                        </Link>
+                        <nav className="hidden items-center gap-6 text-[13px] text-[rgb(var(--w-fg-2))] md:flex">
+                            <Link
+                                href="/track-complaint"
+                                className="transition-colors hover:text-[rgb(var(--w-accent))]"
+                            >
+                                Track a complaint
+                            </Link>
                             <a
                                 href="#how-it-works"
-                                className="hover:text-white"
+                                onClick={() =>
+                                    setSelectedSection('how-it-works')
+                                }
+                                aria-current={
+                                    selectedSection === 'how-it-works'
+                                        ? 'location'
+                                        : undefined
+                                }
+                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'how-it-works' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
                             >
                                 {t('w.nav.how')}
                             </a>
-                            <a href="#features" className="hover:text-white">
+                            <a
+                                href="#features"
+                                onClick={() => setSelectedSection('features')}
+                                aria-current={
+                                    selectedSection === 'features'
+                                        ? 'location'
+                                        : undefined
+                                }
+                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'features' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
+                            >
                                 {t('w.nav.features')}
                             </a>
                             <a
                                 href="#announcements"
-                                className="hover:text-white"
+                                onClick={() =>
+                                    setSelectedSection('announcements')
+                                }
+                                aria-current={
+                                    selectedSection === 'announcements'
+                                        ? 'location'
+                                        : undefined
+                                }
+                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'announcements' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
                             >
                                 {t('w.nav.ann')}
                             </a>
+                            <Link
+                                href={feedHref}
+                                className="rounded-xl border border-[rgb(var(--w-accent)/0.22)] bg-[rgb(var(--w-accent)/0.06)] px-3 py-2 font-semibold text-[rgb(var(--w-accent)/1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                            >
+                                Community feed
+                            </Link>
                         </nav>
-                        <div className="flex items-center gap-3 text-[13px] sm:gap-4">
-                            <LanguageSwitcher tone="landing" />
+                        <div className="flex items-center gap-2 text-[12px] sm:gap-4 sm:text-[13px]">
+                            <div className="md:hidden">
+                                <Sheet>
+                                    <SheetTrigger asChild>
+                                        <button
+                                            type="button"
+                                            aria-label="Open site navigation"
+                                            className="inline-flex size-10 items-center justify-center rounded-xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] text-[rgb(var(--w-fg))] shadow-sm transition hover:border-[rgb(var(--w-accent)/0.5)] focus-visible:ring-2 focus-visible:ring-[rgb(var(--w-accent))] focus-visible:outline-none"
+                                        >
+                                            <Menu size={20} />
+                                        </button>
+                                    </SheetTrigger>
+                                    <SheetContent
+                                        side="left"
+                                        className="w-[min(86vw,320px)] border-[rgb(var(--w-line))] bg-[rgb(var(--w-bg))] p-0 text-[rgb(var(--w-fg))]"
+                                    >
+                                        <SheetHeader className="border-b border-[rgb(var(--w-line))] px-5 py-4 text-left">
+                                            <SheetTitle className="text-[rgb(var(--w-fg))]">
+                                                {place}
+                                            </SheetTitle>
+                                            <p className="text-sm text-[rgb(var(--w-fg-2))]">
+                                                {BRAND.product}
+                                            </p>
+                                        </SheetHeader>
+                                        <nav
+                                            className="grid gap-1 p-3"
+                                            aria-label="Mobile site navigation"
+                                        >
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#how-it-works"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'how-it-works',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <CheckCircle2 size={18} />
+                                                    {t('w.nav.how')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#features"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'features',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <ShieldCheck size={18} />
+                                                    {t('w.nav.features')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <a
+                                                    href="#announcements"
+                                                    onClick={() =>
+                                                        setSelectedSection(
+                                                            'announcements',
+                                                        )
+                                                    }
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <Bell size={18} />
+                                                    {t('w.nav.ann')}
+                                                </a>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <Link
+                                                    href="/track-complaint"
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <FileText size={18} />
+                                                    Track a complaint
+                                                </Link>
+                                            </SheetClose>
+                                            <SheetClose asChild>
+                                                <Link
+                                                    href={feedHref}
+                                                    className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                >
+                                                    <ArrowRight size={18} />
+                                                    Community feed
+                                                </Link>
+                                            </SheetClose>
+                                            {auth.user ? (
+                                                <SheetClose asChild>
+                                                    <Link
+                                                        href={dashboard()}
+                                                        className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                    >
+                                                        {t('w.dashboard')}
+                                                    </Link>
+                                                </SheetClose>
+                                            ) : (
+                                                <>
+                                                    <SheetClose asChild>
+                                                        <Link
+                                                            href={login()}
+                                                            className="flex min-h-12 items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium hover:bg-[rgb(var(--w-accent)/0.08)]"
+                                                        >
+                                                            {t('w.login')}
+                                                        </Link>
+                                                    </SheetClose>
+                                                    <SheetClose asChild>
+                                                        <Link
+                                                            href={register()}
+                                                            className="mt-2 flex min-h-12 items-center justify-center rounded-xl bg-[#D7263D] px-3 py-2 text-sm font-semibold text-white"
+                                                        >
+                                                            {t('w.register')}
+                                                        </Link>
+                                                    </SheetClose>
+                                                </>
+                                            )}
+                                        </nav>
+                                    </SheetContent>
+                                </Sheet>
+                            </div>
+                            <div className="hidden sm:block">
+                                <LanguageSwitcher tone="landing" />
+                            </div>
                             <ThemeToggle tone="landing" />
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="hover:text-white"
+                                    className="hidden hover:text-[rgb(var(--w-accent)/1)] md:inline-flex"
                                 >
                                     {t('w.dashboard')}
                                 </Link>
@@ -162,14 +377,14 @@ export default function Welcome({
                                 <>
                                     <Link
                                         href={login()}
-                                        className="text-[rgb(var(--w-fg)/0.75)] hover:text-white"
+                                        className="hidden text-[rgb(var(--w-fg-2))] hover:text-[rgb(var(--w-accent)/1)] md:inline-flex"
                                     >
                                         {t('w.login')}
                                     </Link>
                                     {/* @chisel-registration */}
                                     <Link
                                         href={register()}
-                                        className="rounded-lg bg-[#D7263D] px-4 py-2 font-medium text-white hover:bg-[#D7263D]/90"
+                                        className="hidden rounded-xl bg-[#D7263D] px-4 py-2.5 font-semibold text-white shadow-md shadow-[#D7263D]/15 transition hover:-translate-y-0.5 hover:bg-[#bd2034] md:inline-flex"
                                     >
                                         {t('w.register')}
                                     </Link>
@@ -180,296 +395,340 @@ export default function Welcome({
                     </div>
                 </header>
 
-                {/* Hero: the barangay photo sits BEHIND the headline as a soft overlay (it fades into the page at the bottom).
-                    The photo is the admin's upload from Settings → Barangay, or the bundled Santotero photo. */}
-                <div className="relative isolate overflow-hidden">
-                    <div aria-hidden className="absolute inset-0 -z-10">
-                        {barangay.banner_url && !photoFailed && (
-                            <img
-                                src={barangay.banner_url}
-                                alt=""
-                                onError={() => setPhotoFailed(true)}
-                                className="size-full scale-105 object-cover object-[center_45%]"
-                            />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-r from-[rgb(var(--w-bg)/0.97)] via-[rgb(var(--w-bg)/0.84)] to-[rgb(var(--w-bg)/0.6)]" />
-                        <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgb(var(--w-bg))] to-transparent" />
-                    </div>
-                    {barangay.banner_url && !photoFailed && (
-                        <p className="absolute right-4 bottom-4 z-10 hidden items-center gap-1.5 rounded-full border border-[rgb(var(--w-accent)/0.3)] bg-[rgb(var(--w-bg)/0.7)] px-3 py-1 text-[12px] backdrop-blur sm:flex">
-                            <MapPin
-                                size={13}
-                                className="text-[rgb(var(--w-accent))]"
-                            />{' '}
-                            {place}
-                        </p>
-                    )}
-                    <section
-                        className={`${wrap} grid items-center gap-12 py-20 lg:grid-cols-2`}
-                    >
-                        <div>
-                            <span className="inline-flex items-center gap-2 rounded-full bg-[#0197F6]/15 px-3 py-1 text-[12px] text-[rgb(var(--w-accent)/1)]">
-                                <span className="h-1.5 w-1.5 rounded-full bg-[#0197F6]" />{' '}
-                                {t('w.badge')}
-                            </span>
-                            <h1 className="mt-6 text-[44px] leading-[1.1] font-semibold lg:text-[54px]">
-                                {t('w.h1a')}{' '}
-                                <span className="text-[#0197F6]">
-                                    {t('w.h1b')}
-                                </span>
-                            </h1>
-                            <p className="mt-3 text-[18px] font-medium text-[rgb(var(--w-fg)/0.85)]">
-                                {t('w.tagline')}
-                            </p>
-                            <p className="mt-6 max-w-md text-[16px] leading-relaxed text-[rgb(var(--w-fg)/0.7)]">
-                                {t('w.lead')}
-                            </p>
-                            <div className="mt-8 flex flex-wrap gap-3">
-                                <Link href={register()} className={primaryBtn}>
-                                    {t('w.cta')}
-                                </Link>
-                                <a
-                                    href="#how-it-works"
-                                    className="rounded-lg border border-[rgb(var(--w-accent)/0.3)] px-5 py-2.5 text-[14px] hover:bg-[rgb(var(--w-accent)/0.1)]"
-                                >
-                                    {t('w.learn')}
-                                </a>
-                            </div>
-                            <div className="mt-8 flex flex-wrap gap-6 text-[12px] text-[rgb(var(--w-fg)/0.6)]">
-                                <span className="flex items-center gap-2">
-                                    <CheckCircle2 size={14} color="#448FA3" />{' '}
-                                    {t('w.trust1')}
-                                </span>
-                                <span className="flex items-center gap-2">
-                                    <ShieldCheck size={14} color="#0197F6" />{' '}
-                                    {t('w.trust2')}
-                                </span>
-                                <span className="flex items-center gap-2">
-                                    <Clock size={14} color="#D7263D" />{' '}
-                                    {t('w.trust3')}
-                                </span>
-                            </div>
+                <main id="main-content" tabIndex={-1} className="outline-none">
+                    {/* Hero: the barangay photo sits BEHIND the headline as a soft overlay (it fades into the page at the bottom).
+                        The photo is the admin's upload from Settings → Barangay, or the bundled Santotero photo. */}
+                    <div className="relative isolate overflow-hidden">
+                        <div aria-hidden className="absolute inset-0 -z-10">
+                            {barangay.banner_url && !photoFailed && (
+                                <img
+                                    src={barangay.banner_url}
+                                    alt=""
+                                    onError={() => setPhotoFailed(true)}
+                                    className="size-full scale-105 object-cover object-[center_45%]"
+                                />
+                            )}
+                            <div className="absolute -top-36 right-[8%] size-[28rem] rounded-full bg-[#0197F6]/10 blur-3xl" />
+                            <div className="absolute top-1/3 -left-48 size-[26rem] rounded-full bg-[#D7263D]/[0.06] blur-3xl" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-[rgb(var(--w-bg)/var(--w-hero-a))] via-[rgb(var(--w-bg)/var(--w-hero-b))] to-[rgb(var(--w-bg)/var(--w-hero-c))]" />
+                            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgb(var(--w-bg))] to-transparent" />
                         </div>
-
-                        {/* Recent complaints panel */}
-                        <div className="rounded-2xl border border-[rgb(var(--w-accent)/0.2)] bg-[#0197F6]/[0.06] p-3">
-                            <div className="rounded-xl bg-[rgb(var(--w-bg)/1)] p-6">
-                                <div className="flex items-start justify-between border-b border-[rgb(var(--w-accent)/0.15)] pb-4">
-                                    <div>
-                                        <p className="text-[11px] text-[rgb(var(--w-fg)/0.5)]">
-                                            {t('w.panelKicker')}
-                                        </p>
-                                        <h2 className="text-[16px] font-semibold">
-                                            {t('w.panelTitle')}
-                                        </h2>
-                                    </div>
-                                    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0197F6]/20 text-[#0197F6]">
-                                        <FileText size={16} />
+                        {barangay.banner_url && !photoFailed && (
+                            <p className="absolute right-4 bottom-4 z-10 hidden items-center gap-1.5 rounded-full border border-[rgb(var(--w-line-strong))] bg-[rgb(var(--w-card))] px-3 py-1 text-[12px] backdrop-blur sm:flex">
+                                <MapPin
+                                    size={13}
+                                    className="text-[rgb(var(--w-accent))]"
+                                />{' '}
+                                {place}
+                            </p>
+                        )}
+                        <section
+                            id="home"
+                            className={`${wrap} grid items-center gap-12 py-12 sm:py-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12 lg:py-20`}
+                        >
+                            <div data-reveal>
+                                <span className="inline-flex items-center gap-2 rounded-full border border-[#0197F6]/25 bg-[#0197F6]/10 px-4 py-2 text-[12px] font-semibold tracking-wide text-[rgb(var(--w-accent)/1)] shadow-sm">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-[#0197F6]" />{' '}
+                                    {t('w.badge')}
+                                </span>
+                                <h1 className="mt-6 max-w-2xl text-[38px] leading-[1.06] font-bold tracking-[-0.045em] sm:text-[48px] lg:text-[56px]">
+                                    {t('w.h1a')}{' '}
+                                    <span className="text-[rgb(var(--w-brand))]">
+                                        {t('w.h1b')}
+                                    </span>
+                                </h1>
+                                <p className="mt-5 text-[16px] font-semibold tracking-tight text-[rgb(var(--w-fg-2))] sm:text-[20px]">
+                                    {t('w.tagline')}
+                                </p>
+                                <p className="mt-5 max-w-xl text-[15px] leading-7 text-[rgb(var(--w-fg-2))] sm:text-[16px]">
+                                    {t('w.lead')}
+                                </p>
+                                <div className="mt-9 flex flex-wrap gap-3">
+                                    <Link
+                                        href={register()}
+                                        className={primaryBtn}
+                                    >
+                                        {t('w.cta')}
+                                    </Link>
+                                    <Link
+                                        href={feedHref}
+                                        className="inline-flex items-center gap-2 rounded-xl border border-[rgb(var(--w-line-strong))] bg-[rgb(var(--w-card))] px-5 py-3 text-[14px] font-semibold text-[rgb(var(--w-fg))] shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[rgb(var(--w-accent)/0.5)] hover:bg-[rgb(var(--w-accent)/0.08)] hover:shadow-lg"
+                                    >
+                                        Browse community feed
+                                    </Link>
+                                    <a
+                                        href="#how-it-works"
+                                        className="rounded-xl border border-[rgb(var(--w-line-strong))] bg-[rgb(var(--w-card))] px-5 py-3 text-[14px] font-semibold shadow-sm transition hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.1)]"
+                                    >
+                                        {t('w.learn')}
+                                    </a>
+                                </div>
+                                <div className="mt-8 flex flex-wrap gap-6 text-[12px] text-[rgb(var(--w-fg-2))]">
+                                    <span className="flex items-center gap-2">
+                                        <CheckCircle2
+                                            size={14}
+                                            color="#448FA3"
+                                        />{' '}
+                                        {t('w.trust1')}
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <ShieldCheck
+                                            size={14}
+                                            color="#0197F6"
+                                        />{' '}
+                                        {t('w.trust2')}
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <Clock size={14} color="#D7263D" />{' '}
+                                        {t('w.trust3')}
                                     </span>
                                 </div>
-                                {recent.map((r) => (
-                                    <div
-                                        key={r.ref}
-                                        className="flex items-start justify-between border-b border-[rgb(var(--w-accent)/0.1)] py-4"
-                                    >
+                            </div>
+
+                            {/* Recent complaints panel */}
+                            <div
+                                data-reveal
+                                className="relative rounded-3xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-band))] p-3 shadow-xl shadow-[#02182B]/10 sm:p-4"
+                            >
+                                <div className="rounded-2xl border border-[rgb(var(--w-line))] bg-[rgb(var(--w-card))] p-5 shadow-sm sm:p-7">
+                                    <div className="flex items-start justify-between border-b border-[rgb(var(--w-line))] pb-4">
                                         <div>
-                                            <p className="text-[14px] font-medium">
-                                                {t(r.key)}
+                                            <p className="text-[12px] text-[rgb(var(--w-fg-3))]">
+                                                {t('w.panelKicker')}
                                             </p>
-                                            <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[rgb(var(--w-fg)/0.55)]">
-                                                <MapPin size={12} /> {r.place}
-                                            </p>
-                                            <p className="mt-0.5 text-[11px] text-[rgb(var(--w-fg)/0.4)]">
-                                                {r.ref}
-                                            </p>
+                                            <h2 className="text-[16px] font-semibold">
+                                                {t('w.panelTitle')}
+                                            </h2>
                                         </div>
-                                        <span
-                                            className="flex items-center gap-1.5 text-[12px]"
-                                            style={{
-                                                color: statusColor[r.status],
-                                            }}
-                                        >
-                                            <span
-                                                className="h-1.5 w-1.5 rounded-full"
-                                                style={{
-                                                    backgroundColor:
-                                                        statusColor[r.status],
-                                                }}
-                                            />
-                                            {t(`status.${r.status}`)}
+                                        <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0197F6]/20 text-[#0197F6]">
+                                            <FileText size={16} />
                                         </span>
                                     </div>
+                                    {recent.map((r) => (
+                                        <div
+                                            key={r.ref}
+                                            className="flex items-start justify-between border-b border-[rgb(var(--w-line))] py-4"
+                                        >
+                                            <div>
+                                                <p className="text-[14px] font-medium">
+                                                    {t(r.key)}
+                                                </p>
+                                                <p className="mt-1 flex items-center gap-1.5 text-[12px] text-[rgb(var(--w-fg-3))]">
+                                                    <MapPin size={12} />{' '}
+                                                    {r.place}
+                                                </p>
+                                                <p className="mt-0.5 text-[12px] text-[rgb(var(--w-fg-3))]">
+                                                    {r.ref}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className="flex items-center gap-1.5 text-[12px]"
+                                                style={{
+                                                    color: statusColor[
+                                                        r.status
+                                                    ],
+                                                }}
+                                            >
+                                                <span
+                                                    className="h-1.5 w-1.5 rounded-full"
+                                                    style={{
+                                                        backgroundColor:
+                                                            statusColor[
+                                                                r.status
+                                                            ],
+                                                    }}
+                                                />
+                                                {t(`status.${r.status}`)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                    <p className="mt-4 flex items-center gap-2 rounded-lg bg-[rgb(var(--w-accent)/0.1)] px-3 py-2.5 text-[12px] text-[rgb(var(--w-fg-2))]">
+                                        <Bell size={13} /> {t('w.panelNote')}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* How it works */}
+                    <section
+                        id="how-it-works"
+                        className="scroll-mt-24 border-y border-[rgb(var(--w-line))] bg-[rgb(var(--w-band))] py-20 sm:py-24"
+                    >
+                        <div className={`${wrap} text-center`}>
+                            <Eyebrow>{t('w.process')}</Eyebrow>
+                            <h2 className="mt-3 text-[32px] font-bold tracking-tight sm:text-[38px]">
+                                {t('w.howTitle')}
+                            </h2>
+                            <p className="mt-4 text-[15px] leading-7 text-[rgb(var(--w-fg-2))] sm:text-[16px]">
+                                {t('w.howSub')}
+                            </p>
+                            <div className="mt-10 grid gap-5 text-left md:grid-cols-3">
+                                {steps.map(({ icon: Icon, color, key }) => (
+                                    <div
+                                        key={key}
+                                        data-reveal
+                                        className={`${card} p-6`}
+                                    >
+                                        <span
+                                            className="flex h-10 w-10 items-center justify-center rounded-lg"
+                                            style={{
+                                                backgroundColor: `${color}33`,
+                                                color,
+                                            }}
+                                        >
+                                            <Icon size={18} />
+                                        </span>
+                                        <h3 className="mt-5 text-[15px] font-semibold">
+                                            {t(`${key}t`)}
+                                        </h3>
+                                        <p className="mt-2 text-[14.5px] leading-relaxed text-[rgb(var(--w-fg-2))]">
+                                            {t(`${key}b`)}
+                                        </p>
+                                    </div>
                                 ))}
-                                <p className="mt-4 flex items-center gap-2 rounded-lg bg-[rgb(var(--w-accent)/0.1)] px-3 py-2.5 text-[12px] text-[rgb(var(--w-fg)/0.6)]">
-                                    <Bell size={13} /> {t('w.panelNote')}
-                                </p>
                             </div>
                         </div>
                     </section>
-                </div>
 
-                {/* How it works */}
-                <section
-                    id="how-it-works"
-                    className="scroll-mt-16 bg-[#0197F6]/[0.04] py-20"
-                >
-                    <div className={`${wrap} text-center`}>
-                        <Eyebrow>{t('w.process')}</Eyebrow>
-                        <h2 className="mt-2 text-[30px] font-semibold">
-                            {t('w.howTitle')}
+                    {/* Categories */}
+                    <section className={`${wrap} py-20 text-center sm:py-24`}>
+                        <Eyebrow>{t('w.catsKicker')}</Eyebrow>
+                        <h2 className="mt-3 text-[30px] font-bold tracking-tight sm:text-[36px]">
+                            {t('w.catsTitle')}
                         </h2>
-                        <p className="mt-3 text-[15px] text-[rgb(var(--w-fg)/0.6)]">
-                            {t('w.howSub')}
-                        </p>
-                        <div className="mt-10 grid gap-5 text-left md:grid-cols-3">
-                            {steps.map(({ icon: Icon, color, key }) => (
-                                <div key={key} className={`${card} p-6`}>
-                                    <span
-                                        className="flex h-10 w-10 items-center justify-center rounded-lg"
-                                        style={{
-                                            backgroundColor: `${color}33`,
-                                            color,
-                                        }}
-                                    >
-                                        <Icon size={18} />
-                                    </span>
-                                    <h3 className="mt-5 text-[15px] font-semibold">
-                                        {t(`${key}t`)}
-                                    </h3>
-                                    <p className="mt-2 text-[13.5px] leading-relaxed text-[rgb(var(--w-fg)/0.6)]">
-                                        {t(`${key}b`)}
-                                    </p>
-                                </div>
+                        <div className="mt-6 flex flex-wrap justify-center gap-3">
+                            {categories.map(([label, c]) => (
+                                <span
+                                    key={label}
+                                    className="rounded-full border px-5 py-2.5 text-[13px] font-semibold shadow-sm transition hover:-translate-y-0.5"
+                                    style={{
+                                        borderColor: `${c}99`,
+                                        backgroundColor: `${c}1f`,
+                                    }}
+                                >
+                                    {t(`cat.${label}`)}
+                                </span>
                             ))}
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                {/* Categories */}
-                <section className={`${wrap} py-16 text-center`}>
-                    <Eyebrow>{t('w.catsKicker')}</Eyebrow>
-                    <h2 className="mt-2 text-[26px] font-semibold">
-                        {t('w.catsTitle')}
-                    </h2>
-                    <div className="mt-6 flex flex-wrap justify-center gap-3">
-                        {categories.map(([label, c]) => (
-                            <span
-                                key={label}
-                                className="rounded-full border px-5 py-2 text-[13px]"
-                                style={{
-                                    borderColor: `${c}99`,
-                                    backgroundColor: `${c}1f`,
-                                }}
-                            >
-                                {t(`cat.${label}`)}
-                            </span>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Features */}
-                <section
-                    id="features"
-                    className="scroll-mt-16 bg-[#0197F6]/[0.04] py-20"
-                >
-                    <div className={wrap}>
-                        <Eyebrow>{t('w.featKicker')}</Eyebrow>
-                        <h2 className="mt-2 text-[30px] font-semibold">
-                            {t('w.featTitle')}
-                        </h2>
-                        <p className="mt-3 text-[15px] text-[rgb(var(--w-fg)/0.6)]">
-                            {t('w.featSub')}
-                        </p>
-                        <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                            {features.map(({ icon: Icon, key }) => (
-                                <div key={key} className={`${card} p-6`}>
-                                    <Icon size={18} color="#0197F6" />
-                                    <h3 className="mt-4 text-[15px] font-semibold">
-                                        {t(`${key}t`)}
-                                    </h3>
-                                    <p className="mt-2 text-[13.5px] leading-relaxed text-[rgb(var(--w-fg)/0.6)]">
-                                        {t(`${key}b`)}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Announcements */}
-                <section
-                    id="announcements"
-                    className={`${wrap} scroll-mt-16 py-20`}
-                >
-                    <div className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0197F6]/20 text-[#0197F6]">
-                            <Megaphone size={18} />
-                        </span>
-                        <div>
-                            <Eyebrow>{t('w.annKicker')}</Eyebrow>
-                            <h2 className="text-[26px] font-semibold">
-                                {t('w.annTitle')}
+                    {/* Features */}
+                    <section
+                        id="features"
+                        className="scroll-mt-24 border-y border-[rgb(var(--w-line))] bg-[rgb(var(--w-band))] py-20 sm:py-24"
+                    >
+                        <div className={wrap}>
+                            <Eyebrow>{t('w.featKicker')}</Eyebrow>
+                            <h2 className="mt-3 text-[32px] font-bold tracking-tight sm:text-[38px]">
+                                {t('w.featTitle')}
                             </h2>
-                        </div>
-                    </div>
-                    {announcements.length === 0 ? (
-                        <p
-                            className={`${card} mt-8 p-6 text-[14px] text-[rgb(var(--w-fg)/0.6)]`}
-                        >
-                            {t('w.annEmpty')}
-                        </p>
-                    ) : (
-                        <div className="mt-8 grid gap-5 md:grid-cols-2">
-                            {announcements.map((n) => {
-                                const shown = localizeAnnouncement(n, locale);
-
-                                return (
+                            <p className="mt-4 text-[15px] leading-7 text-[rgb(var(--w-fg-2))] sm:text-[16px]">
+                                {t('w.featSub')}
+                            </p>
+                            <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                                {features.map(({ icon: Icon, key }) => (
                                     <div
-                                        key={n.id}
-                                        className={`${card} border-l-2 border-l-[#D7263D] p-6`}
+                                        key={key}
+                                        data-reveal
+                                        className={`${card} p-6`}
                                     >
-                                        <h3 className="text-[15px] font-semibold">
-                                            {shown.title}
+                                        <Icon size={18} color="#0197F6" />
+                                        <h3 className="mt-4 text-[15px] font-semibold">
+                                            {t(`${key}t`)}
                                         </h3>
-                                        <p className="mt-2 text-[13.5px] whitespace-pre-line text-[rgb(var(--w-fg)/0.6)]">
-                                            {shown.body}
+                                        <p className="mt-2 text-[14.5px] leading-relaxed text-[rgb(var(--w-fg-2))]">
+                                            {t(`${key}b`)}
                                         </p>
-                                        {shown.lang !== locale && (
-                                            <p className="mt-3 text-[11px] text-[rgb(var(--w-accent)/1)] italic">
-                                                {t('w.annFallback')}
-                                            </p>
-                                        )}
                                     </div>
-                                );
-                            })}
+                                ))}
+                            </div>
                         </div>
-                    )}
-                </section>
+                    </section>
 
-                {/* Call to action band */}
-                <section className="bg-[#0197F6] py-16 text-center">
-                    <div className={wrap}>
-                        <h2 className="text-[30px] font-semibold text-white">
-                            {t('w.ctaTitle')}
-                        </h2>
-                        <p className="mx-auto mt-3 max-w-lg text-[15px] text-[#02182B]">
-                            {t('w.ctaBody')}
-                        </p>
-                        <Link
-                            href={register()}
-                            className="mt-7 inline-block rounded-lg bg-white px-6 py-3 text-[14px] font-semibold text-[#02182B] hover:bg-[#68C5DB]"
-                        >
-                            {t('w.ctaBtn')}
-                        </Link>
-                    </div>
-                </section>
+                    {/* Announcements */}
+                    <section
+                        id="announcements"
+                        className={`${wrap} scroll-mt-24 py-20 sm:py-24`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0197F6]/20 text-[#0197F6]">
+                                <Megaphone size={18} />
+                            </span>
+                            <div>
+                                <Eyebrow>{t('w.annKicker')}</Eyebrow>
+                                <h2 className="text-[26px] font-semibold">
+                                    {t('w.annTitle')}
+                                </h2>
+                            </div>
+                        </div>
+                        {announcements.length === 0 ? (
+                            <p
+                                className={`${card} mt-8 p-6 text-[14px] text-[rgb(var(--w-fg-2))]`}
+                            >
+                                {t('w.annEmpty')}
+                            </p>
+                        ) : (
+                            <div className="mt-8 grid gap-5 md:grid-cols-2">
+                                {announcements.map((n) => {
+                                    const shown = localizeAnnouncement(
+                                        n,
+                                        locale,
+                                    );
 
-                <footer className="border-t border-[rgb(var(--w-accent)/0.15)] py-6">
+                                    return (
+                                        <div
+                                            key={n.id}
+                                            data-reveal
+                                            className={`${card} border-l-2 border-l-[#D7263D] p-6`}
+                                        >
+                                            <h3 className="text-[15px] font-semibold">
+                                                {shown.title}
+                                            </h3>
+                                            <p className="mt-2 text-[14.5px] whitespace-pre-line text-[rgb(var(--w-fg-2))]">
+                                                {shown.body}
+                                            </p>
+                                            {shown.lang !== locale && (
+                                                <p className="mt-3 text-[12px] text-[rgb(var(--w-accent)/1)] italic">
+                                                    {t('w.annFallback')}
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Call to action band */}
+                    <section className="bg-gradient-to-br from-[#02182B] via-[#063a5b] to-[#0197F6] py-20 text-center shadow-inner sm:py-24">
+                        <div data-reveal className={wrap}>
+                            <h2 className="text-[30px] font-semibold text-white">
+                                {t('w.ctaTitle')}
+                            </h2>
+                            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/80 sm:text-[16px]">
+                                {t('w.ctaBody')}
+                            </p>
+                            <Link
+                                href={register()}
+                                className="mt-8 inline-block rounded-xl bg-white px-6 py-3.5 text-[14px] font-bold text-[#02182B] shadow-xl transition hover:-translate-y-0.5 hover:bg-[#e6f4f9]"
+                            >
+                                {t('w.ctaBtn')}
+                            </Link>
+                        </div>
+                    </section>
+                </main>
+
+                <footer className="border-t border-[rgb(var(--w-line))] py-6">
                     <div
-                        className={`${wrap} flex flex-wrap justify-between gap-2 text-[12px] text-[rgb(var(--w-fg)/0.55)]`}
+                        className={`${wrap} flex flex-wrap justify-between gap-2 text-[12px] text-[rgb(var(--w-fg-3))]`}
                     >
                         <span>{t('w.footer1')}</span>
                         <span>{t('w.footer2')}</span>
+                        <span className="w-full pt-2 sm:w-auto sm:pt-0">
+                            © {new Date().getFullYear()} San Sotero — Report
+                            Concerns. All rights reserved.
+                        </span>
                     </div>
                 </footer>
             </div>

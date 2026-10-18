@@ -1,11 +1,32 @@
-import { MessageCircle, Send, X, Bot, LoaderCircle } from 'lucide-react';
+import {
+    ChevronRight,
+    MessageCircle,
+    Send,
+    X,
+    Bot,
+    LoaderCircle,
+} from 'lucide-react';
 import { useState } from 'react';
+import ReportPopout from '@/components/feed/report-popout';
 
-type Message = { role: 'assistant' | 'user'; text: string };
+/** A report the assistant lists. `ticket_code` is only ever sent for the person's own reports (and to admins). */
+type ReportItem = {
+    id: number;
+    title: string;
+    category: string;
+    status: string;
+    ticket_code: string | null;
+};
+type Message = {
+    role: 'assistant' | 'user';
+    text: string;
+    items?: ReportItem[];
+};
 export default function AssistantChat() {
     const [open, setOpen] = useState(false);
     const [draft, setDraft] = useState('');
     const [busy, setBusy] = useState(false);
+    const [openReport, setOpenReport] = useState<number | null>(null); // report shown in the pop-out
     const [messages, setMessages] = useState<Message[]>([
         {
             role: 'assistant',
@@ -43,13 +64,10 @@ export default function AssistantChat() {
                 {
                     role: 'assistant',
                     text: response.ok
-                        ? (data.answer ??
-                              'Sorry, I could not find an answer.') +
-                          (data.report?.url
-                              ? `\nReport details — Open: ${data.report.url}`
-                              : '')
+                        ? (data.answer ?? 'Sorry, I could not find an answer.')
                         : (data.message ??
                           'I could not process that request. Please try again.'),
+                    items: response.ok ? data.items : undefined,
                 },
             ]);
         } catch {
@@ -66,10 +84,11 @@ export default function AssistantChat() {
     }
 
     return (
-        <div className="fixed right-4 bottom-4 z-[60]">
+        <div className="fixed right-4 bottom-4 z-40">
+            <ReportPopout id={openReport} onClose={() => setOpenReport(null)} />
             {open && (
                 <section
-                    className="mb-3 flex h-[min(70vh,520px)] w-[min(92vw,360px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
+                    className="chat-panel-enter mb-3 flex h-[min(70vh,520px)] w-[min(92vw,360px)] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
                     aria-label="San Sotero assistant"
                 >
                     <header className="flex items-center justify-between bg-[#06263A] px-4 py-3 text-white">
@@ -99,31 +118,48 @@ export default function AssistantChat() {
                         {messages.map((m, i) => (
                             <div
                                 key={i}
-                                className={`max-w-[90%] rounded-xl px-3 py-2 text-sm leading-5 whitespace-pre-wrap ${m.role === 'user' ? 'ml-auto bg-[#0197F6] text-white' : 'mr-auto bg-muted text-foreground'}`}
+                                className={`chat-msg-enter ${m.items?.length ? 'w-[90%]' : ''} max-w-[90%] rounded-xl px-3 py-2 text-sm leading-5 whitespace-pre-wrap ${m.role === 'user' ? 'ml-auto bg-[#0197F6] text-white' : 'mr-auto bg-muted text-foreground'}`}
                             >
-                                {m.text.split('\n').map((line, li) => {
-                                    const match = line.match(
-                                        /^(.*?)(?: — Open: )(\/[^ ]+)$/,
-                                    );
-
-                                    return (
-                                        <span key={li} className="block">
-                                            {match ? (
-                                                <>
-                                                    {match[1]} —{' '}
-                                                    <a
-                                                        className="font-semibold underline"
-                                                        href={match[2]}
-                                                    >
+                                {m.text.split('\n').map((line, li) => (
+                                    <span key={li} className="block">
+                                        {line}
+                                    </span>
+                                ))}
+                                {m.items && m.items.length > 0 && (
+                                    <ul className="mt-2 space-y-1.5">
+                                        {m.items.map((r) => (
+                                            <li key={r.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setOpenReport(r.id)
+                                                    }
+                                                    aria-label={`Open report: ${r.title}`}
+                                                    className="chat-report-row group flex w-full items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-left hover:border-[#0197F6]/60"
+                                                >
+                                                    <span className="min-w-0 flex-1">
+                                                        <span className="block truncate text-[13px] font-semibold">
+                                                            {r.title}
+                                                        </span>
+                                                        <span className="block truncate text-[11px] text-muted-foreground">
+                                                            {r.category} ·{' '}
+                                                            {r.status}
+                                                            {r.ticket_code &&
+                                                                ` · ${r.ticket_code}`}
+                                                        </span>
+                                                    </span>
+                                                    <span className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#0670b3] dark:text-[#5cc0fa]">
                                                         Open report
-                                                    </a>
-                                                </>
-                                            ) : (
-                                                line
-                                            )}
-                                        </span>
-                                    );
-                                })}
+                                                        <ChevronRight
+                                                            size={14}
+                                                            className="transition-transform duration-300 group-hover:translate-x-1"
+                                                        />
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
                             </div>
                         ))}
                         {busy && (
@@ -184,7 +220,7 @@ export default function AssistantChat() {
                 aria-label={
                     open ? 'Close chat assistant' : 'Open chat assistant'
                 }
-                className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0197F6] text-white shadow-xl transition hover:scale-105"
+                className="chat-fab ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#0197F6] text-white shadow-xl"
             >
                 <MessageCircle size={24} />
             </button>

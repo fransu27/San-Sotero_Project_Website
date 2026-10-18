@@ -1,0 +1,350 @@
+import { Head, Link, usePage, router } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    FileText,
+    Printer,
+    ShieldCheck,
+    Upload,
+} from 'lucide-react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+
+type Receipt = { ticket_code: string; pin: string; reporter_name: string };
+type Props = { categories: string[] };
+
+export default function WalkInComplaint({ categories }: Props) {
+    const { flash } = usePage().props as unknown as {
+        flash?: { walk_in_receipt?: Receipt };
+    };
+    const receipt = flash?.walk_in_receipt;
+    const [form, setForm] = useState({
+        reporter_name: '',
+        reporter_contact: '',
+        title: '',
+        description: '',
+        location: '',
+        category: 'Infrastructure',
+        custom_category: '',
+        incident_date: new Date().toISOString().slice(0, 10),
+    });
+    const [image, setImage] = useState<File | null>(null);
+    const [files, setFiles] = useState<FileList | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const update = (key: keyof typeof form, value: string) =>
+        setForm((current) => ({ ...current, [key]: value }));
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        setBusy(true);
+        setErrors({});
+        const data = new FormData();
+        Object.entries(form).forEach(([key, value]) => data.append(key, value));
+
+        if (image) {
+            data.append('image', image);
+        }
+
+        if (files) {
+            Array.from(files).forEach((file) => data.append('files[]', file));
+        }
+
+        router.post('/admin/walk-in-complaints', data, {
+            forceFormData: true,
+            onError: (next) => setErrors(next as Record<string, string>),
+            onFinish: () => setBusy(false),
+        });
+    };
+    const inputClass =
+        'w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500';
+
+    return (
+        <>
+            <Head title="Assisted walk-in complaint" />
+            <div className="mx-auto max-w-3xl space-y-5 pb-10">
+                <Link
+                    href="/admin/moderation"
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                    <ArrowLeft size={16} /> Back to moderation
+                </Link>
+                <header>
+                    <p className="text-xs font-semibold tracking-widest text-sky-600 uppercase">
+                        Assisted reporting
+                    </p>
+                    <h1 className="mt-1 text-2xl font-bold">
+                        Walk-in complaint entry
+                    </h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        Use this form when a resident visits the Barangay Hall
+                        and cannot submit online. Read the complaint back to the
+                        resident before saving.
+                    </p>
+                </header>
+                {receipt && (
+                    <section
+                        className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/5 p-5"
+                        aria-live="polite"
+                    >
+                        <div className="flex items-center gap-2 font-semibold">
+                            <ShieldCheck className="text-emerald-600" />{' '}
+                            Complaint recorded — print or copy this receipt
+                        </div>
+                        <p className="mt-2 text-sm">
+                            Resident: {receipt.reporter_name}
+                        </p>
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div className="rounded-xl bg-background p-3">
+                                <p className="text-xs text-muted-foreground">
+                                    Tracking reference
+                                </p>
+                                <p className="font-mono text-lg font-bold">
+                                    {receipt.ticket_code}
+                                </p>
+                            </div>
+                            <div className="rounded-xl bg-background p-3">
+                                <p className="text-xs text-muted-foreground">
+                                    Private tracking PIN
+                                </p>
+                                <p className="font-mono text-lg font-bold">
+                                    {receipt.pin}
+                                </p>
+                            </div>
+                        </div>
+                        <p className="mt-3 text-xs text-muted-foreground">
+                            The PIN is shown only once. Give the resident a
+                            printed copy and advise them to keep it private.
+                        </p>
+                        <div className="mt-3 flex flex-wrap gap-2 print:hidden">
+                            <button
+                                onClick={() => window.print()}
+                                className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
+                            >
+                                <Printer size={16} /> Print receipt
+                            </button>
+                            <button
+                                onClick={() =>
+                                    navigator.clipboard?.writeText(
+                                        `San Sotero complaint receipt\nReference: ${receipt.ticket_code}\nPIN: ${receipt.pin}\nTrack at: ${window.location.origin}/track-complaint`,
+                                    )
+                                }
+                                className="rounded-lg border px-3 py-2 text-sm"
+                            >
+                                Copy receipt details
+                            </button>
+                        </div>
+                    </section>
+                )}
+                <form
+                    onSubmit={submit}
+                    className="space-y-5 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6"
+                >
+                    <section className="space-y-3">
+                        <h2 className="font-semibold">Resident information</h2>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="space-y-1 text-sm">
+                                <span>Resident name *</span>
+                                <input
+                                    required
+                                    maxLength={120}
+                                    className={inputClass}
+                                    value={form.reporter_name}
+                                    onChange={(e) =>
+                                        update('reporter_name', e.target.value)
+                                    }
+                                />
+                                {errors.reporter_name && (
+                                    <small className="text-red-600">
+                                        {errors.reporter_name}
+                                    </small>
+                                )}
+                            </label>
+                            <label className="space-y-1 text-sm">
+                                <span>Contact number (optional)</span>
+                                <input
+                                    maxLength={80}
+                                    className={inputClass}
+                                    value={form.reporter_contact}
+                                    onChange={(e) =>
+                                        update(
+                                            'reporter_contact',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                                {errors.reporter_contact && (
+                                    <small className="text-red-600">
+                                        {errors.reporter_contact}
+                                    </small>
+                                )}
+                            </label>
+                        </div>
+                    </section>
+                    <section className="space-y-3">
+                        <h2 className="font-semibold">Concern details</h2>
+                        <label className="block space-y-1 text-sm">
+                            <span>Concern title *</span>
+                            <input
+                                required
+                                maxLength={150}
+                                className={inputClass}
+                                value={form.title}
+                                onChange={(e) =>
+                                    update('title', e.target.value)
+                                }
+                            />
+                            {errors.title && (
+                                <small className="text-red-600">
+                                    {errors.title}
+                                </small>
+                            )}
+                        </label>
+                        <label className="block space-y-1 text-sm">
+                            <span>Description *</span>
+                            <textarea
+                                required
+                                maxLength={3000}
+                                rows={5}
+                                className={inputClass}
+                                value={form.description}
+                                onChange={(e) =>
+                                    update('description', e.target.value)
+                                }
+                            />
+                            {errors.description && (
+                                <small className="text-red-600">
+                                    {errors.description}
+                                </small>
+                            )}
+                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <label className="space-y-1 text-sm">
+                                <span>Location / purok *</span>
+                                <input
+                                    required
+                                    maxLength={150}
+                                    className={inputClass}
+                                    value={form.location}
+                                    onChange={(e) =>
+                                        update('location', e.target.value)
+                                    }
+                                />
+                                {errors.location && (
+                                    <small className="text-red-600">
+                                        {errors.location}
+                                    </small>
+                                )}
+                            </label>
+                            <label className="space-y-1 text-sm">
+                                <span>Category *</span>
+                                <select
+                                    className={inputClass}
+                                    value={form.category}
+                                    onChange={(e) =>
+                                        update('category', e.target.value)
+                                    }
+                                >
+                                    {categories.map((category) => (
+                                        <option key={category}>
+                                            {category}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        {form.category === 'Others' && (
+                            <label className="block space-y-1 text-sm">
+                                <span>Specify category *</span>
+                                <input
+                                    required
+                                    minLength={2}
+                                    maxLength={60}
+                                    className={inputClass}
+                                    value={form.custom_category}
+                                    onChange={(e) =>
+                                        update(
+                                            'custom_category',
+                                            e.target.value,
+                                        )
+                                    }
+                                />
+                            </label>
+                        )}
+                        <label className="block space-y-1 text-sm">
+                            <span>Date of incident *</span>
+                            <input
+                                type="date"
+                                required
+                                max={new Date().toISOString().slice(0, 10)}
+                                className={inputClass}
+                                value={form.incident_date}
+                                onChange={(e) =>
+                                    update('incident_date', e.target.value)
+                                }
+                            />
+                        </label>
+                    </section>
+                    <section className="space-y-3">
+                        <h2 className="font-semibold">
+                            Supporting evidence (optional)
+                        </h2>
+                        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed p-4 text-sm">
+                            <Upload size={18} />
+                            <span className="min-w-0 flex-1">
+                                {image
+                                    ? image.name
+                                    : 'Attach one photo (JPG, PNG, WebP; up to 4 MB)'}
+                            </span>
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="max-w-40 text-xs"
+                                onChange={(e) =>
+                                    setImage(e.target.files?.[0] ?? null)
+                                }
+                            />
+                        </label>
+                        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed p-4 text-sm">
+                            <FileText size={18} />
+                            <span className="min-w-0 flex-1">
+                                {files?.length
+                                    ? `${files.length} document(s) selected`
+                                    : 'Attach up to 5 documents (PDF, DOC, DOCX, ODT, TXT; 10 MB each)'}
+                            </span>
+                            <input
+                                type="file"
+                                multiple
+                                accept=".pdf,.doc,.docx,.odt,.txt"
+                                className="max-w-40 text-xs"
+                                onChange={(e) => setFiles(e.target.files)}
+                            />
+                        </label>
+                        {Object.entries(errors)
+                            .filter(
+                                ([key]) =>
+                                    key.startsWith('files') || key === 'image',
+                            )
+                            .map(([key, value]) => (
+                                <p key={key} className="text-sm text-red-600">
+                                    {value}
+                                </p>
+                            ))}
+                    </section>
+                    <aside className="rounded-xl bg-muted/50 p-3 text-sm text-muted-foreground">
+                        This intake is private by default. Do not promise a
+                        resolution date. Give the resident their tracking
+                        reference and PIN, and do not write the PIN in public
+                        notes.
+                    </aside>
+                    <button
+                        disabled={busy}
+                        className="w-full rounded-xl bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60"
+                    >
+                        {busy
+                            ? 'Saving complaint…'
+                            : 'Record walk-in complaint'}
+                    </button>
+                </form>
+            </div>
+        </>
+    );
+}

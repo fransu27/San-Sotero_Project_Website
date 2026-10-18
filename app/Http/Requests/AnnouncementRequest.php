@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Announcement;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -50,6 +51,8 @@ class AnnouncementRequest extends FormRequest
             'pinned' => ['boolean'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'remove_image' => ['boolean'],
+            // PDF / Office files (preview + download for residents)
+            ...Announcement::attachmentRules(),
         ];
     }
 
