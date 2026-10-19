@@ -14,6 +14,7 @@ import {
     Loader,
     LockKeyhole,
     MapPin,
+    Menu,
     MessageCircle,
     Megaphone,
     ShieldCheck,
@@ -33,6 +34,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import Wordmark, { PaletteStripe } from '@/components/wordmark';
 import { useLocale } from '@/hooks/use-locale';
 import type { Locale } from '@/lib/i18n';
@@ -152,7 +161,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
             <div className="min-h-screen bg-background text-foreground">
                 <PaletteStripe />
                 <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
-                    <div className="mx-auto flex max-w-[1320px] items-center gap-3 px-4 py-3 sm:px-6">
+                    <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-4 py-4 sm:px-6 lg:px-8">
                         <Link
                             href="/"
                             aria-label="San Sotero home"
@@ -161,23 +170,23 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                             <Wordmark />
                         </Link>
                         <nav
-                            className="mx-auto hidden items-center gap-1.5 lg:flex"
+                            className="mx-auto hidden items-center gap-3 xl:flex"
                             aria-label={t('nav.main')}
                         >
                             {navItems.map((item) => (
                                 <Link
                                     key={item.label}
                                     href={item.href}
-                                    className="nav-fill-link rounded-full px-3.5 py-2 text-sm font-medium"
+                                    className="nav-fill-link rounded-full px-5 py-2.5 text-sm font-medium whitespace-nowrap"
                                 >
                                     <item.icon size={16} />
                                     {item.label}
                                 </Link>
                             ))}
                         </nav>
-                        <div className="ml-auto flex items-center gap-2 sm:gap-3 lg:ml-0">
+                        <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4 xl:ml-0">
                             {!user && (
-                                <span className="hidden items-center gap-2 rounded-full border border-teal-600/25 bg-teal-600/10 px-3 py-1.5 text-xs font-semibold text-teal-800 xl:inline-flex dark:text-teal-300">
+                                <span className="hidden items-center gap-2 rounded-full border border-teal-600/25 bg-teal-600/10 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-teal-800 2xl:inline-flex dark:text-teal-300">
                                     <span className="size-2 rounded-full bg-teal-500" />
                                     Guest preview
                                 </span>
@@ -187,7 +196,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                             {user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="nav-fill-link rounded-full px-4 py-2 text-sm font-semibold"
+                                    className="nav-fill-link rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap"
                                 >
                                     <ChartNoAxesCombined size={16} /> Dashboard
                                 </Link>
@@ -195,13 +204,13 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                                 <>
                                     <Link
                                         href={login()}
-                                        className="nav-fill-link rounded-full px-4 py-2 text-sm font-semibold"
+                                        className="nav-fill-link rounded-full px-5 py-2.5 text-sm font-semibold whitespace-nowrap"
                                     >
                                         Log in
                                     </Link>
                                     <Link
                                         href={register()}
-                                        className="rounded-full bg-[#0197F6] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[#0197F6]/20 transition hover:-translate-y-0.5 hover:bg-[#0670b3]"
+                                        className="rounded-full bg-[#0197F6] px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-white shadow-md shadow-[#0197F6]/20 transition hover:-translate-y-0.5 hover:bg-[#0670b3]"
                                     >
                                         Join community
                                     </Link>
@@ -209,21 +218,59 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                             )}
                         </div>
                     </div>
-                    <nav
-                        className="mx-auto flex max-w-[1320px] gap-2 overflow-x-auto px-4 pb-3 sm:px-6 lg:hidden"
-                        aria-label={t('nav.main')}
-                    >
-                        {navItems.map((item) => (
-                            <Link
-                                key={item.label}
-                                href={item.href}
-                                className="nav-fill-link shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium"
-                            >
-                                <item.icon size={15} />
-                                {item.label}
-                            </Link>
-                        ))}
-                    </nav>
+                    {/* Phones / tablets: the page links live in a collapsible drawer (top-left button), the same as the
+                        signed-in pages, instead of a second row of buttons in the header. */}
+                    <div className="border-t border-border/70 px-4 py-2.5 sm:px-6 xl:hidden">
+                        <div className="mx-auto flex max-w-[1320px] items-center gap-3">
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <button
+                                        type="button"
+                                        aria-label="Open navigation menu"
+                                        className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-[background-color,transform] duration-300 ease-[var(--ease-spring)] hover:bg-accent focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:outline-none active:scale-90"
+                                    >
+                                        <Menu size={20} />
+                                    </button>
+                                </SheetTrigger>
+                                <SheetContent
+                                    side="left"
+                                    className="w-[min(86vw,320px)] bg-card p-0"
+                                >
+                                    <SheetHeader className="border-b border-border px-5 py-4 text-left">
+                                        <SheetTitle>San Sotero</SheetTitle>
+                                        <p className="text-sm text-muted-foreground">
+                                            Community feed
+                                        </p>
+                                    </SheetHeader>
+                                    <nav
+                                        className="grid gap-1 p-3"
+                                        aria-label={t('nav.main')}
+                                    >
+                                        {navItems.map((item) => (
+                                            <SheetClose
+                                                asChild
+                                                key={item.label}
+                                            >
+                                                <Link
+                                                    href={item.href}
+                                                    className="flex min-h-12 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:outline-none"
+                                                >
+                                                    <item.icon size={18} />
+                                                    <span>{item.label}</span>
+                                                </Link>
+                                            </SheetClose>
+                                        ))}
+                                    </nav>
+                                </SheetContent>
+                            </Sheet>
+                            <span className="min-w-0 truncate text-sm font-medium text-muted-foreground">
+                                Community feed
+                            </span>
+                            <span className="ml-auto text-xs text-muted-foreground">
+                                San Sotero
+                            </span>
+                        </div>
+                    </div>
                 </header>
 
                 <div className="mx-auto grid max-w-[1320px] gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[272px_minmax(0,1fr)]">
