@@ -131,6 +131,9 @@ export default function Welcome({
     const [photoFailed, setPhotoFailed] = useState(false);
     const [selectedSection, setSelectedSection] = useState('');
     const place = barangay.name || BRAND.place;
+    // The picked link stays solid blue with white text (the !important utilities win over any other rule).
+    const activeLink =
+        'is-active !border-[#0678c5] !bg-[#0678c5] !text-white !shadow-[0_8px_18px_-6px_rgba(6,120,197,0.55)] dark:!border-[#0a74c4] dark:!bg-[#0a74c4]';
 
     useEffect(() => {
         const targets = Array.from(
@@ -175,22 +178,21 @@ export default function Welcome({
                     Skip to main content
                 </a>
 
-                {/* Header */}
+                {/* Header: the brand sits in the far-left corner, the account buttons in the far-right corner, and the
+                    links share the middle as pills that turn solid blue when picked (same style as the Newsfeed). */}
                 <header className="sticky top-0 z-10 border-b border-[rgb(var(--w-line))] bg-[rgb(var(--w-bg)/0.95)] backdrop-blur">
-                    <div
-                        className={`${wrap} flex items-center justify-between py-4`}
-                    >
+                    <div className="flex items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-10">
                         <Link
                             href="/"
                             aria-label={`${place} — ${BRAND.product}, home`}
-                            className="group inline-flex rounded-xl transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-offset-4"
+                            className="group inline-flex shrink-0 rounded-xl transition-transform duration-300 ease-out hover:-translate-y-0.5 focus-visible:outline-offset-4"
                         >
                             <Wordmark />
                         </Link>
-                        <nav className="hidden items-center gap-6 text-[13px] text-[rgb(var(--w-fg-2))] md:flex">
+                        <nav className="hidden items-center gap-2 text-[rgb(var(--w-fg-2))] xl:flex">
                             <Link
                                 href="/track-complaint"
-                                className="transition-colors hover:text-[rgb(var(--w-accent))]"
+                                className="nav-fill-link rounded-full px-4 py-2 text-[13px] font-medium"
                             >
                                 Track a complaint
                             </Link>
@@ -204,7 +206,7 @@ export default function Welcome({
                                         ? 'location'
                                         : undefined
                                 }
-                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'how-it-works' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
+                                className={`nav-fill-link rounded-full px-4 py-2 text-[13px] font-medium ${selectedSection === 'how-it-works' ? activeLink : ''}`}
                             >
                                 {t('w.nav.how')}
                             </a>
@@ -216,7 +218,7 @@ export default function Welcome({
                                         ? 'location'
                                         : undefined
                                 }
-                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'features' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
+                                className={`nav-fill-link rounded-full px-4 py-2 text-[13px] font-medium ${selectedSection === 'features' ? activeLink : ''}`}
                             >
                                 {t('w.nav.features')}
                             </a>
@@ -230,19 +232,19 @@ export default function Welcome({
                                         ? 'location'
                                         : undefined
                                 }
-                                className={`rounded-xl px-3 py-2 transition-all duration-300 focus-visible:outline-offset-4 ${selectedSection === 'announcements' ? 'bg-[rgb(var(--w-accent)/0.12)] text-[rgb(var(--w-accent)/1)] shadow-[0_8px_24px_rgb(var(--w-accent)/0.16)] ring-1 ring-[rgb(var(--w-accent)/0.2)]' : 'text-[rgb(var(--w-fg-2))] hover:-translate-y-0.5 hover:bg-[rgb(var(--w-accent)/0.08)] hover:text-[rgb(var(--w-accent)/1)] hover:shadow-md'}`}
+                                className={`nav-fill-link rounded-full px-4 py-2 text-[13px] font-medium ${selectedSection === 'announcements' ? activeLink : ''}`}
                             >
                                 {t('w.nav.ann')}
                             </a>
                             <Link
                                 href={feedHref}
-                                className="rounded-xl border border-[rgb(var(--w-accent)/0.22)] bg-[rgb(var(--w-accent)/0.06)] px-3 py-2 font-semibold text-[rgb(var(--w-accent)/1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                                className="nav-fill-link rounded-full px-4 py-2 text-[13px] font-medium"
                             >
                                 Community feed
                             </Link>
                         </nav>
                         <div className="flex items-center gap-2 text-[12px] sm:gap-4 sm:text-[13px]">
-                            <div className="md:hidden">
+                            <div className="xl:hidden">
                                 <Sheet>
                                     <SheetTrigger asChild>
                                         <button
@@ -369,7 +371,7 @@ export default function Welcome({
                             {auth.user ? (
                                 <Link
                                     href={dashboard()}
-                                    className="hidden hover:text-[rgb(var(--w-accent)/1)] md:inline-flex"
+                                    className="nav-fill-link hidden rounded-full px-4 py-2 text-[13px] font-medium lg:inline-flex"
                                 >
                                     {t('w.dashboard')}
                                 </Link>
@@ -377,14 +379,14 @@ export default function Welcome({
                                 <>
                                     <Link
                                         href={login()}
-                                        className="hidden text-[rgb(var(--w-fg-2))] hover:text-[rgb(var(--w-accent)/1)] md:inline-flex"
+                                        className="nav-fill-link hidden rounded-full px-4 py-2 text-[13px] font-medium lg:inline-flex"
                                     >
                                         {t('w.login')}
                                     </Link>
                                     {/* @chisel-registration */}
                                     <Link
                                         href={register()}
-                                        className="hidden rounded-xl bg-[#D7263D] px-4 py-2.5 font-semibold text-white shadow-md shadow-[#D7263D]/15 transition hover:-translate-y-0.5 hover:bg-[#bd2034] md:inline-flex"
+                                        className="hidden rounded-full bg-[#D7263D] px-5 py-2.5 font-semibold text-white shadow-md shadow-[#D7263D]/15 transition hover:-translate-y-0.5 hover:bg-[#bd2034] lg:inline-flex"
                                     >
                                         {t('w.register')}
                                     </Link>
@@ -396,7 +398,7 @@ export default function Welcome({
                 </header>
 
                 <main id="main-content" tabIndex={-1} className="outline-none">
-                    {/* Hero: the barangay photo sits BEHIND the headline as a soft overlay (it fades into the page at the bottom).
+                    {/* Hero: the barangay photo sits BEHIND the headline at full strength, shaded only where the text is (it fades into the page at the bottom).
                         The photo is the admin's upload from Settings → Barangay, or the bundled Santotero photo. */}
                     <div className="relative isolate overflow-hidden">
                         <div aria-hidden className="absolute inset-0 -z-10">
@@ -410,8 +412,11 @@ export default function Welcome({
                             )}
                             <div className="absolute -top-36 right-[8%] size-[28rem] rounded-full bg-[#0197F6]/10 blur-3xl" />
                             <div className="absolute top-1/3 -left-48 size-[26rem] rounded-full bg-[#D7263D]/[0.06] blur-3xl" />
-                            <div className="absolute inset-0 bg-gradient-to-r from-[rgb(var(--w-bg)/var(--w-hero-a))] via-[rgb(var(--w-bg)/var(--w-hero-b))] to-[rgb(var(--w-bg)/var(--w-hero-c))]" />
-                            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgb(var(--w-bg))] to-transparent" />
+                            {/* The photo stays clearly visible. Phones get an even light veil (the text covers the whole width);
+                                wide screens only shade the text side, so the right half shows the barangay at full strength. */}
+                            <div className="absolute inset-0 bg-[rgb(var(--w-bg)/0.74)] lg:hidden" />
+                            <div className="absolute inset-0 hidden bg-gradient-to-r from-[rgb(var(--w-bg)/0.93)] via-[rgb(var(--w-bg)/0.62)] to-[rgb(var(--w-bg)/0.05)] lg:block" />
+                            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[rgb(var(--w-bg))] to-transparent" />
                         </div>
                         {barangay.banner_url && !photoFailed && (
                             <p className="absolute right-4 bottom-4 z-10 hidden items-center gap-1.5 rounded-full border border-[rgb(var(--w-line-strong))] bg-[rgb(var(--w-card))] px-3 py-1 text-[12px] backdrop-blur sm:flex">
