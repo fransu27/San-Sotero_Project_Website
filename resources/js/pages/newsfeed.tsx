@@ -4,6 +4,7 @@ import BarangayBanner from '@/components/barangay-banner';
 import AnnouncementCard from '@/components/feed/announcement-card';
 import type { Notice } from '@/components/feed/announcement-card';
 import Composer from '@/components/feed/composer';
+import MobileReportFilters from '@/components/feed/mobile-report-filters';
 import PostCard, { statusColor } from '@/components/feed/post-card';
 import type { Complaint, Status } from '@/components/feed/post-card';
 import { useFeedSeen } from '@/hooks/use-feed-seen';
@@ -118,7 +119,7 @@ export default function Dashboard({
                     {/* 0. Barangay location photo (set by an admin in Settings → Barangay; placeholder until then) */}
                     <BarangayBanner />
 
-                    <div className="sticky top-[116px] z-20 rounded-2xl border border-border/70 bg-background p-2 shadow-sm lg:top-[60px]">
+                    <div className="sticky top-[130px] z-20 rounded-2xl border border-border/70 bg-background p-2 shadow-sm lg:top-[68px]">
                         <Composer
                             mode={isAdmin ? 'announcement' : 'complaint'}
                             userName={auth.user.name}
@@ -126,6 +127,9 @@ export default function Dashboard({
                             categories={categories}
                         />
                     </div>
+
+                    {/* Phones / tablets: "All reports" + "Browse by category" as two boxes, right above New / Best / Hot */}
+                    <MobileReportFilters />
 
                     <div
                         className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/80 bg-card p-4 shadow-sm"
@@ -248,7 +252,7 @@ export default function Dashboard({
                 </div>
 
                 {/* ── Right widgets (desktop only) ── */}
-                <aside className="hidden h-fit space-y-3 2xl:sticky 2xl:top-[72px] 2xl:block">
+                <aside className="hidden h-fit space-y-3 2xl:sticky 2xl:top-[80px] 2xl:block">
                     {!isAdmin && (
                         <div className="flex items-start gap-2 rounded-xl border border-border bg-card p-3.5 text-xs leading-relaxed text-muted-foreground shadow-sm">
                             <Lock size={14} className="mt-0.5 shrink-0" />

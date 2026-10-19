@@ -185,7 +185,7 @@ export default function Submissions({
             <div className="grid gap-4 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[272px_minmax(0,720px)_280px] xl:justify-center">
                 <aside
                     aria-label={t('sub.title')}
-                    className="sticky top-[76px] hidden h-fit max-h-[calc(100vh-92px)] space-y-4 self-start overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm lg:block"
+                    className="sticky top-[84px] hidden h-fit max-h-[calc(100vh-100px)] space-y-4 self-start overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm lg:block"
                 >
                     <TimeWidget />
                     <div className="space-y-2.5">
@@ -384,7 +384,7 @@ export default function Submissions({
 
                 <aside
                     aria-label={t('sub.title')}
-                    className="hidden h-fit xl:sticky xl:top-[72px] xl:block"
+                    className="hidden h-fit xl:sticky xl:top-[80px] xl:block"
                 >
                     <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
                         <h2 className="mb-3 text-sm font-semibold">

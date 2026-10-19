@@ -333,7 +333,7 @@
         transform 220ms ease;
 }
 
-.w-theme nav a[aria-current='location'] {
+.w-theme nav a[aria-current='location']:not(.nav-fill-link) {
     background: rgb(var(--w-accent) / 0.12);
     color: rgb(var(--w-accent) / 1);
     box-shadow: 0 8px 24px rgb(var(--w-accent) / 0.16);
