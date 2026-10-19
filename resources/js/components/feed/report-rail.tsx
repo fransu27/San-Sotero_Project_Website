@@ -1,7 +1,14 @@
 import { Link } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Clock, Settings } from 'lucide-react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Search,
+    Settings,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -22,11 +29,18 @@ type Props = {
     links: RailLink[];
     settings: { label: string; href: string };
     ariaLabel: string;
+    /** Optional search box, drawn above the clock (the Newsfeed passes one; the guest page does not). */
+    search?: ReactNode;
 };
 
 const manila = { timeZone: 'Asia/Manila' } as const;
 
-export default function ReportRail({ links, settings, ariaLabel }: Props) {
+export default function ReportRail({
+    links,
+    settings,
+    ariaLabel,
+    search,
+}: Props) {
     const [collapsed, setCollapsed] = useState(false);
     const [clock, setClock] = useState(() => new Date());
 
@@ -48,7 +62,7 @@ export default function ReportRail({ links, settings, ariaLabel }: Props) {
         <aside
             aria-label={ariaLabel}
             className={cn(
-                'feed-filter-rail sticky top-[76px] hidden h-fit max-h-[calc(100vh-92px)] self-start overflow-x-hidden overflow-y-auto transition-[width] duration-300 ease-out xl:block',
+                'feed-filter-rail sticky top-[84px] hidden h-fit max-h-[calc(100vh-100px)] self-start overflow-x-hidden overflow-y-auto transition-[width] duration-300 ease-out xl:block',
                 collapsed ? 'w-[88px]' : 'w-[272px]',
             )}
         >
@@ -84,6 +98,24 @@ export default function ReportRail({ links, settings, ariaLabel }: Props) {
                         </>
                     )}
                 </button>
+
+                {search &&
+                    (collapsed ? (
+                        <button
+                            type="button"
+                            onClick={() => setCollapsed(false)}
+                            aria-label="Search reports"
+                            title="Search reports"
+                            className={cn(
+                                'nav-fill-link rounded-xl text-sm font-medium',
+                                iconBox,
+                            )}
+                        >
+                            <Search size={18} />
+                        </button>
+                    ) : (
+                        search
+                    ))}
 
                 {collapsed ? (
                     <div
