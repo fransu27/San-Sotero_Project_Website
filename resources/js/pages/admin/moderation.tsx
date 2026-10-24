@@ -1,3 +1,4 @@
+
 import { Head, Link, router, usePoll } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -11,7 +12,7 @@ import {
     ShieldCheck,
     XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AttachmentList } from '@/components/feed/attachments';
 import type { Attachment } from '@/components/feed/attachments';
 import { ZoomableImage } from '@/components/feed/image-lightbox';
@@ -23,6 +24,7 @@ type Event = {
     note: string | null;
     created_at: string | null;
 };
+
 type Complaint = {
     id: number;
     ticket_code: string | null;
@@ -49,8 +51,32 @@ type Complaint = {
     removed_reason: string | null;
     events: Event[];
 };
-type ManagedUser = { id: number; name: string; email: string; status: string; expires_at: string | null; reason: string | null; profile_restricted: boolean; profile_reason: string | null; last_seen_at: string | null };
-type PostReport = { id: number; complaint_id: number; title: string; author_id: number | null; reporter: string; reason: string; details: string | null; status: string; admin_note: string | null; created_at: string | null };
+
+type ManagedUser = {
+    id: number;
+    name: string;
+    email: string;
+    status: string;
+    expires_at: string | null;
+    reason: string | null;
+    profile_restricted: boolean;
+    profile_reason: string | null;
+    last_seen_at: string | null;
+};
+
+type PostReport = {
+    id: number;
+    complaint_id: number;
+    title: string;
+    author_id: number | null;
+    reporter: string;
+    reason: string;
+    details: string | null;
+    status: string;
+    admin_note: string | null;
+    created_at: string | null;
+};
+
 type Props = {
     complaints: Complaint[];
     users: ManagedUser[];
@@ -68,8 +94,46 @@ const dateLabel = (value: string | null) =>
           })
         : '—';
 
-export default function Moderation({ complaints, view, query, counts, users, postReports }: Props) {
+const isRecentlyActive = (
+    lastSeenAt: string | null,
+    currentTime: number | null,
+): boolean => {
+    if (!lastSeenAt || currentTime === null) {
+        return false;
+    }
+
+    const lastSeenTime = new Date(lastSeenAt).getTime();
+
+    return (
+        Number.isFinite(lastSeenTime) &&
+        currentTime - lastSeenTime >= 0 &&
+        currentTime - lastSeenTime < 5 * 60 * 1000
+    );
+};
+
+export default function Moderation({
+    complaints,
+    view,
+    query,
+    counts,
+    users,
+    postReports,
+}: Props) {
     usePoll(30000, { only: ['users', 'postReports', 'counts'] });
+
+    // Keep the current time in state instead of calling Date.now() during render.
+    const [now, setNow] = useState<number | null>(null);
+
+    useEffect(() => {
+        const updateTime = () => setNow(Date.now());
+
+        updateTime();
+
+        const intervalId = window.setInterval(updateTime, 60_000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
     const [preview, setPreview] = useState<Complaint | null>(null);
     const [rejectTarget, setRejectTarget] = useState<number | null>(null);
     const [reasons, setReasons] = useState<Record<number, string>>({});
@@ -93,6 +157,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
     };
 
     const updateStatus = (item: Complaint) => {
+        if (busyId !== null) {
+            return;
+        }
+
         if (statusDraft === 'Rejected' && statusNote.trim().length < 5) {
             setError(
                 'Please enter a rejection reason of at least 5 characters.',
@@ -103,9 +171,13 @@ export default function Moderation({ complaints, view, query, counts, users, pos
 
         setBusyId(item.id);
         setError(null);
+
         router.patch(
             `/complaints/${item.id}/status`,
-            { status: statusDraft, note: statusNote.trim() || null },
+            {
+                status: statusDraft,
+                note: statusNote.trim() || null,
+            },
             {
                 preserveScroll: true,
                 onSuccess: () => setPreview(null),
@@ -121,6 +193,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
     };
 
     const removePost = (item: Complaint) => {
+        if (busyId !== null) {
+            return;
+        }
+
         if (removalReason.trim().length < 5) {
             setError(
                 'Please provide a reason of at least 5 characters before removing this post.',
@@ -131,6 +207,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
 
         setBusyId(item.id);
         setError(null);
+
         router.patch(
             `/complaints/${item.id}/remove`,
             { reason: removalReason.trim() },
@@ -147,10 +224,14 @@ export default function Moderation({ complaints, view, query, counts, users, pos
         );
     };
 
-    /** Undo a removal (for example the wrong post was removed). The post returns exactly as it was. */
     const restorePost = (item: Complaint) => {
+        if (busyId !== null) {
+            return;
+        }
+
         setBusyId(item.id);
         setError(null);
+
         router.patch(
             `/complaints/${item.id}/restore`,
             {},
@@ -165,8 +246,13 @@ export default function Moderation({ complaints, view, query, counts, users, pos
     };
 
     const approve = (item: Complaint) => {
+        if (busyId !== null) {
+            return;
+        }
+
         setBusyId(item.id);
         setError(null);
+
         router.patch(
             `/complaints/${item.id}/approve`,
             { note: approveNotes[item.id]?.trim() || null },
@@ -184,6 +270,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
     };
 
     const reject = (item: Complaint) => {
+        if (busyId !== null) {
+            return;
+        }
+
         const reason = (reasons[item.id] ?? '').trim();
 
         if (reason.length < 5) {
@@ -196,6 +286,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
 
         setBusyId(item.id);
         setError(null);
+
         router.patch(
             `/complaints/${item.id}/remove`,
             { reason },
@@ -203,7 +294,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                 preserveScroll: true,
                 onSuccess: () => {
                     setRejectTarget(null);
-                    setReasons((current) => ({ ...current, [item.id]: '' }));
+                    setReasons((current) => ({
+                        ...current,
+                        [item.id]: '',
+                    }));
                 },
                 onError: (errors) =>
                     setError(
@@ -215,25 +309,119 @@ export default function Moderation({ complaints, view, query, counts, users, pos
         );
     };
 
+    const moderateUser = (user: ManagedUser) => {
+        const action = window.prompt(
+            'Action: restrict, ban, activate, profile_restrict, or profile_restore',
+            user.profile_restricted
+                ? 'profile_restore'
+                : user.status === 'active'
+                  ? 'restrict'
+                  : 'activate',
+        );
+
+        if (
+            !action ||
+            ![
+                'restrict',
+                'ban',
+                'activate',
+                'profile_restrict',
+                'profile_restore',
+            ].includes(action)
+        ) {
+            return;
+        }
+
+        const reason = window.prompt(
+            'Required moderation reason (minimum 5 characters):',
+            action === 'profile_restrict'
+                ? 'Inappropriate profile picture'
+                : 'Community guideline violation',
+        );
+
+        if (!reason || reason.trim().length < 5) {
+            window.alert('Please provide a reason of at least 5 characters.');
+
+            return;
+        }
+
+        let days: number | undefined;
+
+        if (action === 'restrict') {
+            const duration = window.prompt(
+                'Restriction duration in days (1–365):',
+                '7',
+            );
+
+            if (duration === null) {
+                return;
+            }
+
+            days = Number(duration);
+
+            if (!Number.isInteger(days) || days < 1 || days > 365) {
+                window.alert('Enter a whole number between 1 and 365.');
+
+                return;
+            }
+        }
+
+        router.patch(
+            `/admin/users/${user.id}/moderation`,
+            { action, reason: reason.trim(), days },
+            { preserveScroll: true },
+        );
+    };
+
+    const reviewPostReport = (report: PostReport, status: string) => {
+        const adminNote = window.prompt(
+            `Required note for ${status} (minimum 5 characters):`,
+            status === 'actioned'
+                ? 'Reviewed and action taken'
+                : 'Reviewed by administration',
+        );
+
+        if (adminNote === null) {
+            return;
+        }
+
+        if (adminNote.trim().length < 5) {
+            window.alert('Please provide a note of at least 5 characters.');
+
+            return;
+        }
+
+        router.patch(
+            `/admin/post-reports/${report.id}`,
+            { status, admin_note: adminNote.trim() },
+            { preserveScroll: true },
+        );
+    };
+
     return (
         <>
             <Head title="Admin · Moderation" />
+
             <main className="mx-auto w-full max-w-5xl space-y-6">
                 <header className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                         <div>
                             <div className="mb-2 flex items-center gap-2 text-sm font-medium text-[#0197F6]">
-                                <ShieldCheck size={18} /> Administrator tools
+                                <ShieldCheck size={18} />
+                                Administrator tools
                             </div>
+
                             <h1 className="text-2xl font-bold tracking-tight">
                                 Moderation
                             </h1>
+
                             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                                 Review residents’ concerns, inspect attached
                                 images, and record clear approval or rejection
                                 decisions.
                             </p>
                         </div>
+
                         <Link
                             href="/dashboard"
                             className="inline-flex w-fit items-center rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
@@ -245,21 +433,32 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                         <Link
                             href="/admin/moderation?view=queue"
-                            className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${view === 'queue' ? 'border-[#0197F6] bg-[#0197F6]/5' : 'border-border'}`}
+                            className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${
+                                view === 'queue'
+                                    ? 'border-[#0197F6] bg-[#0197F6]/5'
+                                    : 'border-border'
+                            }`}
                         >
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Clock3 size={16} /> Awaiting review
+                                <Clock3 size={16} />
+                                Awaiting review
                             </div>
                             <div className="mt-1 text-2xl font-bold">
                                 {counts.queue}
                             </div>
                         </Link>
+
                         <Link
                             href="/admin/moderation?view=reviewed"
-                            className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${view === 'reviewed' ? 'border-[#0197F6] bg-[#0197F6]/5' : 'border-border'}`}
+                            className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${
+                                view === 'reviewed'
+                                    ? 'border-[#0197F6] bg-[#0197F6]/5'
+                                    : 'border-border'
+                            }`}
                         >
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <CheckCircle2 size={16} /> Reviewed submissions
+                                <CheckCircle2 size={16} />
+                                Reviewed submissions
                             </div>
                             <div className="mt-1 text-2xl font-bold">
                                 {counts.reviewed}
@@ -273,6 +472,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                         className="mt-5 flex flex-col gap-2 sm:flex-row"
                     >
                         <input type="hidden" name="view" value={view} />
+
                         <label className="relative min-w-0 flex-1">
                             <Search
                                 size={17}
@@ -287,6 +487,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                 className="w-full rounded-lg border border-input bg-background py-2.5 pr-3 pl-10 text-sm outline-none focus:ring-2 focus:ring-[#0197F6]/30"
                             />
                         </label>
+
                         <button
                             type="submit"
                             className="rounded-lg bg-[#0197F6] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#087bc2]"
@@ -333,7 +534,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     {item.image_url ? (
                                         <button
                                             type="button"
-                                            onClick={() => setPreview(item)}
+                                            onClick={() => openPreview(item)}
                                             aria-label={`Preview image for ${item.title}`}
                                             className="h-36 w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:w-44"
                                         >
@@ -348,10 +549,19 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             <ImageIcon size={30} />
                                         </div>
                                     )}
+
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span
-                                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${item.removed || item.status === 'Rejected' ? 'bg-red-500/10 text-red-700 dark:text-red-300' : item.approval === 'pending' ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300' : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'}`}
+                                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                                    item.removed ||
+                                                    item.status === 'Rejected'
+                                                        ? 'bg-red-500/10 text-red-700 dark:text-red-300'
+                                                        : item.approval ===
+                                                            'pending'
+                                                          ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300'
+                                                          : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                                                }`}
                                             >
                                                 {item.removed ||
                                                 item.status === 'Rejected'
@@ -361,17 +571,21 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                       ? 'Awaiting approval'
                                                       : 'Approved'}
                                             </span>
+
                                             <span className="text-xs text-muted-foreground">
                                                 {item.ticket_code ??
                                                     `Submission #${item.id}`}
                                             </span>
                                         </div>
+
                                         <h2 className="mt-2 text-lg leading-snug font-semibold">
                                             {item.title}
                                         </h2>
+
                                         <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                                             {item.description}
                                         </p>
+
                                         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                                             <span>
                                                 {item.author}
@@ -386,57 +600,56 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     : item.category}
                                             </span>
                                             <span>{item.location}</span>
+
                                             {item.attachments.length > 0 && (
                                                 <span className="inline-flex items-center gap-1 font-medium text-[#0777bd] dark:text-[#4cb9f8]">
                                                     <Paperclip size={12} />
-                                                    {
-                                                        item.attachments.length
-                                                    }{' '}
+                                                    {item.attachments.length}{' '}
                                                     {item.attachments.length ===
                                                     1
                                                         ? 'file'
                                                         : 'files'}
                                                 </span>
                                             )}
+
                                             <span>
                                                 Submitted{' '}
                                                 {dateLabel(item.created_at)}
                                             </span>
                                         </div>
+
                                         <div className="mt-4 flex flex-wrap items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    openPreview(item)
-                                                }
+                                                onClick={() => openPreview(item)}
                                                 className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
                                             >
-                                                <Eye size={16} /> Preview
-                                                submission
+                                                <Eye size={16} />
+                                                Preview submission
                                             </button>
+
                                             {item.removed && (
                                                 <button
                                                     type="button"
-                                                    disabled={
-                                                        busyId === item.id
-                                                    }
+                                                    disabled={busyId !== null}
                                                     onClick={() =>
                                                         restorePost(item)
                                                     }
                                                     className="inline-flex items-center gap-2 rounded-lg bg-[#0197F6] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#087bc2] disabled:opacity-50"
                                                 >
-                                                    <RotateCcw size={16} />{' '}
+                                                    <RotateCcw size={16} />
                                                     {busyId === item.id
                                                         ? 'Restoring…'
                                                         : 'Restore post'}
                                                 </button>
                                             )}
+
                                             {item.approval === 'pending' &&
                                                 !item.removed && (
                                                     <button
                                                         type="button"
                                                         disabled={
-                                                            busyId === item.id
+                                                            busyId !== null
                                                         }
                                                         onClick={() =>
                                                             approve(item)
@@ -445,16 +658,20 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     >
                                                         <CheckCircle2
                                                             size={16}
-                                                        />{' '}
+                                                        />
                                                         {busyId === item.id
                                                             ? 'Saving…'
                                                             : 'Approve'}
                                                     </button>
                                                 )}
+
                                             {item.approval === 'pending' &&
                                                 !item.removed && (
                                                     <button
                                                         type="button"
+                                                        disabled={
+                                                            busyId !== null
+                                                        }
                                                         onClick={() => {
                                                             setRejectTarget(
                                                                 rejectTarget ===
@@ -464,13 +681,14 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                             );
                                                             setError(null);
                                                         }}
-                                                        className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-500/10 dark:text-red-300"
+                                                        className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-500/10 disabled:opacity-50 dark:text-red-300"
                                                     >
-                                                        <XCircle size={16} />{' '}
+                                                        <XCircle size={16} />
                                                         Reject
                                                     </button>
                                                 )}
                                         </div>
+
                                         {item.approval === 'pending' &&
                                             !item.removed && (
                                                 <div className="mt-4 grid gap-3 rounded-xl bg-muted/40 p-3 sm:grid-cols-2">
@@ -483,14 +701,12 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                                     item.id
                                                                 ] ?? ''
                                                             }
-                                                            onChange={(e) =>
+                                                            onChange={(event) =>
                                                                 setApproveNotes(
-                                                                    (
-                                                                        current,
-                                                                    ) => ({
+                                                                    (current) => ({
                                                                         ...current,
                                                                         [item.id]:
-                                                                            e
+                                                                            event
                                                                                 .target
                                                                                 .value,
                                                                     }),
@@ -502,6 +718,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                             className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#0197F6]/30"
                                                         />
                                                     </label>
+
                                                     {rejectTarget ===
                                                         item.id && (
                                                         <label className="text-xs font-medium text-muted-foreground">
@@ -513,14 +730,16 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                                         item.id
                                                                     ] ?? ''
                                                                 }
-                                                                onChange={(e) =>
+                                                                onChange={(
+                                                                    event,
+                                                                ) =>
                                                                     setReasons(
                                                                         (
                                                                             current,
                                                                         ) => ({
                                                                             ...current,
                                                                             [item.id]:
-                                                                                e
+                                                                                event
                                                                                     .target
                                                                                     .value,
                                                                         }),
@@ -534,8 +753,8 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                             <button
                                                                 type="button"
                                                                 disabled={
-                                                                    busyId ===
-                                                                    item.id
+                                                                    busyId !==
+                                                                    null
                                                                 }
                                                                 onClick={() =>
                                                                     reject(item)
@@ -549,6 +768,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     )}
                                                 </div>
                                             )}
+
                                         {(item.removed ||
                                             item.status === 'Rejected') &&
                                             item.removed_reason && (
@@ -565,57 +785,163 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                         ))}
                     </section>
                 )}
+
                 <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
                     <div>
                         <h2 className="text-xl font-bold">User moderation</h2>
-                        <p className="text-sm text-muted-foreground">Active and offline accounts, temporary restrictions, bans, and profile-picture restrictions. Every action requires a reason and is audited.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Active and offline accounts, temporary
+                            restrictions, bans, and profile-picture
+                            restrictions. Every action requires a reason and
+                            is audited.
+                        </p>
                     </div>
+
                     <div className="grid gap-3 md:grid-cols-2">
                         {users.map((user) => (
-                            <article key={user.id} className="rounded-xl border border-border p-4">
+                            <article
+                                key={user.id}
+                                className="rounded-xl border border-border p-4"
+                            >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                        <p className="font-semibold">{user.name}</p>
-                                        <p className="break-all text-xs text-muted-foreground">{user.email}</p>
-                                        <p className="mt-1 text-xs text-muted-foreground">{user.last_seen_at && Date.now() - new Date(user.last_seen_at).getTime() < 5 * 60 * 1000 ? 'Active now' : 'Offline'} · Last seen: {dateLabel(user.last_seen_at)}</p>
+                                        <p className="font-semibold">
+                                            {user.name}
+                                        </p>
+                                        <p className="break-all text-xs text-muted-foreground">
+                                            {user.email}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            {isRecentlyActive(
+                                                user.last_seen_at,
+                                                now,
+                                            )
+                                                ? 'Active now'
+                                                : 'Offline'}
+                                            {' · Last seen: '}
+                                            {dateLabel(user.last_seen_at)}
+                                        </p>
                                     </div>
-                                    <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold">{user.status}</span>
+
+                                    <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold">
+                                        {user.status}
+                                    </span>
                                 </div>
-                                {(user.reason || user.profile_reason) && <p className="mt-2 text-xs text-muted-foreground">Reason: {user.reason || user.profile_reason}</p>}
+
+                                {(user.reason || user.profile_reason) && (
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        Reason:{' '}
+                                        {user.reason || user.profile_reason}
+                                    </p>
+                                )}
+
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                    <button type="button" className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted" onClick={() => {
-                                        const action = window.prompt('Action: restrict, ban, activate, profile_restrict, or profile_restore', user.profile_restricted ? 'profile_restore' : user.status === 'active' ? 'restrict' : 'activate');
-                                        if (!action || !['restrict','ban','activate','profile_restrict','profile_restore'].includes(action)) return;
-                                        const reason = window.prompt('Required moderation reason (minimum 5 characters):', action === 'profile_restrict' ? 'Inappropriate profile picture' : 'Community guideline violation');
-                                        if (!reason || reason.trim().length < 5) return;
-                                        const days = action === 'restrict' ? Number(window.prompt('Restriction duration in days (1–365):', '7') || 7) : undefined;
-                                        router.patch(`/admin/users/${user.id}/moderation`, { action, reason, days }, { preserveScroll: true });
-                                    }}>••• Moderation tools</button>
+                                    <button
+                                        type="button"
+                                        className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                                        onClick={() => moderateUser(user)}
+                                    >
+                                        Moderation tools
+                                    </button>
                                 </div>
-                                {user.status === 'restricted' && user.expires_at && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Restriction ends: {dateLabel(user.expires_at)}</p>}
+
+                                {user.status === 'restricted' &&
+                                    user.expires_at && (
+                                        <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                                            Restriction ends:{' '}
+                                            {dateLabel(user.expires_at)}
+                                        </p>
+                                    )}
                             </article>
                         ))}
-                        {users.length === 0 && <p className="text-sm text-muted-foreground">No resident accounts found.</p>}
+
+                        {users.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                                No resident accounts found.
+                            </p>
+                        )}
                     </div>
                 </section>
 
                 <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
                     <div>
                         <h2 className="text-xl font-bold">Reported posts</h2>
-                        <p className="text-sm text-muted-foreground">Residents can report misinformation, harassment, inappropriate content, spam, privacy concerns, and other issues.</p>
+                        <p className="text-sm text-muted-foreground">
+                            Residents can report misinformation, harassment,
+                            inappropriate content, spam, privacy concerns, and
+                            other issues.
+                        </p>
                     </div>
+
                     <div className="space-y-3">
-                        {postReports.map((report) => <article key={report.id} className="rounded-xl border border-border p-4">
-                            <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{report.title}</p><span className="rounded-full bg-muted px-2 py-1 text-xs">{report.status}</span></div>
-                            <p className="mt-1 text-sm">{report.reason} · Reported by {report.reporter}</p>
-                            {report.details && <p className="mt-2 text-sm text-muted-foreground">{report.details}</p>}
-                            {report.admin_note && <p className="mt-2 text-xs text-muted-foreground">Admin note: {report.admin_note}</p>}
-                            {report.status === 'pending' && <div className="mt-3 flex flex-wrap gap-2">{(['actioned','dismissed','reviewed'] as const).map((status) => <button key={status} type="button" className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted" onClick={() => {
-                                const admin_note = window.prompt(`Required note for ${status} (minimum 5 characters):`, status === 'actioned' ? 'Reviewed and action taken' : 'Reviewed by administration');
-                                if (admin_note && admin_note.trim().length >= 5) router.patch(`/admin/post-reports/${report.id}`, { status, admin_note }, { preserveScroll: true });
-                            }}>{status === 'actioned' ? 'Take action' : status === 'dismissed' ? 'Dismiss' : 'Mark reviewed'}</button>)}</div>}
-                        </article>)}
-                        {postReports.length === 0 && <p className="text-sm text-muted-foreground">No post reports have been submitted.</p>}
+                        {postReports.map((report) => (
+                            <article
+                                key={report.id}
+                                className="rounded-xl border border-border p-4"
+                            >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <p className="font-semibold">
+                                        {report.title}
+                                    </p>
+                                    <span className="rounded-full bg-muted px-2 py-1 text-xs">
+                                        {report.status}
+                                    </span>
+                                </div>
+
+                                <p className="mt-1 text-sm">
+                                    {report.reason} · Reported by{' '}
+                                    {report.reporter}
+                                </p>
+
+                                {report.details && (
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        {report.details}
+                                    </p>
+                                )}
+
+                                {report.admin_note && (
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        Admin note: {report.admin_note}
+                                    </p>
+                                )}
+
+                                {report.status === 'pending' && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {(
+                                            [
+                                                'actioned',
+                                                'dismissed',
+                                                'reviewed',
+                                            ] as const
+                                        ).map((status) => (
+                                            <button
+                                                key={status}
+                                                type="button"
+                                                className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted"
+                                                onClick={() =>
+                                                    reviewPostReport(
+                                                        report,
+                                                        status,
+                                                    )
+                                                }
+                                            >
+                                                {status === 'actioned'
+                                                    ? 'Take action'
+                                                    : status === 'dismissed'
+                                                      ? 'Dismiss'
+                                                      : 'Mark reviewed'}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </article>
+                        ))}
+
+                        {postReports.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                                No post reports have been submitted.
+                            </p>
+                        )}
                     </div>
                 </section>
             </main>
@@ -647,6 +973,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     {preview.title}
                                 </h2>
                             </div>
+
                             <button
                                 type="button"
                                 onClick={() => setPreview(null)}
@@ -655,6 +982,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                 Close
                             </button>
                         </div>
+
                         <div className="space-y-5 p-5">
                             {preview.image_url ? (
                                 <ZoomableImage
@@ -664,17 +992,22 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                 />
                             ) : (
                                 <div className="flex items-center gap-3 rounded-xl bg-muted p-5 text-sm text-muted-foreground">
-                                    <FileText size={24} /> No image attached to
-                                    this submission.
+                                    <FileText size={24} />
+                                    No image attached to this submission.
                                 </div>
                             )}
+
                             {preview.attachments.length > 0 ? (
-                                <AttachmentList files={preview.attachments} />
+                                <AttachmentList
+                                    files={preview.attachments}
+                                />
                             ) : (
                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <Paperclip size={14} /> No files attached.
+                                    <Paperclip size={14} />
+                                    No files attached.
                                 </p>
                             )}
+
                             {preview.intake_channel === 'walk_in' && (
                                 <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-3">
                                     <p className="text-sm font-semibold">
@@ -696,6 +1029,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     </p>
                                 </div>
                             )}
+
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div>
                                     <p className="text-xs text-muted-foreground">
@@ -706,6 +1040,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             `Submission #${preview.id}`}
                                     </p>
                                 </div>
+
                                 <div>
                                     <p className="text-xs text-muted-foreground">
                                         Submitted by
@@ -722,6 +1057,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                         </p>
                                     )}
                                 </div>
+
                                 <div>
                                     <p className="text-xs text-muted-foreground">
                                         Category
@@ -733,6 +1069,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             : preview.category}
                                     </p>
                                 </div>
+
                                 <div>
                                     <p className="text-xs text-muted-foreground">
                                         Location
@@ -741,6 +1078,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                         {preview.location}
                                     </p>
                                 </div>
+
                                 <div>
                                     <p className="text-xs text-muted-foreground">
                                         Incident date
@@ -749,6 +1087,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                         {preview.date ?? '—'}
                                     </p>
                                 </div>
+
                                 <div>
                                     <p className="text-xs text-muted-foreground">
                                         Visibility
@@ -758,6 +1097,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     </p>
                                 </div>
                             </div>
+
                             <div>
                                 <h3 className="mb-2 font-semibold">
                                     Concern details
@@ -766,6 +1106,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     {preview.description}
                                 </p>
                             </div>
+
                             {preview.events.length > 0 && (
                                 <div>
                                     <h3 className="mb-2 font-semibold">
@@ -782,11 +1123,13 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                               .toUpperCase() +
                                                           event.type.slice(1)}
                                                 </p>
+
                                                 {event.note && (
                                                     <p className="mt-1 text-sm text-muted-foreground">
                                                         {event.note}
                                                     </p>
                                                 )}
+
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     {dateLabel(
                                                         event.created_at,
@@ -797,12 +1140,14 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                     </ol>
                                 </div>
                             )}
+
                             {preview.removed_reason && (
                                 <div className="rounded-lg bg-red-500/10 p-3 text-sm">
                                     <strong>Rejection reason:</strong>{' '}
                                     {preview.removed_reason}
                                 </div>
                             )}
+
                             <div className="space-y-4 border-t border-border pt-4">
                                 {preview.approval === 'pending' &&
                                     !preview.removed && (
@@ -810,6 +1155,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             <h3 className="font-semibold">
                                                 Approval decision
                                             </h3>
+
                                             <label className="mt-3 block text-sm">
                                                 Approval note (optional)
                                                 <textarea
@@ -818,12 +1164,12 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                             preview.id
                                                         ] ?? ''
                                                     }
-                                                    onChange={(e) =>
+                                                    onChange={(event) =>
                                                         setApproveNotes(
                                                             (current) => ({
                                                                 ...current,
                                                                 [preview.id]:
-                                                                    e.target
+                                                                    event.target
                                                                         .value,
                                                             }),
                                                         )
@@ -834,16 +1180,20 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     placeholder="Optional note for the resident"
                                                 />
                                             </label>
+
                                             <button
                                                 type="button"
-                                                disabled={busyId === preview.id}
+                                                disabled={busyId !== null}
                                                 onClick={() => approve(preview)}
                                                 className="mt-3 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
                                             >
-                                                Approve submission
+                                                {busyId === preview.id
+                                                    ? 'Saving…'
+                                                    : 'Approve submission'}
                                             </button>
                                         </div>
                                     )}
+
                                 {preview.approval === 'approved' &&
                                     !preview.removed && (
                                         <div className="rounded-xl border border-border p-4">
@@ -855,14 +1205,16 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                 decision history and visible to
                                                 the resident.
                                             </p>
+
                                             <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                                 <label className="text-sm">
                                                     New status
                                                     <select
                                                         value={statusDraft}
-                                                        onChange={(e) =>
+                                                        onChange={(event) =>
                                                             setStatusDraft(
-                                                                e.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2"
@@ -881,6 +1233,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                         </option>
                                                     </select>
                                                 </label>
+
                                                 <label className="text-sm">
                                                     Staff note{' '}
                                                     {statusDraft === 'Rejected'
@@ -888,9 +1241,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                         : '(optional)'}
                                                     <textarea
                                                         value={statusNote}
-                                                        onChange={(e) =>
+                                                        onChange={(event) =>
                                                             setStatusNote(
-                                                                e.target.value,
+                                                                event.target
+                                                                    .value,
                                                             )
                                                         }
                                                         maxLength={300}
@@ -905,10 +1259,11 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     />
                                                 </label>
                                             </div>
+
                                             <button
                                                 type="button"
                                                 disabled={
-                                                    busyId === preview.id ||
+                                                    busyId !== null ||
                                                     statusDraft ===
                                                         preview.status
                                                 }
@@ -921,6 +1276,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             </button>
                                         </div>
                                     )}
+
                                 {!preview.removed && (
                                     <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
                                         <h3 className="font-semibold text-red-700 dark:text-red-300">
@@ -934,6 +1290,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             can restore the post later if it was
                                             removed by mistake.
                                         </p>
+
                                         {!confirmingRemove ? (
                                             <button
                                                 type="button"
@@ -952,9 +1309,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                     (required)
                                                     <textarea
                                                         value={removalReason}
-                                                        onChange={(e) => {
+                                                        onChange={(event) => {
                                                             setRemovalReason(
-                                                                e.target.value,
+                                                                event.target
+                                                                    .value,
                                                             );
                                                             setError(null);
                                                         }}
@@ -966,13 +1324,12 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                         placeholder="Explain why this post must be removed (at least 5 characters)"
                                                     />
                                                 </label>
+
                                                 <div className="flex flex-wrap gap-2">
-                                                    {/* Disabled until a reason is typed: a post can never be removed without one. */}
                                                     <button
                                                         type="button"
                                                         disabled={
-                                                            busyId ===
-                                                                preview.id ||
+                                                            busyId !== null ||
                                                             removalReason.trim()
                                                                 .length < 5
                                                         }
@@ -982,9 +1339,10 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                                         className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                                                     >
                                                         {busyId === preview.id
-                                                            ? 'Deleting…'
-                                                            : 'Delete post'}
+                                                            ? 'Removing…'
+                                                            : 'Remove post'}
                                                     </button>
+
                                                     <button
                                                         type="button"
                                                         onClick={() => {
@@ -1004,6 +1362,7 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                         )}
                                     </div>
                                 )}
+
                                 {preview.removed && (
                                     <div className="space-y-3 rounded-lg bg-muted p-4 text-sm">
                                         <p>
@@ -1011,19 +1370,21 @@ export default function Moderation({ complaints, view, query, counts, users, pos
                                             {preview.removed_reason ??
                                                 'No reason recorded.'}
                                         </p>
+
                                         <button
                                             type="button"
-                                            disabled={busyId === preview.id}
+                                            disabled={busyId !== null}
                                             onClick={() => restorePost(preview)}
                                             className="inline-flex items-center gap-2 rounded-lg bg-[#0197F6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#087bc2] disabled:opacity-50"
                                         >
-                                            <RotateCcw size={16} />{' '}
+                                            <RotateCcw size={16} />
                                             {busyId === preview.id
                                                 ? 'Restoring…'
                                                 : 'Restore post'}
                                         </button>
                                     </div>
                                 )}
+
                                 {error && (
                                     <p
                                         role="alert"

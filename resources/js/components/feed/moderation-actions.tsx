@@ -30,7 +30,9 @@ export function ModerationActions({ complaintId, canReport = true }: { complaint
     function submitReport() {
         router.post(`/complaints/${complaintId}/report`, { reason, details: details.trim() || null }, {
             preserveScroll: true,
-            onSuccess: () => { setOpen(false); setDetails(''); setMessage('Report submitted for review'); },
+            onSuccess: () => {
+ setOpen(false); setDetails(''); setMessage('Report submitted for review'); 
+},
             onError: () => setMessage('Unable to submit report. You may already have reported this post.'),
         });
     }

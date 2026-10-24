@@ -667,7 +667,11 @@ export default function PostCard({
                                     const choices = ['Misinformation', 'Harassment or hate', 'Inappropriate content', 'Spam or scam', 'Privacy concern', 'Other'];
                                     const selection = window.prompt(`Choose a report reason by number:\n${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\nEnter 1–6:`);
                                     const reason = selection ? choices[Number(selection.trim()) - 1] : undefined;
-                                    if (!reason) return;
+
+                                    if (!reason) {
+return;
+}
+
                                     const details = window.prompt('Optional details to help the admin review this report (max 1000 characters):') || '';
                                     router.post(`/complaints/${c.id}/report`, { reason: reason.trim(), details }, { preserveScroll: true });
                                 }}>
