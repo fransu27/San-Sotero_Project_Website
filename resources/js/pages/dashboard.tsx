@@ -48,7 +48,13 @@ type Props = {
     statusCounts: Record<string, number>;
     series: Record<Period, Bucket[]>;
     reports: Report[];
-    siteMetrics: { pageViews: number; uniqueVisitors: number; visitorsToday: number; onlineUsers: number; registeredUsers: number } | null;
+    siteMetrics: {
+        pageViews: number;
+        uniqueVisitors: number;
+        visitorsToday: number;
+        onlineUsers: number;
+        registeredUsers: number;
+    } | null;
 };
 const periods: { key: Period; label: string; detail: string }[] = [
     { key: 'day', label: 'Day', detail: '24 hours · hourly submissions' },
@@ -204,18 +210,56 @@ export default function Dashboard({
                     </label>
                 </div>
                 {isAdmin && siteMetrics && (
-                    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5" aria-label="Website activity widgets">
+                    <section
+                        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
+                        aria-label="Website activity widgets"
+                    >
                         {[
-                            { label: 'Page views', value: siteMetrics.pageViews, detail: 'Recorded page visits', icon: Activity },
-                            { label: 'Unique visitors', value: siteMetrics.uniqueVisitors, detail: 'Distinct browser sessions', icon: Eye },
-                            { label: 'Visitors today', value: siteMetrics.visitorsToday, detail: 'Since midnight', icon: CalendarDays },
-                            { label: 'Users online', value: siteMetrics.onlineUsers, detail: 'Seen in the last 5 minutes', icon: Activity },
-                            { label: 'Resident accounts', value: siteMetrics.registeredUsers, detail: 'Registered non-admin users', icon: FileText },
+                            {
+                                label: 'Page views',
+                                value: siteMetrics.pageViews,
+                                detail: 'Recorded page visits',
+                                icon: Activity,
+                            },
+                            {
+                                label: 'Unique visitors',
+                                value: siteMetrics.uniqueVisitors,
+                                detail: 'Distinct browser sessions',
+                                icon: Eye,
+                            },
+                            {
+                                label: 'Visitors today',
+                                value: siteMetrics.visitorsToday,
+                                detail: 'Since midnight',
+                                icon: CalendarDays,
+                            },
+                            {
+                                label: 'Users online',
+                                value: siteMetrics.onlineUsers,
+                                detail: 'Seen in the last 5 minutes',
+                                icon: Activity,
+                            },
+                            {
+                                label: 'Resident accounts',
+                                value: siteMetrics.registeredUsers,
+                                detail: 'Registered non-admin users',
+                                icon: FileText,
+                            },
                         ].map((metric) => (
-                            <article key={metric.label} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{metric.label}</span><metric.icon size={16} /></div>
-                                <p className="mt-2 text-2xl font-bold tabular-nums">{metric.value.toLocaleString()}</p>
-                                <p className="mt-1 text-[11px] text-muted-foreground">{metric.detail}</p>
+                            <article
+                                key={metric.label}
+                                className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+                            >
+                                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                                    <span>{metric.label}</span>
+                                    <metric.icon size={16} />
+                                </div>
+                                <p className="mt-2 text-2xl font-bold tabular-nums">
+                                    {metric.value.toLocaleString()}
+                                </p>
+                                <p className="mt-1 text-[11px] text-muted-foreground">
+                                    {metric.detail}
+                                </p>
                             </article>
                         ))}
                     </section>

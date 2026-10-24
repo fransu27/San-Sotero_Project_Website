@@ -1,4 +1,3 @@
-
 import { Head, Link, router } from '@inertiajs/react';
 import { Activity, Ban, Flag, ShieldAlert, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -125,8 +124,8 @@ export default function CommunityModeration({
                         </h1>
 
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Review resident reports, apply account actions,
-                            and monitor community activity.
+                            Review resident reports, apply account actions, and
+                            monitor community activity.
                         </p>
                     </div>
 
@@ -177,8 +176,8 @@ export default function CommunityModeration({
                         <h2 className="font-semibold">Reported posts</h2>
 
                         <p className="text-sm text-muted-foreground">
-                            An approved post is automatically placed on hold
-                            at {threshold} distinct open reports.
+                            An approved post is automatically placed on hold at{' '}
+                            {threshold} distinct open reports.
                         </p>
                     </div>
 
@@ -200,9 +199,9 @@ export default function CommunityModeration({
                                             </Link>
 
                                             <p className="text-xs text-muted-foreground">
-                                                Complaint #
-                                                {report.complaint.id} ·
-                                                reported by {report.user.name} ·{' '}
+                                                Complaint #{report.complaint.id}{' '}
+                                                · reported by {report.user.name}{' '}
+                                                ·{' '}
                                                 {new Date(
                                                     report.created_at,
                                                 ).toLocaleString()}
@@ -222,8 +221,8 @@ export default function CommunityModeration({
                                     )}
 
                                     <p className="text-xs text-muted-foreground">
-                                        Post owner ID: {report.complaint.user_id}{' '}
-                                        · approval:{' '}
+                                        Post owner ID:{' '}
+                                        {report.complaint.user_id} · approval:{' '}
                                         {report.complaint.approval_status} ·
                                         visibility:{' '}
                                         {report.complaint.visibility}
@@ -284,8 +283,7 @@ export default function CommunityModeration({
                             const online =
                                 now !== null &&
                                 !!user.last_seen_at &&
-                                now -
-                                    new Date(user.last_seen_at).getTime() <
+                                now - new Date(user.last_seen_at).getTime() <
                                     5 * 60 * 1000;
 
                             return (
@@ -304,7 +302,9 @@ export default function CommunityModeration({
                                                         : 'bg-muted-foreground/40'
                                                 }`}
                                                 title={
-                                                    online ? 'Active' : 'Offline'
+                                                    online
+                                                        ? 'Active'
+                                                        : 'Offline'
                                                 }
                                             />
                                         </div>

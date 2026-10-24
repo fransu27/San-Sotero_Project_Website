@@ -114,17 +114,47 @@ export default function Dashboard({
         <>
             <Head title={t('nav.newsfeed')} />
             <div className="newsfeed-page grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,720px)_260px] 2xl:justify-center">
-                {auth.user.effective_moderation_status && auth.user.effective_moderation_status !== 'active' && (
-                    <div className="col-span-full rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm" role="status">
-                        <p className="font-semibold">Account {auth.user.effective_moderation_status === 'banned' ? 'banned' : 'temporarily restricted'}</p>
-                        <p className="mt-1">Reason: {auth.user.moderation_message || 'No reason provided.'}</p>
-                        {auth.user.restriction_expires_at && <p className="mt-1">Restriction ends: {new Date(auth.user.restriction_expires_at).toLocaleString()}</p>}
-                    </div>
-                )}
+                {auth.user.effective_moderation_status &&
+                    auth.user.effective_moderation_status !== 'active' && (
+                        <div
+                            className="col-span-full rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
+                            role="status"
+                        >
+                            <p className="font-semibold">
+                                Account{' '}
+                                {auth.user.effective_moderation_status ===
+                                'banned'
+                                    ? 'banned'
+                                    : 'temporarily restricted'}
+                            </p>
+                            <p className="mt-1">
+                                Reason:{' '}
+                                {auth.user.moderation_message ||
+                                    'No reason provided.'}
+                            </p>
+                            {auth.user.restriction_expires_at && (
+                                <p className="mt-1">
+                                    Restriction ends:{' '}
+                                    {new Date(
+                                        auth.user.restriction_expires_at,
+                                    ).toLocaleString()}
+                                </p>
+                            )}
+                        </div>
+                    )}
                 {auth.user.profile_restriction_message && (
-                    <div className="col-span-full rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm" role="status">
-                        <p className="font-semibold">Profile picture restricted</p>
-                        <p className="mt-1">Your profile picture has been replaced with the anonymous placeholder. Reason: {auth.user.profile_restriction_message}</p>
+                    <div
+                        className="col-span-full rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm"
+                        role="status"
+                    >
+                        <p className="font-semibold">
+                            Profile picture restricted
+                        </p>
+                        <p className="mt-1">
+                            Your profile picture has been replaced with the
+                            anonymous placeholder. Reason:{' '}
+                            {auth.user.profile_restriction_message}
+                        </p>
                     </div>
                 )}
                 {/* ── Centre feed ── */}

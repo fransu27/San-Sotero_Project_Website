@@ -1,4 +1,3 @@
-
 import { Head, Link, router, usePoll } from '@inertiajs/react';
 import {
     CheckCircle2,
@@ -604,7 +603,9 @@ export default function Moderation({
                                             {item.attachments.length > 0 && (
                                                 <span className="inline-flex items-center gap-1 font-medium text-[#0777bd] dark:text-[#4cb9f8]">
                                                     <Paperclip size={12} />
-                                                    {item.attachments.length}{' '}
+                                                    {
+                                                        item.attachments.length
+                                                    }{' '}
                                                     {item.attachments.length ===
                                                     1
                                                         ? 'file'
@@ -621,7 +622,9 @@ export default function Moderation({
                                         <div className="mt-4 flex flex-wrap items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => openPreview(item)}
+                                                onClick={() =>
+                                                    openPreview(item)
+                                                }
                                                 className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
                                             >
                                                 <Eye size={16} />
@@ -703,7 +706,9 @@ export default function Moderation({
                                                             }
                                                             onChange={(event) =>
                                                                 setApproveNotes(
-                                                                    (current) => ({
+                                                                    (
+                                                                        current,
+                                                                    ) => ({
                                                                         ...current,
                                                                         [item.id]:
                                                                             event
@@ -790,10 +795,9 @@ export default function Moderation({
                     <div>
                         <h2 className="text-xl font-bold">User moderation</h2>
                         <p className="text-sm text-muted-foreground">
-                            Active and offline accounts, temporary
-                            restrictions, bans, and profile-picture
-                            restrictions. Every action requires a reason and
-                            is audited.
+                            Active and offline accounts, temporary restrictions,
+                            bans, and profile-picture restrictions. Every action
+                            requires a reason and is audited.
                         </p>
                     </div>
 
@@ -808,7 +812,7 @@ export default function Moderation({
                                         <p className="font-semibold">
                                             {user.name}
                                         </p>
-                                        <p className="break-all text-xs text-muted-foreground">
+                                        <p className="text-xs break-all text-muted-foreground">
                                             {user.email}
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
@@ -998,9 +1002,7 @@ export default function Moderation({
                             )}
 
                             {preview.attachments.length > 0 ? (
-                                <AttachmentList
-                                    files={preview.attachments}
-                                />
+                                <AttachmentList files={preview.attachments} />
                             ) : (
                                 <p className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Paperclip size={14} />

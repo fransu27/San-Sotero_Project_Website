@@ -655,72 +655,93 @@ export default function PostCard({
                 )}
 
                 <DropdownMenu>
-                        <DropdownMenuTrigger
-                            aria-label={t('post.menu')}
-                            className="rounded-full p-1.5 text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
-                        >
-                            <MoreHorizontal size={18} />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {!c.mine && !isAdmin && (
-                                <DropdownMenuItem onSelect={() => {
-                                    const choices = ['Misinformation', 'Harassment or hate', 'Inappropriate content', 'Spam or scam', 'Privacy concern', 'Other'];
-                                    const selection = window.prompt(`Choose a report reason by number:\n${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\nEnter 1–6:`);
-                                    const reason = selection ? choices[Number(selection.trim()) - 1] : undefined;
+                    <DropdownMenuTrigger
+                        aria-label={t('post.menu')}
+                        className="rounded-full p-1.5 text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
+                    >
+                        <MoreHorizontal size={18} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        {!c.mine && !isAdmin && (
+                            <DropdownMenuItem
+                                onSelect={() => {
+                                    const choices = [
+                                        'Misinformation',
+                                        'Harassment or hate',
+                                        'Inappropriate content',
+                                        'Spam or scam',
+                                        'Privacy concern',
+                                        'Other',
+                                    ];
+                                    const selection = window.prompt(
+                                        `Choose a report reason by number:\n${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\nEnter 1–6:`,
+                                    );
+                                    const reason = selection
+                                        ? choices[Number(selection.trim()) - 1]
+                                        : undefined;
 
                                     if (!reason) {
-return;
-}
+                                        return;
+                                    }
 
-                                    const details = window.prompt('Optional details to help the admin review this report (max 1000 characters):') || '';
-                                    router.post(`/complaints/${c.id}/report`, { reason: reason.trim(), details }, { preserveScroll: true });
-                                }}>
-                                    <Shield className="mr-2" size={15} /> Report post
-                                </DropdownMenuItem>
-                            )}
-                            {canEdit && (
-                                <DropdownMenuItem onSelect={startEdit}>
-                                    <Pencil className="mr-2" size={15} />{' '}
-                                    {t('post.edit')}
-                                </DropdownMenuItem>
-                            )}
-                            {c.mine && (
-                                <DropdownMenuItem
-                                    className="text-[#D7263D] focus:text-[#D7263D]"
-                                    onSelect={() =>
-                                        confirm(t('post.deleteConfirm')) &&
-                                        router.delete(`/complaints/${c.id}`, {
-                                            preserveScroll: true,
-                                        })
-                                    }
-                                >
-                                    <Trash2 className="mr-2" size={15} />{' '}
-                                    {t('post.delete')}
-                                </DropdownMenuItem>
-                            )}
-                            {isAdmin && !c.removed && (
-                                <DropdownMenuItem
-                                    onSelect={() => setRejecting(true)}
-                                >
-                                    <Ban className="mr-2" size={15} />{' '}
-                                    {t('post.remove')}
-                                </DropdownMenuItem>
-                            )}
-                            {isAdmin && c.removed && (
-                                <DropdownMenuItem
-                                    onSelect={() =>
-                                        router.patch(
-                                            `/complaints/${c.id}/restore`,
-                                            {},
-                                            { preserveScroll: true },
-                                        )
-                                    }
-                                >
-                                    <RotateCcw className="mr-2" size={15} />{' '}
-                                    {t('post.restore')}
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
+                                    const details =
+                                        window.prompt(
+                                            'Optional details to help the admin review this report (max 1000 characters):',
+                                        ) || '';
+                                    router.post(
+                                        `/complaints/${c.id}/report`,
+                                        { reason: reason.trim(), details },
+                                        { preserveScroll: true },
+                                    );
+                                }}
+                            >
+                                <Shield className="mr-2" size={15} /> Report
+                                post
+                            </DropdownMenuItem>
+                        )}
+                        {canEdit && (
+                            <DropdownMenuItem onSelect={startEdit}>
+                                <Pencil className="mr-2" size={15} />{' '}
+                                {t('post.edit')}
+                            </DropdownMenuItem>
+                        )}
+                        {c.mine && (
+                            <DropdownMenuItem
+                                className="text-[#D7263D] focus:text-[#D7263D]"
+                                onSelect={() =>
+                                    confirm(t('post.deleteConfirm')) &&
+                                    router.delete(`/complaints/${c.id}`, {
+                                        preserveScroll: true,
+                                    })
+                                }
+                            >
+                                <Trash2 className="mr-2" size={15} />{' '}
+                                {t('post.delete')}
+                            </DropdownMenuItem>
+                        )}
+                        {isAdmin && !c.removed && (
+                            <DropdownMenuItem
+                                onSelect={() => setRejecting(true)}
+                            >
+                                <Ban className="mr-2" size={15} />{' '}
+                                {t('post.remove')}
+                            </DropdownMenuItem>
+                        )}
+                        {isAdmin && c.removed && (
+                            <DropdownMenuItem
+                                onSelect={() =>
+                                    router.patch(
+                                        `/complaints/${c.id}/restore`,
+                                        {},
+                                        { preserveScroll: true },
+                                    )
+                                }
+                            >
+                                <RotateCcw className="mr-2" size={15} />{' '}
+                                {t('post.restore')}
+                            </DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
                 </DropdownMenu>
             </div>
 
