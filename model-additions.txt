@@ -1,0 +1,27 @@
+Merge these additions into the existing model files; do not replace the models.
+
+app/Models/User.php
+1. Add imports:
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\ComplaintReport;
+2. Add casts to casts():
+'restricted_at' => 'datetime',
+'banned_at' => 'datetime',
+'last_seen_at' => 'datetime',
+3. Add methods:
+public function complaintReports(): HasMany
+{
+    return $this->hasMany(ComplaintReport::class);
+}
+
+app/Models/Complaint.php
+1. Add import:
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\ComplaintReport;
+2. Add method:
+public function reports(): HasMany
+{
+    return $this->hasMany(ComplaintReport::class);
+}
+
+The project uses PHP 8.3 and Laravel 13. Keep the existing #[Fillable] / #[Hidden] model attributes. Do not make role, banned_at, restricted_at, approval_status, or removal fields mass assignable from resident requests.

@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 /**
  * The Philippine time card (UTC+8): label, live clock and the full date.
  * It is the same card the Newsfeed's left panel shows, pulled out so Dashboard, Announcements,
- * My submissions and Submission moderation all show the exact same widget.
+ * My submissions and Moderation all show the exact same widget.
  * Display only: it reads the browser clock and formats it for Asia/Manila, nothing is sent to the server.
  */
 const manila = { timeZone: 'Asia/Manila' } as const;

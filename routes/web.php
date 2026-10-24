@@ -12,6 +12,7 @@ use App\Http\Controllers\PreferenceController;
 use App\Http\Controllers\PublicTrackingController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\WalkInComplaintController;
+use App\Http\Controllers\UserModerationController;
 use App\Http\Controllers\WelcomeController;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Support\Facades\Route;
@@ -63,10 +64,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('complaints/{complaint}/comments', [ComplaintController::class, 'comment'])->middleware('throttle:30,1')->name('complaints.comment');
     Route::post('complaints/{complaint}/rate', [ComplaintController::class, 'rate'])->middleware('throttle:60,1')->name('complaints.rate');
     Route::post('complaints/{complaint}/react', [ComplaintController::class, 'react'])->middleware('throttle:60,1')->name('complaints.react');
+    Route::post('complaints/{complaint}/report', [UserModerationController::class, 'reportPost'])->middleware('throttle:10,1')->name('complaints.report');
 
     // Admin-only: EnsureAdmin here + Gate::authorize('moderate') inside each action (two locks).
     Route::middleware(EnsureAdmin::class)->group(function () {
         Route::get('admin/moderation', [ModerationController::class, 'index'])->name('admin.moderation');
+        Route::patch('admin/users/{user}/moderation', [UserModerationController::class, 'moderateUser'])->middleware('throttle:30,1')->name('admin.users.moderation');
+        Route::patch('admin/post-reports/{report}', [UserModerationController::class, 'reviewReport'])->middleware('throttle:30,1')->name('admin.post-reports.review');
         Route::get('admin/walk-in-complaints/create', [WalkInComplaintController::class, 'create'])->name('admin.walk-in.create');
         Route::post('admin/walk-in-complaints', [WalkInComplaintController::class, 'store'])->middleware('throttle:20,1')->name('admin.walk-in.store');
         Route::patch('complaints/{complaint}/approve', [ComplaintController::class, 'approve'])->name('complaints.approve');

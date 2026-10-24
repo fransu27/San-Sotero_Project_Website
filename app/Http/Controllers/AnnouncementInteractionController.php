@@ -20,6 +20,10 @@ class AnnouncementInteractionController extends Controller
     {
         $user = $request->user();
 
+        if ($user && ! $user->isAdmin() && $user->isPostingRestricted()) {
+            return back()->withErrors(['moderation' => 'Your account is restricted. Reason: '.($user->moderation_reason ?: 'No reason provided.')]);
+        }
+
         if ($user === null) {
             return back();
         }
@@ -44,6 +48,10 @@ class AnnouncementInteractionController extends Controller
     /** Plain-text comment (React escapes it on display). */
     public function comment(Request $request, Announcement $announcement): RedirectResponse
     {
+        $user = $request->user();
+        if ($user && ! $user->isAdmin() && $user->isPostingRestricted()) {
+            return back()->withErrors(['moderation' => 'Your account is restricted. Reason: '.($user->moderation_reason ?: 'No reason provided.')]);
+        }
         /** @var array{body: string} $validated */
         $validated = $request->validate(['body' => ['required', 'string', 'max:1000']]);
 

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePoll } from '@inertiajs/react';
 import {
     CheckCircle2,
     Clock3,
@@ -49,8 +49,12 @@ type Complaint = {
     removed_reason: string | null;
     events: Event[];
 };
+type ManagedUser = { id: number; name: string; email: string; status: string; expires_at: string | null; reason: string | null; profile_restricted: boolean; profile_reason: string | null; last_seen_at: string | null };
+type PostReport = { id: number; complaint_id: number; title: string; author_id: number | null; reporter: string; reason: string; details: string | null; status: string; admin_note: string | null; created_at: string | null };
 type Props = {
     complaints: Complaint[];
+    users: ManagedUser[];
+    postReports: PostReport[];
     view: 'queue' | 'reviewed' | 'all';
     query: string;
     counts: { queue: number; reviewed: number };
@@ -64,7 +68,8 @@ const dateLabel = (value: string | null) =>
           })
         : '—';
 
-export default function Moderation({ complaints, view, query, counts }: Props) {
+export default function Moderation({ complaints, view, query, counts, users, postReports }: Props) {
+    usePoll(30000, { only: ['users', 'postReports', 'counts'] });
     const [preview, setPreview] = useState<Complaint | null>(null);
     const [rejectTarget, setRejectTarget] = useState<number | null>(null);
     const [reasons, setReasons] = useState<Record<number, string>>({});
@@ -212,7 +217,7 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
 
     return (
         <>
-            <Head title="Admin · Submission moderation" />
+            <Head title="Admin · Moderation" />
             <main className="mx-auto w-full max-w-5xl space-y-6">
                 <header className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
                     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
@@ -221,7 +226,7 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                                 <ShieldCheck size={18} /> Administrator tools
                             </div>
                             <h1 className="text-2xl font-bold tracking-tight">
-                                Submission moderation
+                                Moderation
                             </h1>
                             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
                                 Review residents’ concerns, inspect attached
@@ -233,7 +238,7 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                             href="/dashboard"
                             className="inline-flex w-fit items-center rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-muted"
                         >
-                            Back to newsfeed
+                            Back to dashboard
                         </Link>
                     </div>
 
@@ -560,6 +565,59 @@ export default function Moderation({ complaints, view, query, counts }: Props) {
                         ))}
                     </section>
                 )}
+                <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                    <div>
+                        <h2 className="text-xl font-bold">User moderation</h2>
+                        <p className="text-sm text-muted-foreground">Active and offline accounts, temporary restrictions, bans, and profile-picture restrictions. Every action requires a reason and is audited.</p>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                        {users.map((user) => (
+                            <article key={user.id} className="rounded-xl border border-border p-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="font-semibold">{user.name}</p>
+                                        <p className="break-all text-xs text-muted-foreground">{user.email}</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">{user.last_seen_at && Date.now() - new Date(user.last_seen_at).getTime() < 5 * 60 * 1000 ? 'Active now' : 'Offline'} · Last seen: {dateLabel(user.last_seen_at)}</p>
+                                    </div>
+                                    <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold">{user.status}</span>
+                                </div>
+                                {(user.reason || user.profile_reason) && <p className="mt-2 text-xs text-muted-foreground">Reason: {user.reason || user.profile_reason}</p>}
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <button type="button" className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted" onClick={() => {
+                                        const action = window.prompt('Action: restrict, ban, activate, profile_restrict, or profile_restore', user.profile_restricted ? 'profile_restore' : user.status === 'active' ? 'restrict' : 'activate');
+                                        if (!action || !['restrict','ban','activate','profile_restrict','profile_restore'].includes(action)) return;
+                                        const reason = window.prompt('Required moderation reason (minimum 5 characters):', action === 'profile_restrict' ? 'Inappropriate profile picture' : 'Community guideline violation');
+                                        if (!reason || reason.trim().length < 5) return;
+                                        const days = action === 'restrict' ? Number(window.prompt('Restriction duration in days (1–365):', '7') || 7) : undefined;
+                                        router.patch(`/admin/users/${user.id}/moderation`, { action, reason, days }, { preserveScroll: true });
+                                    }}>••• Moderation tools</button>
+                                </div>
+                                {user.status === 'restricted' && user.expires_at && <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">Restriction ends: {dateLabel(user.expires_at)}</p>}
+                            </article>
+                        ))}
+                        {users.length === 0 && <p className="text-sm text-muted-foreground">No resident accounts found.</p>}
+                    </div>
+                </section>
+
+                <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                    <div>
+                        <h2 className="text-xl font-bold">Reported posts</h2>
+                        <p className="text-sm text-muted-foreground">Residents can report misinformation, harassment, inappropriate content, spam, privacy concerns, and other issues.</p>
+                    </div>
+                    <div className="space-y-3">
+                        {postReports.map((report) => <article key={report.id} className="rounded-xl border border-border p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-semibold">{report.title}</p><span className="rounded-full bg-muted px-2 py-1 text-xs">{report.status}</span></div>
+                            <p className="mt-1 text-sm">{report.reason} · Reported by {report.reporter}</p>
+                            {report.details && <p className="mt-2 text-sm text-muted-foreground">{report.details}</p>}
+                            {report.admin_note && <p className="mt-2 text-xs text-muted-foreground">Admin note: {report.admin_note}</p>}
+                            {report.status === 'pending' && <div className="mt-3 flex flex-wrap gap-2">{(['actioned','dismissed','reviewed'] as const).map((status) => <button key={status} type="button" className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted" onClick={() => {
+                                const admin_note = window.prompt(`Required note for ${status} (minimum 5 characters):`, status === 'actioned' ? 'Reviewed and action taken' : 'Reviewed by administration');
+                                if (admin_note && admin_note.trim().length >= 5) router.patch(`/admin/post-reports/${report.id}`, { status, admin_note }, { preserveScroll: true });
+                            }}>{status === 'actioned' ? 'Take action' : status === 'dismissed' ? 'Dismiss' : 'Mark reviewed'}</button>)}</div>}
+                        </article>)}
+                        {postReports.length === 0 && <p className="text-sm text-muted-foreground">No post reports have been submitted.</p>}
+                    </div>
+                </section>
             </main>
 
             {preview && (

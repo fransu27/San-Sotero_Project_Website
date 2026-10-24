@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Complaint;
+use App\Models\ComplaintReport;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -79,6 +81,23 @@ class ModerationController extends Controller
             'complaints' => $complaints,
             'view' => $view,
             'query' => $filters['q'] ?? '',
+            'users' => User::query()->where('role', '!=', 'admin')->latest()->limit(100)->get()->map(fn (User $u) => [
+                'id' => $u->id, 'name' => $u->name, 'email' => $u->email,
+                'status' => $u->effectiveModerationStatus(),
+                'expires_at' => $u->restriction_expires_at?->toIso8601String(),
+                'reason' => $u->moderation_reason,
+                'profile_restricted' => (bool) $u->profile_restricted,
+                'profile_reason' => $u->profile_restriction_reason,
+                'last_seen_at' => $u->last_seen_at?->toIso8601String(),
+            ])->values(),
+            'postReports' => ComplaintReport::with(['complaint:id,title,user_id,removed_at', 'reporter:id,name'])
+                ->latest()->limit(100)->get()->map(fn (ComplaintReport $r) => [
+                    'id' => $r->id, 'complaint_id' => $r->complaint_id,
+                    'title' => $r->complaint?->title ?? '[Post deleted]',
+                    'author_id' => $r->complaint?->user_id, 'reporter' => $r->reporter?->name ?? 'Deleted user',
+                    'reason' => $r->reason, 'details' => $r->details, 'status' => $r->status,
+                    'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String(),
+                ])->values(),
             'counts' => [
                 'queue' => Complaint::where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at')->count(),
                 'reviewed' => Complaint::where(fn ($q) => $q->where('approval_status', Complaint::APPROVAL_APPROVED)->orWhereNotNull('removed_at'))->count(),

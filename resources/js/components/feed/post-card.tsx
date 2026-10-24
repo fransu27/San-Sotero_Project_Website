@@ -12,6 +12,7 @@ import {
     MoreHorizontal,
     Pencil,
     RotateCcw,
+    Shield,
     ThumbsDown,
     ThumbsUp,
     Trash2,
@@ -653,8 +654,7 @@ export default function PostCard({
                     </span>
                 )}
 
-                {(c.mine || isAdmin) && (
-                    <DropdownMenu>
+                <DropdownMenu>
                         <DropdownMenuTrigger
                             aria-label={t('post.menu')}
                             className="rounded-full p-1.5 text-muted-foreground outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-[#0197F6]"
@@ -662,6 +662,18 @@ export default function PostCard({
                             <MoreHorizontal size={18} />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                            {!c.mine && !isAdmin && (
+                                <DropdownMenuItem onSelect={() => {
+                                    const choices = ['Misinformation', 'Harassment or hate', 'Inappropriate content', 'Spam or scam', 'Privacy concern', 'Other'];
+                                    const selection = window.prompt(`Choose a report reason by number:\n${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\nEnter 1–6:`);
+                                    const reason = selection ? choices[Number(selection.trim()) - 1] : undefined;
+                                    if (!reason) return;
+                                    const details = window.prompt('Optional details to help the admin review this report (max 1000 characters):') || '';
+                                    router.post(`/complaints/${c.id}/report`, { reason: reason.trim(), details }, { preserveScroll: true });
+                                }}>
+                                    <Shield className="mr-2" size={15} /> Report post
+                                </DropdownMenuItem>
+                            )}
                             {canEdit && (
                                 <DropdownMenuItem onSelect={startEdit}>
                                     <Pencil className="mr-2" size={15} />{' '}
@@ -705,8 +717,7 @@ export default function PostCard({
                                 </DropdownMenuItem>
                             )}
                         </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
+                </DropdownMenu>
             </div>
 
             {/* Admin: confirm a status change, with an optional note (required for Rejected) */}

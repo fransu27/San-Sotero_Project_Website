@@ -1,0 +1,10 @@
+Audit logging for existing approval/rejection actions
+
+The existing ComplaintController already implements approval, removal and restoration. To audit those existing actions, inject App\Services\ModerationAudit $audit into each action and, after a successful state change, call:
+$audit->record($request, 'complaint.approved', $complaint, ['note' => $request->input('note')]);
+$audit->record($request, 'complaint.rejected', $complaint, ['reason' => $request->input('reason')]);
+$audit->record($request, 'complaint.restored', $complaint);
+$audit->record($request, 'complaint.status_changed', $complaint, ['status' => $complaint->status]);
+Use the matching action string in each method; do not call these before the database change succeeds.
+
+To count visitor page views, create a separate middleware that records ActivityLog action `visitor.page_view` for eligible GET requests, excluding assets, health checks, and authenticated repeat polling. Decide whether to store raw visits or deduplicated daily visitor identifiers before presenting the metric as “visitors.” The provided dashboard query counts recorded events, not unique visitors.

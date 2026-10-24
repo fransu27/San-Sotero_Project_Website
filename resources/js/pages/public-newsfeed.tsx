@@ -130,7 +130,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
         { label: 'Announcements', href: go('/announcements'), icon: Megaphone },
         isAdmin
             ? {
-                  label: 'Submission moderation',
+                  label: 'Moderation',
                   href: go('/admin/moderation'),
                   icon: ClipboardCheck,
               }

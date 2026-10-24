@@ -82,6 +82,9 @@ class User extends Authenticatable implements PasskeyUser
             'email_verified_at' => 'datetime',
             'birthdate' => 'date',
             'anonymous_default' => 'boolean',
+            'profile_restricted' => 'boolean',
+            'restriction_expires_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'password' => 'hashed',
             /* @chisel-2fa */
             'two_factor_confirmed_at' => 'datetime',
@@ -92,12 +95,26 @@ class User extends Authenticatable implements PasskeyUser
     /** URL of the profile picture (served by MediaController), or null to show the initials badge. */
     public function avatarUrl(): ?string
     {
-        return $this->avatar_path ? '/media/'.$this->avatar_path : null;
+        return ($this->profile_restricted ?? false) ? '/images/anonymous-avatar.svg' : ($this->avatar_path ? '/media/'.$this->avatar_path : null);
     }
 
     /** True for the barangay admin. `role` is not fillable, so it can't be set from a form. */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function effectiveModerationStatus(): string
+    {
+        if ($this->moderation_status === 'restricted' && $this->restriction_expires_at && $this->restriction_expires_at->isPast()) {
+            return 'active';
+        }
+
+        return $this->moderation_status ?? 'active';
+    }
+
+    public function isPostingRestricted(): bool
+    {
+        return ! $this->isAdmin() && $this->effectiveModerationStatus() !== 'active';
     }
 }

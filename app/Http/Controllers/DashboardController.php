@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -259,8 +260,20 @@ class DashboardController extends Controller
             'created_at' => $c->created_at?->format('Y-m-d H:i:s'),
         ])->values();
 
+        $siteMetrics = null;
+        if ($user->isAdmin()) {
+            $siteMetrics = [
+                'pageViews' => (int) DB::table('site_visits')->count(),
+                'uniqueVisitors' => (int) DB::table('site_visits')->distinct('visitor_key')->count('visitor_key'),
+                'visitorsToday' => (int) DB::table('site_visits')->where('visited_at', '>=', now()->startOfDay())->distinct('visitor_key')->count('visitor_key'),
+                'onlineUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+                'registeredUsers' => (int) User::where('role', '!=', 'admin')->count(),
+            ];
+        }
+
         return Inertia::render('dashboard', [
             'isAdmin' => $user->isAdmin(),
+            'siteMetrics' => $siteMetrics,
             'analytics' => $analytics,
             'statusCounts' => $statusCounts,
             'series' => $series,
