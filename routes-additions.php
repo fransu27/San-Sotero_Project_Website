@@ -36,6 +36,7 @@ Route::get('community/announcement-photo/{file}', [MediaController::class, 'publ
 // Direct permalink to a specific community report post
 Route::get('community/reports/{complaint}', function (Complaint $complaint) {
     abort_unless($complaint->isPubliclyVisible(), 404);
+
     return redirect('/community#complaint-'.$complaint->id);
 })->name('community.complaint.permalink');
 
