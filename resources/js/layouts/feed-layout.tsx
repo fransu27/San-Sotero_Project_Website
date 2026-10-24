@@ -165,7 +165,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
         },
         isAdmin
             ? {
-                  label: 'Submission moderation',
+                  label: 'Moderation',
                   href: '/admin/moderation',
                   icon: ClipboardCheck,
                   active: onModeration,
@@ -326,7 +326,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* The report rail (clock + status filters) belongs to the Newsfeed. Dashboard, Announcements and
-                Submission moderation get the same time widget in the same left spot; My submissions places it
+                Moderation get the same time widget in the same left spot; My submissions places it
                 inside its own filter column. */}
             <div
                 className={cn(

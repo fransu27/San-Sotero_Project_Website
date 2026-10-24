@@ -38,6 +38,7 @@ class ComplaintController extends Controller
      */
     public function store(ComplaintRequest $request): RedirectResponse
     {
+        $this->assertPostingAllowed($request);
         $user = $request->user();
         $fields = $request->fields();
         $needsApproval = isset($fields['visibility']) && $fields['visibility'] === 'public' && (! $user || ! $user->isAdmin());
@@ -79,6 +80,7 @@ class ComplaintController extends Controller
      */
     public function update(ComplaintRequest $request, Complaint $complaint): RedirectResponse
     {
+        $this->assertPostingAllowed($request);
         Gate::authorize('update', $complaint);
 
         $user = $request->user();
@@ -243,6 +245,7 @@ class ComplaintController extends Controller
      */
     public function comment(Request $request, Complaint $complaint): RedirectResponse
     {
+        $this->assertPostingAllowed($request);
         Gate::authorize('interact', $complaint);
 
         /** @var array{body: string} $validated */
@@ -263,6 +266,7 @@ class ComplaintController extends Controller
      */
     public function react(Request $request, Complaint $complaint): RedirectResponse
     {
+        $this->assertPostingAllowed($request);
         Gate::authorize('interact', $complaint);
 
         $user = $request->user();
@@ -293,6 +297,7 @@ class ComplaintController extends Controller
      */
     public function rate(Request $request, Complaint $complaint): RedirectResponse
     {
+        $this->assertPostingAllowed($request);
         Gate::authorize('interact', $complaint);
         abort_unless($complaint->isClosed(), 422, 'You can rate a concern after it is resolved or rejected.');
 
@@ -322,6 +327,17 @@ class ComplaintController extends Controller
     {
         if ($complaint->image_path) {
             Storage::disk('public')->delete($complaint->image_path);
+        }
+    }
+
+    private function assertPostingAllowed(Request $request): void
+    {
+        $user = $request->user();
+        if ($user && ! $user->isAdmin() && $user->isPostingRestricted()) {
+            $message = $user->effectiveModerationStatus() === 'banned'
+                ? 'Your account is banned from posting and interacting. Reason: '.($user->moderation_reason ?: 'No reason provided.')
+                : 'Your account is temporarily restricted until '.($user->restriction_expires_at?->toDateTimeString() ?? 'further notice').'. Reason: '.($user->moderation_reason ?: 'No reason provided.');
+            throw ValidationException::withMessages(['moderation' => $message]);
         }
     }
 }
