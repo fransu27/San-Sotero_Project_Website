@@ -31,6 +31,7 @@ class TrackSiteActivity
                 'visited_at' => now(),
             ]);
         }
+
         return $response;
     }
 }

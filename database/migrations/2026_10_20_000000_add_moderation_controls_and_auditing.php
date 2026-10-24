@@ -77,7 +77,7 @@ return new class extends Migration
 
         // Create notifications only if another migration has not
         // already created the table.
-        if (!Schema::hasTable('notifications')) {
+        if (! Schema::hasTable('notifications')) {
             Schema::create('notifications', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->string('type');

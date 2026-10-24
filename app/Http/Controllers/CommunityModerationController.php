@@ -6,13 +6,13 @@ use App\Models\ActivityLog;
 use App\Models\Complaint;
 use App\Models\ComplaintReport;
 use App\Models\User;
-use App\Notifications\ProfileRestrictedNotification;
 use App\Notifications\ModerationQueueNotification;
+use App\Notifications\ProfileRestrictedNotification;
 use App\Services\ModerationAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,12 +45,14 @@ class CommunityModerationController extends Controller
                 User::where('role', 'admin')->get()->each(fn (User $admin) => $admin->notify(new ModerationQueueNotification($complaint->id, $count)));
             }
         }
+
         return back()->with('success', 'Thank you. Your report has been sent to the moderation queue.');
     }
 
     public function permalink(Complaint $complaint): Response
     {
         abort_unless($complaint->isPubliclyVisible(), 404);
+
         return Inertia::render('public-newsfeed', ['permalinkComplaintId' => $complaint->id]);
     }
 
@@ -65,12 +67,15 @@ class CommunityModerationController extends Controller
                 'avatar_path' => null, 'anonymous_default' => true,
             ])->save();
             // Clear optional profile fields only when present in this schema.
-            $columns = \Illuminate\Support\Facades\Schema::getColumnListing('users');
+            $columns = Schema::getColumnListing('users');
             $clear = array_values(array_intersect(['bio', 'profile_bio', 'profile_preferences'], $columns));
-            if ($clear) DB::table('users')->where('id', $user->id)->update(array_fill_keys($clear, null));
+            if ($clear) {
+                DB::table('users')->where('id', $user->id)->update(array_fill_keys($clear, null));
+            }
             $audit->record($request, 'user.profile_restricted', $user, ['reason' => $data['reason']]);
         });
         $user->notify(new ProfileRestrictedNotification($data['reason']));
+
         return back()->with('success', 'Profile restricted and resident notified.');
     }
 
@@ -81,6 +86,7 @@ class CommunityModerationController extends Controller
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:1000']]);
         $user->forceFill(['banned_at' => now(), 'ban_reason' => $data['reason']])->save();
         $audit->record($request, 'user.banned', $user, ['reason' => $data['reason']]);
+
         return back()->with('success', 'Account banned. Ensure your authentication middleware rejects banned users on subsequent requests.');
     }
 
@@ -91,6 +97,7 @@ class CommunityModerationController extends Controller
         $complaint->forceFill(['removed_at' => now(), 'removed_reason' => $data['reason']])->save();
         $complaint->log('removed', $request->user(), null, $data['reason']);
         $audit->record($request, 'complaint.taken_down', $complaint, ['reason' => $data['reason']]);
+
         return back()->with('success', 'Post taken down.');
     }
 
@@ -99,7 +106,8 @@ class CommunityModerationController extends Controller
         abort_unless($request->user()->isAdmin(), 403);
         $reports = ComplaintReport::with(['user:id,name,email', 'complaint:id,title,user_id,approval_status,visibility,removed_at'])
             ->where('status', 'open')->latest()->paginate(30)->withQueryString();
-        $users = User::query()->where('role', '!=', 'admin')->latest('id')->paginate(30, ['id','name','email','role','avatar_path','restricted_at','banned_at','last_seen_at','created_at'], 'users_page');
+        $users = User::query()->where('role', '!=', 'admin')->latest('id')->paginate(30, ['id', 'name', 'email', 'role', 'avatar_path', 'restricted_at', 'banned_at', 'last_seen_at', 'created_at'], 'users_page');
+
         return Inertia::render('admin/community-moderation', [
             'reports' => $reports,
             'users' => $users,

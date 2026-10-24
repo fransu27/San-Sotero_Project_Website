@@ -35,6 +35,7 @@ class UserModerationController extends Controller
                 'details' => isset($data['details']) ? trim(strip_tags($data['details'])) : null,
             ]);
         }
+
         return back()->with('success', 'Post report sent to the barangay administrators.');
     }
 
@@ -56,7 +57,9 @@ class UserModerationController extends Controller
                 'profile_restriction_reason' => $action === 'profile_restrict' ? $reason : null,
             ])->save();
         } else {
-            $status = match ($action) { 'restrict' => 'restricted', 'ban' => 'banned', default => 'active' };
+            $status = match ($action) {
+                'restrict' => 'restricted', 'ban' => 'banned', default => 'active'
+            };
             $user->forceFill([
                 'moderation_status' => $status,
                 'restriction_expires_at' => $status === 'restricted' ? now()->addDays((int) ($data['days'] ?? 7)) : null,
@@ -72,6 +75,7 @@ class UserModerationController extends Controller
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+
         return back()->with('success', 'User moderation action saved.');
     }
 
@@ -100,6 +104,7 @@ class UserModerationController extends Controller
                 $complaint->log('status', $request->user(), 'Rejected', $note);
             }
         });
+
         return back()->with('success', $data['status'] === 'actioned' ? 'Report reviewed and post removed with the recorded reason.' : 'Post report reviewed.');
     }
 }
