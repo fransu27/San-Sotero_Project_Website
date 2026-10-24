@@ -15,7 +15,7 @@ class UserModerationController extends Controller
     public function reportPost(Request $request, Complaint $complaint): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user, 401);
+        abort_unless($user !== null, 401);
         abort_if($user->isAdmin(), 403, 'Administrators cannot report posts through the resident reporting flow.');
         abort_if($complaint->user_id === $user->id, 422, 'You cannot report your own post.');
         abort_unless($complaint->isPubliclyVisible(), 404);
@@ -41,7 +41,6 @@ class UserModerationController extends Controller
 
     public function moderateUser(Request $request, User $user): RedirectResponse
     {
-        abort_unless($request->user()?->isAdmin(), 403);
         abort_if($user->isAdmin(), 422, 'Administrator accounts cannot be moderated here.');
         $data = $request->validate([
             'action' => ['required', Rule::in(['activate', 'restrict', 'ban', 'profile_restrict', 'profile_restore'])],

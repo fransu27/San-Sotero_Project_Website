@@ -9,15 +9,26 @@ class ModerationQueueNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public readonly int $complaintId, public readonly int $reportCount) {}
+    public function __construct(
+        public readonly int $complaintId,
+        public readonly int $reportCount
+    ) {}
 
+    /** @return array<int, string> */
     public function via(object $notifiable): array
     {
         return ['database'];
     }
 
+    /** @return array<string, mixed> */
     public function toArray(object $notifiable): array
     {
-        return ['title' => 'Post auto-held', 'message' => 'Complaint #'.$this->complaintId.' reached '.$this->reportCount.' reports and was returned to the moderation queue.', 'complaint_id' => $this->complaintId];
+        return [
+            'title' => 'Post auto-held',
+            'message' => 'Complaint #'.$this->complaintId
+                .' reached '.$this->reportCount
+                .' reports and was returned to the moderation queue.',
+            'complaint_id' => $this->complaintId,
+        ];
     }
 }

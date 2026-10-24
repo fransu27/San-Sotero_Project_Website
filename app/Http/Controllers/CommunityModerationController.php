@@ -28,8 +28,15 @@ class CommunityModerationController extends Controller
             'details' => ['nullable', 'string', 'max:1000'],
         ]);
         $report = ComplaintReport::firstOrCreate(
-            ['complaint_id' => $complaint->id, 'user_id' => $request->user()->id],
-            ['reason' => $data['reason'], 'details' => $data['details'] ?? null, 'status' => 'open']
+            [
+                'complaint_id' => $complaint->id,
+                'reporter_id' => $request->user()->id,
+            ],
+            [
+                'reason' => $data['reason'],
+                'details' => $data['details'] ?? null,
+                'status' => 'pending',
+            ]
         );
         if ($report->wasRecentlyCreated) {
             $threshold = max(1, (int) config('moderation.auto_hold_threshold', 6));
@@ -104,7 +111,10 @@ class CommunityModerationController extends Controller
     public function queue(Request $request): Response
     {
         abort_unless($request->user()->isAdmin(), 403);
-        $reports = ComplaintReport::with(['user:id,name,email', 'complaint:id,title,user_id,approval_status,visibility,removed_at'])
+        $reports = ComplaintReport::with([
+            'reporter:id,name,email',
+            'complaint:id,title,user_id,approval_status,visibility,removed_at',
+        ])
             ->where('status', 'open')->latest()->paginate(30)->withQueryString();
         $users = User::query()->where('role', '!=', 'admin')->latest('id')->paginate(30, ['id', 'name', 'email', 'role', 'avatar_path', 'restricted_at', 'banned_at', 'last_seen_at', 'created_at'], 'users_page');
 

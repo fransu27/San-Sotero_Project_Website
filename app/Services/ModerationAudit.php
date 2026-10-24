@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 
 class ModerationAudit
 {
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
     public function record(Request $request, string $action, ?Model $subject = null, array $metadata = []): void
     {
         ActivityLog::create([

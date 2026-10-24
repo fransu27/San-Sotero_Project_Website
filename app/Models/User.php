@@ -34,6 +34,16 @@ use Laravel\Passkeys\Passkey;
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
  * @property string|null $remember_token
+ * @property string|null $moderation_status
+ * @property string|null $moderation_reason
+ * @property Carbon|null $restriction_expires_at
+ * @property Carbon|null $restricted_at
+ * @property string|null $restriction_reason
+ * @property Carbon|null $banned_at
+ * @property string|null $ban_reason
+ * @property bool $profile_restricted
+ * @property string|null $profile_restriction_reason
+ * @property Carbon|null $last_seen_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
@@ -84,6 +94,8 @@ class User extends Authenticatable implements PasskeyUser
             'anonymous_default' => 'boolean',
             'profile_restricted' => 'boolean',
             'restriction_expires_at' => 'datetime',
+            'restricted_at' => 'datetime',
+            'banned_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'password' => 'hashed',
             /* @chisel-2fa */
@@ -95,7 +107,9 @@ class User extends Authenticatable implements PasskeyUser
     /** URL of the profile picture (served by MediaController), or null to show the initials badge. */
     public function avatarUrl(): ?string
     {
-        return ($this->profile_restricted ?? false) ? '/images/anonymous-avatar.svg' : ($this->avatar_path ? '/media/'.$this->avatar_path : null);
+        return ($this->profile_restricted ?? false)
+            ? '/images/anonymous-avatar.svg'
+            : ($this->avatar_path ? '/media/'.$this->avatar_path : null);
     }
 
     /** True for the barangay admin. `role` is not fillable, so it can't be set from a form. */
@@ -106,7 +120,11 @@ class User extends Authenticatable implements PasskeyUser
 
     public function effectiveModerationStatus(): string
     {
-        if ($this->moderation_status === 'restricted' && $this->restriction_expires_at && $this->restriction_expires_at->isPast()) {
+        if (
+            $this->moderation_status === 'restricted'
+            && $this->restriction_expires_at
+            && $this->restriction_expires_at->isPast()
+        ) {
             return 'active';
         }
 

@@ -93,8 +93,9 @@ class ModerationController extends Controller
             'postReports' => ComplaintReport::with(['complaint:id,title,user_id,removed_at', 'reporter:id,name'])
                 ->latest()->limit(100)->get()->map(fn (ComplaintReport $r) => [
                     'id' => $r->id, 'complaint_id' => $r->complaint_id,
-                    'title' => $r->complaint?->title ?? '[Post deleted]',
-                    'author_id' => $r->complaint?->user_id, 'reporter' => $r->reporter?->name ?? 'Deleted user',
+                    'title' => $r->complaint->title,
+                    'author_id' => $r->complaint->user_id,
+                    'reporter' => $r->reporter->name,
                     'reason' => $r->reason, 'details' => $r->details, 'status' => $r->status,
                     'admin_note' => $r->admin_note, 'created_at' => $r->created_at?->toIso8601String(),
                 ])->values(),
