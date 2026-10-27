@@ -23,8 +23,16 @@ class MediaController extends Controller
             $complaint = Complaint::where('image_path', $path)->firstOrFail();
             Gate::authorize('view', $complaint);
             abort_if($complaint->isRemoved() && ! $request->user()->isAdmin(), 403);
+            if (! $request->user()->isAdmin() && $complaint->user_id !== $request->user()->id) {
+                abort_if(($complaint->user?->profile_visibility ?? 'public') === 'private', 404);
+            }
         } elseif ($folder === 'avatars') {
-            abort_unless(User::where('avatar_path', $path)->exists(), 404);
+            $owner = User::where('avatar_path', $path)->first();
+            abort_unless($owner, 404);
+            $viewer = $request->user();
+            if (! $viewer || (! $viewer->isAdmin() && ! $viewer->is($owner))) {
+                abort_if(($owner->profile_visibility ?? 'public') === 'private' || $owner->anonymous_default || $owner->isProfileRestricted(), 404);
+            }
         } else {
             abort(404);
         }
@@ -46,6 +54,7 @@ class MediaController extends Controller
                 ->where('visibility', 'public')
                 ->where('approval_status', Complaint::APPROVAL_APPROVED)
                 ->whereNull('removed_at')
+                ->whereHas('user', fn ($q) => $q->where(fn ($privacy) => $privacy->whereNull('profile_visibility')->orWhere('profile_visibility', 'public')))
                 ->exists(),
             404,
         );

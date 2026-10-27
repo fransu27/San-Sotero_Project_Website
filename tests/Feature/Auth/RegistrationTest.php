@@ -33,6 +33,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'Password123',
             'phone' => '09171234567',
             'birthdate' => '1990-01-01',
+            'terms_accepted' => '1',
         ]);
 
         $this->assertAuthenticated();
@@ -64,6 +65,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'Password123',
             'phone' => '09171234567',
             'birthdate' => now()->subYears(18)->toDateString(),
+            'terms_accepted' => '1',
         ]);
 
         $this->assertAuthenticated();

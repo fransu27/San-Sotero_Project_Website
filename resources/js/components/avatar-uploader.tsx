@@ -17,11 +17,18 @@ export default function AvatarUploader({
     url,
     staff,
     error,
+    locked = false,
+    lockedUntil = null,
+    lockedReason = null,
 }: {
     name: string;
     url: string | null;
     staff: boolean;
     error?: string;
+    /** Profile-picture restriction: the picture shows the anonymous placeholder and cannot be changed. */
+    locked?: boolean;
+    lockedUntil?: string | null;
+    lockedReason?: string | null;
 }) {
     const input = useRef<HTMLInputElement>(null);
     const [preview, setPreview] = useState<string | null>(null);
@@ -94,6 +101,26 @@ export default function AvatarUploader({
             onFinish: () => setBusy(false),
         });
     };
+
+    if (locked) {
+        return (
+            <div className="flex flex-wrap items-center gap-5">
+                <Avatar name={name} src={url} staff={staff} size={88} />
+                <div className="max-w-md space-y-1 text-sm" role="status">
+                    <p className="font-semibold">Profile picture restricted</p>
+                    <p className="text-xs text-muted-foreground">
+                        Your picture shows the anonymous placeholder and can't be changed
+                        {lockedUntil
+                            ? ` until ${new Date(lockedUntil).toLocaleString()}`
+                            : ' until an administrator lifts the restriction'}
+                        . You can still post, comment and react as usual.
+                        {lockedReason ? ` Reason: ${lockedReason}` : ''}
+                    </p>
+                    <InputError message={error} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-wrap items-center gap-5">

@@ -221,6 +221,14 @@ export default function Register({ passwordRules }: Props) {
                             />
                         </div>
 
+                        <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm">
+                            <label htmlFor="terms_accepted" className="flex items-start gap-2.5">
+                                <input id="terms_accepted" name="terms_accepted" type="checkbox" value="1" required className="mt-1 size-4 accent-[#0197F6]" />
+                                <span>I have read and agree to the <a href="/terms" target="_blank" rel="noreferrer" className="font-semibold text-[#087fd0] underline">Terms of Service</a> and <a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-[#087fd0] underline">Privacy Policy</a>.</span>
+                            </label>
+                            <InputError id="terms_accepted-error" message={errors.terms_accepted} />
+                        </div>
+
                         <Button
                             type="submit"
                             size="lg"

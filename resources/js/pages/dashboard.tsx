@@ -2,9 +2,12 @@ import { Head, router, usePoll } from '@inertiajs/react';
 import {
     Activity,
     CalendarDays,
+    ClipboardList,
     CheckCircle2,
     Clock3,
     FileText,
+    ShieldAlert,
+    UserX,
     Eye,
     TrendingUp,
     X,
@@ -44,16 +47,25 @@ type Report = {
 type Period = 'day' | 'week' | 'month' | 'year';
 type Props = {
     isAdmin: boolean;
+    dashboardSection: 'website' | null;
     analytics: Record<Period, Stats>;
     statusCounts: Record<string, number>;
     series: Record<Period, Bucket[]>;
     reports: Report[];
     siteMetrics: {
+        residentPresence: { id: number; name: string; avatar: string | null; anonymous: boolean; private: boolean; lastSeenAt: string | null; online: boolean }[];
         pageViews: number;
         uniqueVisitors: number;
         visitorsToday: number;
         onlineUsers: number;
+        recentlyActiveUsers: number;
+        offlineUsers: number;
         registeredUsers: number;
+        pendingComplaints: number;
+        pendingPostReports: number;
+        autoHeldComplaints: number;
+        restrictedAccounts: number;
+        bannedAccounts: number;
     } | null;
 };
 const periods: { key: Period; label: string; detail: string }[] = [
@@ -67,8 +79,27 @@ const periods: { key: Period; label: string; detail: string }[] = [
     },
 ];
 
+const periodBounds = (period: Period): [number, number] => {
+    const now = new Date();
+    const start = new Date(now);
+    if (period === 'day') start.setHours(0, 0, 0, 0);
+    if (period === 'week') {
+        start.setHours(0, 0, 0, 0);
+        start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    }
+    if (period === 'month') { start.setDate(1); start.setHours(0, 0, 0, 0); }
+    if (period === 'year') { start.setMonth(0, 1); start.setHours(0, 0, 0, 0); }
+    const end = new Date(start);
+    if (period === 'day') end.setDate(end.getDate() + 1);
+    if (period === 'week') end.setDate(end.getDate() + 7);
+    if (period === 'month') end.setMonth(end.getMonth() + 1);
+    if (period === 'year') end.setFullYear(end.getFullYear() + 1);
+    return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
+};
+
 export default function Dashboard({
     isAdmin,
+    dashboardSection,
     analytics,
     statusCounts,
     series,
@@ -83,6 +114,7 @@ export default function Dashboard({
     const [nextStatus, setNextStatus] = useState('Under Review');
     const [statusNote, setStatusNote] = useState('');
     const [actionError, setActionError] = useState('');
+    const [showAllMetrics, setShowAllMetrics] = useState(false);
     const [processing, setProcessing] = useState(false);
     const openPreview = (report: Report) => {
         setPreview(report);
@@ -128,6 +160,8 @@ export default function Dashboard({
     const visibleReports = useMemo(
         () =>
             reports.filter((report) => {
+                const [periodStart, periodEnd] = periodBounds(period);
+                if (typeof report.ts !== 'number' || report.ts < periodStart || report.ts >= periodEnd) return false;
                 if (
                     selectedBucket &&
                     !(
@@ -162,7 +196,7 @@ export default function Dashboard({
 
                 return true;
             }),
-        [reports, selectedBucket, selectedStatus],
+        [reports, selectedBucket, selectedStatus, period],
     );
     const clearFilters = () => {
         setSelectedBucket(null);
@@ -176,94 +210,74 @@ export default function Dashboard({
     return (
         <>
             <Head title="Dashboard" />
-            <div className="dashboard-page mx-auto max-w-[1180px] space-y-5 pb-8">
-                <div className="dashboard-heading relative flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-3xl border border-[#0197F6]/15 bg-gradient-to-r from-[#0197F6]/[0.09] via-card to-[#68C5DB]/[0.10] p-4 sm:p-5">
+            <div className="dashboard-page mx-auto w-full max-w-[1320px] space-y-3 pb-6">
+                <div className="dashboard-heading relative flex flex-wrap items-end justify-between gap-4 overflow-hidden rounded-2xl border border-[#0197F6]/15 bg-gradient-to-r from-[#0197F6]/[0.09] via-card to-[#68C5DB]/[0.10] p-3 sm:p-4">
                     <div>
                         <p className="text-sm font-semibold tracking-[0.16em] text-[#0197F6] uppercase">
                             {isAdmin ? 'Administration' : 'My activity'}
                         </p>
-                        <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-                            Dashboard
+                        <h1 className="mt-0.5 text-xl font-bold tracking-tight sm:text-2xl">
+                            {dashboardSection === 'website' ? 'Website & moderation overview' : 'Dashboard'}
                         </h1>
-                        <p className="mt-2 text-sm text-muted-foreground">
-                            {isAdmin
-                                ? 'Barangay-wide concern and resolution overview.'
-                                : 'A private overview of your submitted concerns and their progress.'}
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {dashboardSection === 'website' ? 'Website visits, moderation workload, and account-safety metrics.' : isAdmin ? 'Barangay-wide concern and resolution overview.' : 'A private overview of your submitted concerns and their progress.'}
                         </p>
+                        {dashboardSection && <button type="button" onClick={() => router.visit('/dashboard')} className="mt-3 rounded-lg border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">Back to dashboard</button>}
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                        Time range
-                        <select
-                            value={period}
-                            onChange={(e) => {
-                                setPeriod(e.target.value as Period);
-                                clearFilters();
-                            }}
-                            className="rounded-lg border border-input bg-card px-3 py-2 text-foreground"
-                        >
-                            {periods.map((p) => (
-                                <option key={p.key} value={p.key}>
-                                    {p.label}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
                 </div>
                 {isAdmin && siteMetrics && (
-                    <section
-                        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
-                        aria-label="Website activity widgets"
-                    >
-                        {[
-                            {
-                                label: 'Page views',
-                                value: siteMetrics.pageViews,
-                                detail: 'Recorded page visits',
-                                icon: Activity,
-                            },
-                            {
-                                label: 'Unique visitors',
-                                value: siteMetrics.uniqueVisitors,
-                                detail: 'Distinct browser sessions',
-                                icon: Eye,
-                            },
-                            {
-                                label: 'Visitors today',
-                                value: siteMetrics.visitorsToday,
-                                detail: 'Since midnight',
-                                icon: CalendarDays,
-                            },
-                            {
-                                label: 'Users online',
-                                value: siteMetrics.onlineUsers,
-                                detail: 'Seen in the last 5 minutes',
-                                icon: Activity,
-                            },
-                            {
-                                label: 'Resident accounts',
-                                value: siteMetrics.registeredUsers,
-                                detail: 'Registered non-admin users',
-                                icon: FileText,
-                            },
-                        ].map((metric) => (
-                            <article
-                                key={metric.label}
-                                className="rounded-2xl border border-border bg-card p-4 shadow-sm"
-                            >
-                                <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                                    <span>{metric.label}</span>
-                                    <metric.icon size={16} />
-                                </div>
-                                <p className="mt-2 text-2xl font-bold tabular-nums">
-                                    {metric.value.toLocaleString()}
-                                </p>
-                                <p className="mt-1 text-[11px] text-muted-foreground">
-                                    {metric.detail}
-                                </p>
-                            </article>
-                        ))}
-                    </section>
+                    <div className={dashboardSection ? "min-w-0 space-y-4" : "grid min-w-0 items-start gap-3 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px]"}>
+                    {(!dashboardSection || dashboardSection === 'website') && <section id="website-analytics" className="min-w-0 space-y-2.5 rounded-2xl border border-border/80 bg-card/35 p-3" aria-label="Website activity overview">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div><h2 className="text-base font-semibold">Website & moderation overview</h2><p className="text-xs text-muted-foreground">A quick snapshot of current workload and website activity.</p></div>
+                            <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setShowAllMetrics((value) => !value)} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:border-[#0197F6] hover:bg-[#0197F6]/5">{showAllMetrics ? 'Show less' : 'View all metrics'}</button></div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+                            {[
+                                { label: 'Pending complaints', value: siteMetrics.pendingComplaints, detail: 'Awaiting administrator review', icon: ClipboardList, href: '/admin/moderation?view=queue' },
+                                { label: 'Reported posts', value: siteMetrics.pendingPostReports, detail: 'Resident flags awaiting review', icon: ShieldAlert, href: '/admin/moderation?view=posts' },
+                                { label: 'Users online', value: siteMetrics.onlineUsers, detail: 'Within the configured online window', icon: Activity, href: '#user-activity' },
+                                { label: 'Restricted / banned', value: siteMetrics.restrictedAccounts + siteMetrics.bannedAccounts, detail: `${siteMetrics.restrictedAccounts} restricted · ${siteMetrics.bannedAccounts} banned`, icon: UserX, href: '/admin/moderation?view=users' },
+                            ].map((metric) => (
+                                <button key={metric.label} type="button" onClick={() => metric.href.startsWith('#') ? document.getElementById(metric.href.slice(1))?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : router.visit(metric.href)} className="rounded-xl border border-border bg-card p-3 text-left shadow-sm transition hover:border-[#0197F6]/60 hover:shadow-md">
+                                    <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{metric.label}</span><metric.icon size={16} className="shrink-0" /></div><p className="mt-1 text-xl font-bold tabular-nums">{metric.value.toLocaleString()}</p><p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">{metric.detail}</p><span className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-[#0197F6]">Open <ChevronRight size={13}/></span>
+                                </button>
+                            ))}
+                        </div>
+                        {showAllMetrics && (
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                                {[
+                                    ['Page views', siteMetrics.pageViews, 'Recorded page visits'], ['Unique visitors', siteMetrics.uniqueVisitors, 'Distinct browser sessions'], ['Visitors today', siteMetrics.visitorsToday, 'Since midnight'], ['Resident accounts', siteMetrics.registeredUsers, 'Registered non-admin users'], ['Recently active', siteMetrics.recentlyActiveUsers, 'Seen in the last 24 hours'], ['Users offline', siteMetrics.offlineUsers, 'Outside online window'], ['Auto-held complaints', siteMetrics.autoHeldComplaints, 'Returned to review'], ['Restricted accounts', siteMetrics.restrictedAccounts, 'Temporary restrictions active'], ['Banned accounts', siteMetrics.bannedAccounts, 'Accounts currently banned'],
+                                ].map(([label, value, detail]) => <article key={String(label)} className="rounded-xl border border-border/80 bg-card/70 p-3"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-bold tabular-nums">{Number(value).toLocaleString()}</p><p className="mt-1 text-[10px] text-muted-foreground">{detail}</p></article>)}
+                            </div>
+                        )}
+                    </section>}
+                    {!dashboardSection && <section id="user-activity" className="min-w-0 scroll-mt-24 rounded-2xl border border-border bg-card p-3 shadow-sm" aria-label="Resident online and offline status">
+                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><div><h2 className="text-base font-semibold">Resident activity</h2><p className="text-xs text-muted-foreground">Online status uses the configured last-seen window. Showing the latest resident activity.</p></div><div className="flex flex-wrap items-center gap-2"><button type="button" onClick={() => router.visit('/admin/residents')} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:border-[#0197F6] hover:bg-[#0197F6]/5">View all residents</button><div className="flex gap-2 text-xs"><span className="rounded-full bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-700 dark:text-emerald-300">{siteMetrics.onlineUsers} online</span><span className="rounded-full bg-muted px-2.5 py-1 font-medium text-muted-foreground">{siteMetrics.offlineUsers} offline</span></div></div></div>
+                        <div className="grid max-h-[300px] gap-1.5 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-1">
+                            {siteMetrics.residentPresence.map((resident) => <div key={resident.id} className="flex min-w-0 items-center gap-2 rounded-lg border border-border/70 px-2.5 py-1.5"><span title={resident.online ? 'Online' : 'Offline'} className={`size-2 shrink-0 rounded-full ${resident.online ? 'bg-emerald-500' : 'bg-slate-400'}`} /><div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-semibold">{resident.avatar ? <img src={resident.avatar} alt="" className="size-full object-cover"/> : resident.name.slice(0,1)}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium leading-tight">{resident.name}</p><p className={`truncate text-[11px] leading-tight ${resident.online ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'}`}>{resident.online ? 'Online now' : resident.lastSeenAt ? `Last seen ${new Date(resident.lastSeenAt).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : 'No activity recorded'}</p></div><button type="button" onClick={() => router.visit(`/residents/${resident.id}`)} className="shrink-0 rounded-md border border-border px-2 py-1 text-[11px] font-semibold hover:bg-muted">View profile</button></div>)}
+                            {siteMetrics.residentPresence.length === 0 && <p className="text-sm text-muted-foreground">No resident accounts found.</p>}
+                        </div>
+                    </section>}
+                    </div>
                 )}
+                {!dashboardSection && <section aria-label="Report time range" className="w-full rounded-2xl border border-border bg-card px-4 py-3 shadow-sm sm:px-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-semibold text-foreground">Report time range</h2>
+                            <p className="mt-1 text-xs text-muted-foreground">Changes the report totals, activity chart, and report preview below. The website snapshot above remains a current-state overview.</p>
+                        </div>
+                        <div className="flex shrink-0 flex-wrap items-center justify-start gap-2 sm:justify-end">
+                            <span className="text-sm font-medium text-muted-foreground">Time range</span>
+                            <div className="flex flex-wrap justify-start gap-1 rounded-xl border border-border bg-muted/40 p-1 sm:justify-end" role="group" aria-label="Choose report time range">
+                                {periods.map((p) => <button key={p.key} type="button" aria-pressed={period === p.key} onClick={() => { setPeriod(p.key); clearFilters(); }} className={`min-w-14 rounded-lg px-3 py-2 text-sm font-semibold transition ${period === p.key ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-background hover:text-foreground'}`}>{p.label}</button>)}
+                            </div>
+                        </div>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">{periods.find((p) => p.key === period)?.detail}</p>
+                </section>}
+
+                {!dashboardSection && <>
                 <section
                     className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
                     aria-label="Report summary"
@@ -614,7 +628,7 @@ export default function Dashboard({
                                     ? `Reports submitted during ${selectedBucket.label}.`
                                     : selectedStatus
                                       ? `Reports matching: ${selectedStatus === 'approval' ? 'Waiting approval' : selectedStatus}.`
-                                      : `Reports submitted this calendar year (${reports.length} shown at most).`}{' '}
+                                      : `Reports submitted during the selected ${period} (${visibleReports.length} shown).`}{' '}
                                 Select a report to preview its details.
                             </p>
                         </div>
@@ -664,7 +678,7 @@ export default function Dashboard({
                             </div>
                         )}
                     </div>
-                </section>
+                </section></>}
             </div>
             {preview && (
                 <div

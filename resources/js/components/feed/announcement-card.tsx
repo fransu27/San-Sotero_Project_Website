@@ -23,6 +23,14 @@ import PostModal from '@/components/feed/post-modal';
 import { useLocale } from '@/hooks/use-locale';
 import { LOCALE_NAMES, localizeAnnouncement, timeAgo } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 type Translations = Partial<
@@ -73,6 +81,9 @@ export default function AnnouncementCard({
 
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const initial = () => {
         const d: Record<string, string> = { title: a.title, body: a.body };
@@ -251,6 +262,18 @@ export default function AnnouncementCard({
         </div>
     );
 
+    const deleteAnnouncement = () => {
+        setDeleteSubmitting(true);
+        setDeleteError(null);
+        router.delete(`/announcements/${a.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setDeleteDialogOpen(false),
+            onError: () =>
+                setDeleteError('The announcement could not be deleted. Please try again.'),
+            onFinish: () => setDeleteSubmitting(false),
+        });
+    };
+
     return (
         <article
             className={`overflow-hidden rounded-xl border bg-card shadow-sm ${a.pinned ? 'border-[#D7263D]/40' : 'border-border'}`}
@@ -314,12 +337,10 @@ export default function AnnouncementCard({
                             title={t('post.deleteAnn')}
                             aria-label={t('post.deleteAnn')}
                             className={iconBtn}
-                            onClick={() =>
-                                confirm(t('post.deleteAnnConfirm')) &&
-                                router.delete(`/announcements/${a.id}`, {
-                                    preserveScroll: true,
-                                })
-                            }
+                            onClick={() => {
+                                setDeleteError(null);
+                                setDeleteDialogOpen(true);
+                            }}
                         >
                             <Trash2 size={16} color="#D7263D" />
                         </button>
@@ -497,6 +518,39 @@ export default function AnnouncementCard({
                     {actionBar}
                 </PostModal>
             )}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete this announcement?</DialogTitle>
+                        <DialogDescription>
+                            Residents will no longer see this announcement in the feed. Continue only if you intend to delete it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {deleteError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {deleteError}
+                        </p>
+                    )}
+                    <DialogFooter>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteDialogOpen(false)}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={deleteAnnouncement}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-60"
+                        >
+                            {deleteSubmitting ? 'Deleting…' : 'Delete announcement'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </article>
     );
 }

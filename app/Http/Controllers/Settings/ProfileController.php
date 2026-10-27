@@ -29,6 +29,11 @@ class ProfileController extends Controller
             'phone' => $request->user()->phone,
             'birthdate' => $request->user()->birthdate?->format('Y-m-d'),
             'avatarUrl' => $request->user()->avatarUrl(),
+            // A profile restriction freezes ONLY the picture; the page tells the resident why and until when.
+            'avatarLocked' => $request->user()->isProfileRestricted(),
+            'avatarLockedUntil' => $request->user()->isProfileRestricted() ? $request->user()->profile_restriction_expires_at?->toIso8601String() : null,
+            'avatarLockedReason' => $request->user()->isProfileRestricted() ? $request->user()->profile_restriction_reason : null,
+            'profileVisibility' => $request->user()->profile_visibility ?? 'public',
         ]);
     }
 
@@ -50,6 +55,14 @@ class ProfileController extends Controller
         return to_route('profile.edit');
     }
 
+    public function updatePrivacy(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['profile_visibility' => ['required', 'in:public,private']]);
+        $request->user()->forceFill(['profile_visibility' => $data['profile_visibility']])->save();
+        Inertia::flash('toast', ['type' => 'success', 'message' => $data['profile_visibility'] === 'private' ? 'Your profile is now private.' : 'Your profile is now public.']);
+        return back();
+    }
+
     /**
      * Upload or replace the profile picture (any time, from the person's own settings).
      * The old file is deleted so no orphan pictures pile up on disk.
@@ -58,6 +71,7 @@ class ProfileController extends Controller
     {
         $user = $request->user();
         abort_if($user === null, 401);
+        $this->ensureAvatarNotLocked($user);
 
         $file = $request->file('avatar');
         $path = $file?->store('avatars', 'public'); // random file name; false when the disk could not write it
@@ -78,11 +92,22 @@ class ProfileController extends Controller
         return to_route('profile.edit');
     }
 
+    /** A restricted profile cannot upload, replace or remove its picture until the restriction is over. */
+    private function ensureAvatarNotLocked(\App\Models\User $user): void
+    {
+        if ($user->isProfileRestricted()) {
+            throw ValidationException::withMessages([
+                'avatar' => 'Your profile picture is restricted'.($user->profile_restriction_expires_at ? ' until '.$user->profile_restriction_expires_at->toDayDateTimeString() : '').' and cannot be changed right now.',
+            ]);
+        }
+    }
+
     /** Remove the profile picture (the initials badge is shown again). */
     public function destroyAvatar(Request $request): RedirectResponse
     {
         $user = $request->user();
         abort_if($user === null, 401);
+        $this->ensureAvatarNotLocked($user);
 
         if ($user->avatar_path) {
             Storage::disk('public')->delete($user->avatar_path);

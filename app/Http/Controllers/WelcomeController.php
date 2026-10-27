@@ -52,26 +52,29 @@ class WelcomeController extends Controller
                 'created_at' => $announcement->created_at?->toIso8601String(),
             ]);
 
+        $publicComplaint = fn (Complaint $complaint): array => [
+            'id' => $complaint->id,
+            'title' => $complaint->title,
+            'description' => $complaint->description,
+            'category' => $complaint->custom_category ?: $complaint->category,
+            'location' => $complaint->location,
+            'status' => $complaint->status,
+            // Only the guarded public route is exposed; the storage path itself is never sent to guests.
+            'image_url' => $complaint->image_path
+                ? route('community.photo', ['file' => basename($complaint->image_path)], false)
+                : null,
+            'created_at' => $complaint->created_at?->toIso8601String(),
+        ];
+
         $complaints = Complaint::query()
             ->where('visibility', 'public')
             ->where('approval_status', Complaint::APPROVAL_APPROVED)
+            ->whereHas('user', fn ($q) => $q->where(fn ($privacy) => $privacy->whereNull('profile_visibility')->orWhere('profile_visibility', 'public')))
             ->whereNull('removed_at')
             ->latest()
             ->limit(30)
             ->get(['id', 'title', 'description', 'category', 'custom_category', 'location', 'status', 'image_path', 'created_at'])
-            ->map(fn (Complaint $complaint) => [
-                'id' => $complaint->id,
-                'title' => $complaint->title,
-                'description' => $complaint->description,
-                'category' => $complaint->custom_category ?: $complaint->category,
-                'location' => $complaint->location,
-                'status' => $complaint->status,
-                // Only the guarded public route is exposed; the storage path itself is never sent to guests.
-                'image_url' => $complaint->image_path
-                    ? route('community.photo', ['file' => basename($complaint->image_path)], false)
-                    : null,
-                'created_at' => $complaint->created_at?->toIso8601String(),
-            ]);
+            ->map($publicComplaint);
 
         return Inertia::render('public-newsfeed', [
             'announcements' => $announcements,

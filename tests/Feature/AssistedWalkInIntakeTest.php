@@ -57,6 +57,26 @@ class AssistedWalkInIntakeTest extends TestCase
         $this->assertDatabaseHas('complaint_events', ['complaint_id' => $complaint->id, 'type' => 'submitted']);
     }
 
+    public function test_walk_in_evidence_combined_size_is_limited_to_ten_megabytes(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.walk-in.store'), [
+            'reporter_name' => 'Sample Resident',
+            'title' => 'Large evidence test',
+            'description' => 'A test concern with evidence over the combined limit.',
+            'location' => 'Purok 2',
+            'category' => 'Infrastructure',
+            'incident_date' => now()->toDateString(),
+            'files' => [
+                \Illuminate\Http\UploadedFile::fake()->create('first.pdf', 6000, 'application/pdf'),
+                \Illuminate\Http\UploadedFile::fake()->create('second.pdf', 6000, 'application/pdf'),
+            ],
+        ])->assertSessionHasErrors('files');
+
+        $this->assertDatabaseCount('complaints', 0);
+    }
+
     public function test_tracking_requires_reference_and_pin_and_returns_only_minimal_status_data(): void
     {
         $admin = $this->admin();

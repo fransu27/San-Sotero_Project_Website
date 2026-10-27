@@ -65,13 +65,21 @@ export default function TwoFactorChallenge() {
                             {showRecoveryInput ? (
                                 <>
                                     <Input
+                                        id="recovery-code"
                                         name="recovery_code"
                                         type="text"
+                                        aria-invalid={Boolean(errors.recovery_code)}
+                                        aria-describedby={
+                                            errors.recovery_code
+                                                ? 'recovery-code-error'
+                                                : undefined
+                                        }
                                         placeholder="Enter recovery code"
                                         autoFocus={showRecoveryInput}
                                         required
                                     />
                                     <InputError
+                                        id="recovery-code-error"
                                         message={errors.recovery_code}
                                     />
                                 </>
@@ -79,11 +87,15 @@ export default function TwoFactorChallenge() {
                                 <div className="flex flex-col items-center justify-center space-y-3 text-center">
                                     <div className="flex w-full items-center justify-center">
                                         <InputOTP
-                                            name="code"
                                             maxLength={OTP_MAX_LENGTH}
                                             value={code}
                                             onChange={(value) => setCode(value)}
                                             disabled={processing}
+                                            aria-label="Authentication code"
+                                            aria-invalid={Boolean(errors.code)}
+                                            aria-describedby={
+                                                errors.code ? 'auth-code-error' : undefined
+                                            }
                                             pattern={REGEXP_ONLY_DIGITS}
                                             autoFocus
                                         >
@@ -100,7 +112,11 @@ export default function TwoFactorChallenge() {
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
-                                    <InputError message={errors.code} />
+                                    <input type="hidden" name="code" value={code} />
+                                    <InputError
+                                        id="auth-code-error"
+                                        message={errors.code}
+                                    />
                                 </div>
                             )}
 

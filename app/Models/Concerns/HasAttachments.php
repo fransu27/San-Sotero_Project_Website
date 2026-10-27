@@ -6,6 +6,7 @@ use App\Models\Attachment;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -69,36 +70,49 @@ trait HasAttachments
         if ($remove) {
             // Only this post's own files can be removed (a forged id for someone else's file does nothing).
             foreach ($this->attachments()->whereIn('id', $remove)->get() as $file) {
-                Storage::disk('public')->delete($file->path);
+                $path = $file->path;
                 $file->delete();
+                // Filesystem deletion must wait until the database transaction commits; otherwise a rollback
+                // could restore the attachment row while its file has already been destroyed.
+                DB::afterCommit(static fn () => Storage::disk('public')->delete($path));
             }
         }
 
-        foreach ($uploads as $upload) {
-            $stored = $upload->store('attachments', 'public');
+        $newPaths = [];
+        try {
+            foreach ($uploads as $upload) {
+                $stored = $upload->store('attachments', 'public');
 
-            if ($stored === false) {
-                continue;
+                if ($stored === false) {
+                    throw ValidationException::withMessages(['files' => 'An attachment could not be saved. Please try again.']);
+                }
+                $newPaths[] = $stored;
+
+                // Never trust the browser's name: strip tags / control characters and cap the length.
+                $name = trim((string) preg_replace('/[\x00-\x1F\x7F\/\\\\]+/u', '', strip_tags($upload->getClientOriginalName())));
+
+                $this->attachments()->create([
+                    'user_id' => $userId,
+                    'path' => $stored,
+                    'original_name' => Str::limit($name !== '' ? $name : 'file', 150, ''),
+                    'mime' => (string) $upload->getMimeType(), // sniffed from the file content, not the browser's claim
+                    'size' => (int) $upload->getSize(),
+                ]);
             }
-
-            // Never trust the browser's name: strip tags / control characters and cap the length.
-            $name = trim((string) preg_replace('/[\x00-\x1F\x7F\/\\\\]+/u', '', strip_tags($upload->getClientOriginalName())));
-
-            $this->attachments()->create([
-                'user_id' => $userId,
-                'path' => $stored,
-                'original_name' => Str::limit($name !== '' ? $name : 'file', 150, ''),
-                'mime' => (string) $upload->getMimeType(), // sniffed from the file content, not the browser's claim
-                'size' => (int) $upload->getSize(),
-            ]);
+        } catch (\Throwable $exception) {
+            foreach ($newPaths as $path) {
+                Storage::disk('public')->delete($path);
+            }
+            throw $exception;
         }
     }
 
     public function deleteAllAttachments(): void
     {
         foreach ($this->attachments()->get() as $file) {
-            Storage::disk('public')->delete($file->path);
+            $path = $file->path;
             $file->delete();
+            DB::afterCommit(static fn () => Storage::disk('public')->delete($path));
         }
     }
 

@@ -67,12 +67,14 @@ export default function Security(props: Props) {
                                     id="current_password"
                                     ref={currentPasswordInput}
                                     name="current_password"
+                                    aria-invalid={Boolean(errors.current_password)}
+                                    aria-describedby={errors.current_password ? 'current-password-error' : undefined}
                                     className="mt-1 block w-full"
                                     autoComplete="current-password"
                                     placeholder="Current password"
                                 />
 
-                                <InputError message={errors.current_password} />
+                                <InputError id="current-password-error" message={errors.current_password} />
                             </div>
 
                             <div className="grid gap-2">
@@ -82,13 +84,15 @@ export default function Security(props: Props) {
                                     id="password"
                                     ref={passwordInput}
                                     name="password"
+                                    aria-invalid={Boolean(errors.password)}
+                                    aria-describedby={errors.password ? 'new-password-error' : undefined}
                                     className="mt-1 block w-full"
                                     autoComplete="new-password"
                                     placeholder="New password"
                                     passwordrules={props.passwordRules}
                                 />
 
-                                <InputError message={errors.password} />
+                                <InputError id="new-password-error" message={errors.password} />
                             </div>
 
                             <div className="grid gap-2">
@@ -99,6 +103,8 @@ export default function Security(props: Props) {
                                 <PasswordInput
                                     id="password_confirmation"
                                     name="password_confirmation"
+                                    aria-invalid={Boolean(errors.password_confirmation)}
+                                    aria-describedby={errors.password_confirmation ? 'password-confirmation-error' : undefined}
                                     className="mt-1 block w-full"
                                     autoComplete="new-password"
                                     placeholder="Confirm password"
@@ -106,6 +112,7 @@ export default function Security(props: Props) {
                                 />
 
                                 <InputError
+                                    id="password-confirmation-error"
                                     message={errors.password_confirmation}
                                 />
                             </div>

@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
 /* @chisel-email-verification */
 import { Link } from '@inertiajs/react';
 /* @end-chisel-email-verification */
@@ -28,12 +28,20 @@ export default function Profile(
         phone,
         birthdate,
         avatarUrl,
+        avatarLocked,
+        avatarLockedUntil,
+        avatarLockedReason,
+        profileVisibility,
     }: {
         mustVerifyEmail: boolean;
         status?: string;
         phone: string | null;
         birthdate: string | null;
         avatarUrl: string | null;
+        avatarLocked?: boolean;
+        avatarLockedUntil?: string | null;
+        avatarLockedReason?: string | null;
+        profileVisibility: 'public' | 'private';
     },
     /* @end-chisel-email-verification */
 ) {
@@ -59,6 +67,9 @@ export default function Profile(
                     url={avatarUrl}
                     staff={auth.user.role === 'admin'}
                     error={errors.avatar}
+                    locked={avatarLocked}
+                    lockedUntil={avatarLockedUntil}
+                    lockedReason={avatarLockedReason}
                 />
 
                 <Form
@@ -79,12 +90,17 @@ export default function Profile(
                                     defaultValue={auth.user.name}
                                     name="name"
                                     required
+                                    aria-invalid={Boolean(errors.name)}
+                                    aria-describedby={
+                                        errors.name ? 'name-error' : undefined
+                                    }
                                     autoComplete="name"
                                     placeholder="Full name"
                                 />
 
                                 <InputError
                                     className="mt-2"
+                                    id="name-error"
                                     message={errors.name}
                                 />
                             </div>
@@ -99,12 +115,17 @@ export default function Profile(
                                     defaultValue={auth.user.email}
                                     name="email"
                                     required
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                     autoComplete="username"
                                     placeholder="Email address"
                                 />
 
                                 <InputError
                                     className="mt-2"
+                                    id="email-error"
                                     message={errors.email}
                                 />
                             </div>
@@ -119,6 +140,12 @@ export default function Profile(
                                         name="birthdate"
                                         type="date"
                                         required
+                                        aria-invalid={Boolean(errors.birthdate)}
+                                        aria-describedby={
+                                            errors.birthdate
+                                                ? 'birthdate-error'
+                                                : undefined
+                                        }
                                         min="1900-01-02"
                                         max={new Date()
                                             .toISOString()
@@ -127,7 +154,10 @@ export default function Profile(
                                         autoComplete="bday"
                                         className="block [color-scheme:dark]"
                                     />
-                                    <InputError message={errors.birthdate} />
+                                    <InputError
+                                        id="birthdate-error"
+                                        message={errors.birthdate}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
@@ -138,6 +168,10 @@ export default function Profile(
                                         type="tel"
                                         inputMode="numeric"
                                         required
+                                        aria-invalid={Boolean(errors.phone)}
+                                        aria-describedby={
+                                            errors.phone ? 'phone-error' : undefined
+                                        }
                                         defaultValue={phone ?? ''}
                                         autoComplete="tel"
                                         placeholder="09171234567"
@@ -145,7 +179,10 @@ export default function Profile(
                                         pattern="(09[0-9]{9}|\+639[0-9]{9})"
                                         title="Example: 09171234567"
                                     />
-                                    <InputError message={errors.phone} />
+                                    <InputError
+                                        id="phone-error"
+                                        message={errors.phone}
+                                    />
                                 </div>
                             </div>
 
@@ -187,6 +224,11 @@ export default function Profile(
                         </>
                     )}
                 </Form>
+                <section className="space-y-3 rounded-2xl border border-border p-4 sm:p-5">
+                    <div><h2 className="font-semibold">Profile privacy</h2><p className="mt-1 text-sm text-muted-foreground">Choose who can open your resident profile and browse your approved public posts. Administrators can still view profiles for moderation.</p></div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 p-3"><div><p className="text-sm font-medium">{profileVisibility === 'private' ? 'Private profile' : 'Public profile'}</p><p className="mt-1 text-xs text-muted-foreground">{profileVisibility === 'private' ? 'Only you and administrators can open your profile.' : 'Other residents can view your profile and approved public posts.'}</p></div><button type="button" onClick={()=>router.patch('/settings/profile/privacy',{profile_visibility:profileVisibility==='private'?'public':'private'},{preserveScroll:true})} className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted">{profileVisibility === 'private' ? 'Make profile public' : 'Make profile private'}</button></div>
+                    <p className="text-xs text-muted-foreground">Your anonymous-post preference is separate: anonymous posts do not expose your name on the public community feed.</p>
+                </section>
             </div>
 
             <DeleteUser />

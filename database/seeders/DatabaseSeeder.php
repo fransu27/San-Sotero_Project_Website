@@ -22,9 +22,11 @@ class DatabaseSeeder extends Seeder
             $this->command?->info("Admin created: {$admin->email} / {$password}  (change it after first login)");
         }
 
+        $hasOtherPrimaryAdmin = User::query()->where('is_primary_admin', true)->where('id', '!=', $admin->id)->exists();
         $admin->forceFill([
             'name' => 'Barangay Admin',
             'role' => 'admin',
+            'is_primary_admin' => ! $hasOtherPrimaryAdmin,
             'email_verified_at' => now(),
         ])->save();
     }

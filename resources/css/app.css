@@ -589,7 +589,7 @@ a {
     }
 }
 .dashboard-page {
-    max-width: 1080px;
+    max-width: none;
     font-size: 0.9rem;
 }
 .dashboard-page .dashboard-heading h1 {
@@ -818,4 +818,85 @@ article {
 .chat-report-row:hover {
     transform: translateX(4px);
     box-shadow: 0 6px 16px -8px rgb(2 24 43 / 0.3);
+}
+
+
+/* Walk-In Complaint: print only the one-time resident receipt, never the intake form. */
+@page {
+    size: A4 portrait;
+    margin: 12mm;
+}
+
+@media print {
+    html, body {
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    .walk-in-print-area,
+    .walk-in-print-area * {
+        visibility: visible !important;
+    }
+
+    .walk-in-print-area {
+        display: block !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 8mm !important;
+        border: 1px solid #777 !important;
+        border-radius: 0 !important;
+        background: #fff !important;
+        color: #111 !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        min-height: 0 !important;
+        height: auto !important;
+        font-size: 10pt !important;
+    }
+
+    .walk-in-print-area .receipt-brand { border-bottom: 1px solid #777 !important; }
+    .walk-in-print-area img { max-width: 48px !important; max-height: 48px !important; }
+    .walk-in-print-area .bg-background { background: #fff !important; }
+    .walk-in-print-area .text-muted-foreground { color: #333 !important; }
+
+    .walk-in-print-area p,
+    .walk-in-print-area div {
+        overflow-wrap: anywhere !important;
+        word-break: normal !important;
+    }
+
+    .walk-in-print-area .print\:hidden,
+    .walk-in-print-area button {
+        display: none !important;
+    }
+
+    .walk-in-print-area * {
+        box-sizing: border-box !important;
+    }
+}
+
+/* ── Compact density ─────────────────────────────────────────────────────────────────────────────────────────────
+   On desktop, 100% browser zoom now looks like the previous 75% zoom: every rem-based size (text, padding, gaps,
+   cards, buttons) scales down together, so pages are no longer spread out. Phones/tablets keep the normal 16px size
+   so tap targets stay comfortable. */
+@media (min-width: 1024px) {
+    html {
+        font-size: 13px;
+    }
 }

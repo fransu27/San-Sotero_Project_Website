@@ -9,6 +9,7 @@ import {
     RotateCcw,
     Search,
     ShieldCheck,
+    X,
     XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -76,13 +77,16 @@ type PostReport = {
     created_at: string | null;
 };
 
+type Appeal = { id:number; user_id:number; resident_name:string; appeal_type:string; message:string; created_at:string; status:string };
 type Props = {
+    appeals: Appeal[];
     complaints: Complaint[];
     users: ManagedUser[];
     postReports: PostReport[];
-    view: 'queue' | 'reviewed' | 'all';
+    view: 'queue' | 'reviewed' | 'all' | 'users' | 'posts';
+    selectedUserId?: number | null;
     query: string;
-    counts: { queue: number; reviewed: number };
+    counts: { queue: number; reviewed: number; pending_post_reports?: number };
 };
 
 const dateLabel = (value: string | null) =>
@@ -117,6 +121,8 @@ export default function Moderation({
     counts,
     users,
     postReports,
+    appeals,
+    selectedUserId,
 }: Props) {
     usePoll(30000, { only: ['users', 'postReports', 'counts'] });
 
@@ -133,6 +139,16 @@ export default function Moderation({
         return () => window.clearInterval(intervalId);
     }, []);
 
+    useEffect(() => {
+        // Switching moderation workspaces should not leave a stale preview/dialog open.
+        setPreview(null);
+        setUserActionTarget(null);
+        setPostReportAction(null);
+        setError(null);
+        setUserActionError('');
+        setPostReportError('');
+    }, [view]);
+
     const [preview, setPreview] = useState<Complaint | null>(null);
     const [rejectTarget, setRejectTarget] = useState<number | null>(null);
     const [reasons, setReasons] = useState<Record<number, string>>({});
@@ -145,6 +161,29 @@ export default function Moderation({
     const [statusNote, setStatusNote] = useState('');
     const [removalReason, setRemovalReason] = useState('');
     const [confirmingRemove, setConfirmingRemove] = useState(false);
+    const [userActionTarget, setUserActionTarget] = useState<ManagedUser | null>(null);
+    const [userAction, setUserAction] = useState('restrict');
+    const [userReason, setUserReason] = useState('');
+    const [restrictionDays, setRestrictionDays] = useState('7');
+    const [restrictionUnit, setRestrictionUnit] = useState<'seconds' | 'minutes' | 'hours' | 'days'>('days');
+    const [userActionError, setUserActionError] = useState('');
+    const [userActionBusy, setUserActionBusy] = useState(false);
+    const [postReportAction, setPostReportAction] = useState<{ report: PostReport; status: string } | null>(null);
+    const [postReportNote, setPostReportNote] = useState('');
+    const [postReportError, setPostReportError] = useState('');
+
+    useEffect(() => {
+        if (view !== 'users' || !selectedUserId) return;
+        const selected = users.find((candidate) => candidate.id === selectedUserId);
+        if (selected) {
+            setUserActionTarget(selected);
+            setUserAction('restrict');
+            setUserReason('');
+            setRestrictionDays('7');
+            setRestrictionUnit('days');
+        }
+    }, [view, selectedUserId, users]);
+    const [postReportBusy, setPostReportBusy] = useState(false);
 
     const openPreview = (item: Complaint) => {
         setPreview(item);
@@ -309,97 +348,72 @@ export default function Moderation({
     };
 
     const moderateUser = (user: ManagedUser) => {
-        const action = window.prompt(
-            'Action: restrict, ban, activate, profile_restrict, or profile_restore',
-            user.profile_restricted
-                ? 'profile_restore'
-                : user.status === 'active'
-                  ? 'restrict'
-                  : 'activate',
-        );
+        const action = user.profile_restricted
+            ? 'profile_restore'
+            : user.status === 'active'
+              ? 'restrict'
+              : 'activate';
+        setUserActionTarget(user);
+        setUserAction(action);
+        setUserReason('');
+        setRestrictionDays('7');
+        setRestrictionUnit('days');
+        setUserActionError('');
+    };
 
-        if (
-            !action ||
-            ![
-                'restrict',
-                'ban',
-                'activate',
-                'profile_restrict',
-                'profile_restore',
-            ].includes(action)
-        ) {
+    const submitUserModeration = () => {
+        if (!userActionTarget) return;
+        if (userReason.trim().length < 5) {
+            setUserActionError('Please enter a reason of at least 5 characters.');
             return;
         }
-
-        const reason = window.prompt(
-            'Required moderation reason (minimum 5 characters):',
-            action === 'profile_restrict'
-                ? 'Inappropriate profile picture'
-                : 'Community guideline violation',
-        );
-
-        if (!reason || reason.trim().length < 5) {
-            window.alert('Please provide a reason of at least 5 characters.');
-
+        const duration = Number(restrictionDays);
+        const maxDuration = restrictionUnit === 'seconds' ? 31536000 : restrictionUnit === 'minutes' ? 525600 : restrictionUnit === 'hours' ? 8760 : 365;
+        const needsDuration = userAction === 'restrict' || (userAction === 'profile_restrict' && restrictionDays.trim() !== '');
+        if (needsDuration && (!Number.isInteger(duration) || duration < 1 || duration > maxDuration)) {
+            setUserActionError(`Choose a whole-number duration between 1 and ${maxDuration} ${restrictionUnit}.`);
             return;
         }
-
-        let days: number | undefined;
-
-        if (action === 'restrict') {
-            const duration = window.prompt(
-                'Restriction duration in days (1–365):',
-                '7',
-            );
-
-            if (duration === null) {
-                return;
-            }
-
-            days = Number(duration);
-
-            if (!Number.isInteger(days) || days < 1 || days > 365) {
-                window.alert('Enter a whole number between 1 and 365.');
-
-                return;
-            }
-        }
-
-        router.patch(
-            `/admin/users/${user.id}/moderation`,
-            { action, reason: reason.trim(), days },
-            { preserveScroll: true },
-        );
+        setUserActionBusy(true);
+        router.patch(`/admin/users/${userActionTarget.id}/moderation`, {
+            action: userAction,
+            reason: userReason.trim(),
+            ...(needsDuration ? { duration, unit: restrictionUnit } : {}),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setUserActionTarget(null),
+            onError: (errors) => setUserActionError((errors.reason as string) ?? 'Unable to apply this moderation action.'),
+            onFinish: () => setUserActionBusy(false),
+        });
     };
 
     const reviewPostReport = (report: PostReport, status: string) => {
-        const adminNote = window.prompt(
-            `Required note for ${status} (minimum 5 characters):`,
-            status === 'actioned'
-                ? 'Reviewed and action taken'
-                : 'Reviewed by administration',
-        );
+        setPostReportAction({ report, status });
+        setPostReportNote(status === 'actioned' ? 'Reviewed and action taken' : 'Reviewed by administration');
+        setPostReportError('');
+    };
 
-        if (adminNote === null) {
+    const submitPostReportReview = () => {
+        if (!postReportAction) return;
+        if (postReportNote.trim().length < 5) {
+            setPostReportError('Please provide a note of at least 5 characters.');
             return;
         }
-
-        if (adminNote.trim().length < 5) {
-            window.alert('Please provide a note of at least 5 characters.');
-
-            return;
-        }
-
-        router.patch(
-            `/admin/post-reports/${report.id}`,
-            { status, admin_note: adminNote.trim() },
-            { preserveScroll: true },
-        );
+        setPostReportBusy(true);
+        router.patch(`/admin/post-reports/${postReportAction.report.id}`, {
+            status: postReportAction.status,
+            admin_note: postReportNote.trim(),
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setPostReportAction(null),
+            onError: () => setPostReportError('Unable to save this review. Please try again.'),
+            onFinish: () => setPostReportBusy(false),
+        });
     };
 
     return (
         <>
-            <Head title="Admin · Moderation" />
+            <Head title={`Admin · ${view === 'users' ? 'User moderation' : view === 'posts' ? 'Reported posts' : 'Submission review'}`} />
 
             <main className="mx-auto w-full max-w-5xl space-y-6">
                 <header className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
@@ -411,13 +425,11 @@ export default function Moderation({
                             </div>
 
                             <h1 className="text-2xl font-bold tracking-tight">
-                                Moderation
+                                {view === 'users' ? 'User moderation' : view === 'posts' ? 'Reported posts' : 'Moderation'}
                             </h1>
 
                             <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-                                Review residents’ concerns, inspect attached
-                                images, and record clear approval or rejection
-                                decisions.
+                                {view === 'users' ? 'Review resident account status, restrictions, and profile-safety actions.' : view === 'posts' ? 'Review resident flags against community posts and record a reasoned outcome.' : 'Review residents’ concerns, inspect attached images, and record clear approval or rejection decisions.'}
                             </p>
                         </div>
 
@@ -429,7 +441,7 @@ export default function Moderation({
                         </Link>
                     </div>
 
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <nav aria-label="Moderation sections" className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <Link
                             href="/admin/moderation?view=queue"
                             className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${
@@ -463,9 +475,19 @@ export default function Moderation({
                                 {counts.reviewed}
                             </div>
                         </Link>
-                    </div>
+                        <Link href="/admin/moderation?view=users" className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${view === 'users' ? 'border-[#0197F6] bg-[#0197F6]/5' : 'border-border'}`}>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground"><ShieldCheck size={16} />User moderation</div>
+                            <div className="mt-1 text-sm font-semibold">Accounts & restrictions</div>
+                            <p className="mt-1 text-xs text-muted-foreground">Review active, restricted, and banned accounts.</p>
+                        </Link>
+                        <Link href="/admin/moderation?view=posts" className={`rounded-xl border p-4 transition-colors hover:bg-muted/60 ${view === 'posts' ? 'border-[#0197F6] bg-[#0197F6]/5' : 'border-border'}`}>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground"><ShieldCheck size={16} />Reported posts</div>
+                            <div className="mt-1 text-2xl font-bold">{counts.pending_post_reports ?? 0}</div>
+                            <p className="mt-1 text-xs text-muted-foreground">Resident flags awaiting action.</p>
+                        </Link>
+                    </nav>
 
-                    <form
+                    {(view === 'queue' || view === 'reviewed' || view === 'all') && <form
                         action="/admin/moderation"
                         method="get"
                         className="mt-5 flex flex-col gap-2 sm:flex-row"
@@ -493,7 +515,7 @@ export default function Moderation({
                         >
                             Search
                         </button>
-                    </form>
+                    </form>}
                 </header>
 
                 {error && (
@@ -505,7 +527,7 @@ export default function Moderation({
                     </div>
                 )}
 
-                {complaints.length === 0 ? (
+                {(view === 'queue' || view === 'reviewed' || view === 'all') && (complaints.length === 0 ? (
                     <section className="rounded-2xl border border-dashed border-border bg-card p-10 text-center">
                         <CheckCircle2
                             className="mx-auto mb-3 text-muted-foreground"
@@ -789,9 +811,14 @@ export default function Moderation({
                             </article>
                         ))}
                     </section>
-                )}
+                ))}
 
-                <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                {view === 'users' && <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                    <div><h2 className="text-xl font-bold">Pending appeals</h2><p className="text-sm text-muted-foreground">Residents can appeal account or profile moderation. Accepting an account appeal restores the account; all decisions are recorded.</p></div>
+                    {appeals.length === 0 ? <p className="rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">No pending appeals.</p> : <div className="grid gap-3">{appeals.map(appeal => <article key={appeal.id} className="rounded-xl border border-border p-4"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-semibold">{appeal.resident_name}</p><p className="text-xs text-muted-foreground">{appeal.appeal_type === 'profile' ? 'Profile appeal' : 'Account appeal'} · {dateLabel(appeal.created_at)}</p></div><span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-700">Pending</span></div><p className="mt-3 whitespace-pre-wrap text-sm">{appeal.message}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={()=>router.patch(`/admin/appeals/${appeal.id}`,{decision:'accepted',admin_response:'Appeal accepted after administrator review.'},{preserveScroll:true})} className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white">Accept appeal</button><button type="button" onClick={()=>router.patch(`/admin/appeals/${appeal.id}`,{decision:'declined',admin_response:'Appeal reviewed and declined. Please contact the barangay office if you need clarification.'},{preserveScroll:true})} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">Decline appeal</button><button type="button" onClick={()=>router.visit(`/residents/${appeal.user_id}`)} className="rounded-lg border border-border px-3 py-2 text-xs font-semibold hover:bg-muted">View profile</button></div></article>)}</div>}
+                </section>}
+
+                {view === 'users' && <section id="user-moderation" className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
                     <div>
                         <h2 className="text-xl font-bold">User moderation</h2>
                         <p className="text-sm text-muted-foreground">
@@ -865,9 +892,9 @@ export default function Moderation({
                             </p>
                         )}
                     </div>
-                </section>
+                </section>}
 
-                <section className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
+                {view === 'posts' && <section id="reported-posts" className="space-y-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6">
                     <div>
                         <h2 className="text-xl font-bold">Reported posts</h2>
                         <p className="text-sm text-muted-foreground">
@@ -947,8 +974,25 @@ export default function Moderation({
                             </p>
                         )}
                     </div>
-                </section>
+                </section>}
             </main>
+
+            {postReportAction && (
+                <div className="fixed inset-0 z-[65] flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !postReportBusy) setPostReportAction(null); }}>
+                    <section role="dialog" aria-modal="true" aria-labelledby="post-report-review-title" className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#0197F6]/30 bg-card text-card-foreground shadow-2xl">
+                        <header className="flex items-start justify-between gap-3 border-b border-border bg-gradient-to-r from-[#0197F6]/15 to-transparent px-5 py-4">
+                            <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#0197F6]">Reported content</p><h2 id="post-report-review-title" className="mt-1 text-xl font-bold">{postReportAction.status === 'actioned' ? 'Take action' : postReportAction.status === 'dismissed' ? 'Dismiss report' : 'Mark as reviewed'}</h2><p className="mt-1 text-sm text-muted-foreground">{postReportAction.report.title} · Reported by {postReportAction.report.reporter}</p></div>
+                            <button type="button" disabled={postReportBusy} onClick={() => setPostReportAction(null)} aria-label="Close review dialog" className="rounded-lg p-2 hover:bg-muted"><XCircle size={18}/></button>
+                        </header>
+                        <div className="space-y-4 p-5">
+                            <div className="rounded-xl border border-border bg-background/60 p-3"><p className="text-xs font-semibold text-muted-foreground">Report reason</p><p className="mt-1 text-sm">{postReportAction.report.reason}</p>{postReportAction.report.details && <p className="mt-2 text-sm text-muted-foreground">{postReportAction.report.details}</p>}</div>
+                            <label className="block space-y-1.5 text-sm font-medium">Administrator review note <span className="text-red-500">*</span><textarea value={postReportNote} onChange={(event) => { setPostReportNote(event.target.value); setPostReportError(''); }} rows={4} maxLength={1000} placeholder="Record what you reviewed and why this decision was made (minimum 5 characters)." className="w-full resize-y rounded-xl border border-input bg-background px-3 py-2.5 font-normal"/><span className="text-xs font-normal text-muted-foreground">{postReportNote.length}/1000 characters</span></label>
+                            {postReportError && <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-300">{postReportError}</p>}
+                            <footer className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end"><button type="button" disabled={postReportBusy} onClick={() => setPostReportAction(null)} className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">Cancel</button><button type="button" disabled={postReportBusy} onClick={submitPostReportReview} className="rounded-xl bg-[#0197F6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#087bc2] disabled:opacity-50">{postReportBusy ? 'Saving…' : 'Confirm decision'}</button></footer>
+                        </div>
+                    </section>
+                </div>
+            )}
 
             {preview && (
                 <div
@@ -1396,6 +1440,32 @@ export default function Moderation({
                                     </p>
                                 )}
                             </div>
+                        </div>
+                    </section>
+                </div>
+            )}
+
+            {userActionTarget && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/75 p-3 backdrop-blur-sm sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget && !userActionBusy) setUserActionTarget(null); }}>
+                    <section role="dialog" aria-modal="true" aria-labelledby="user-moderation-title" className="w-full max-w-xl overflow-hidden rounded-2xl border border-[#0197F6]/30 bg-card text-card-foreground shadow-2xl">
+                        <header className="flex items-start justify-between gap-4 border-b border-border bg-gradient-to-r from-[#0197F6]/15 to-transparent px-5 py-4 sm:px-6">
+                            <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0197F6]">Account safety</p><h2 id="user-moderation-title" className="mt-1 text-xl font-bold">Moderate {userActionTarget.name}</h2><div className="mt-2 flex flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">Current account status</span><span className={`rounded-full px-2.5 py-1 text-xs font-bold ${userActionTarget.status === 'active' ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : userActionTarget.status === 'restricted' ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-red-500/10 text-red-700 dark:text-red-300'}`}>{userActionTarget.status.toUpperCase()}</span>{userActionTarget.profile_restricted && <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">PROFILE RESTRICTED</span>}</div><p className="mt-2 text-sm text-muted-foreground">Choose an action and document why it is needed. This action will be recorded.</p></div>
+                            <button type="button" aria-label="Close moderation dialog" disabled={userActionBusy} onClick={() => setUserActionTarget(null)} className="rounded-lg p-2 hover:bg-muted"><X size={18}/></button>
+                        </header>
+                        <div className="space-y-4 p-5 sm:p-6">
+                            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                {[
+                                    {value:'restrict', label:'Temporarily restrict', detail:'Block community actions for a period'},
+                                    {value:'ban', label:'Permanently ban', detail:'Disable account access'},
+                                    {value:'activate', label:'Restore account', detail:'Remove account restriction'},
+                                    {value:'profile_restrict', label:'Restrict profile picture', detail:'Show the anonymous picture and lock changes. Posting is not affected'},
+                                    {value:'profile_restore', label:'Restore profile picture', detail:'Bring back their picture and allow changes'},
+                                ].map((item) => <button key={item.value} type="button" onClick={() => {setUserAction(item.value); setUserActionError('');}} className={`rounded-xl border p-3 text-left transition ${userAction===item.value ? 'border-[#0197F6] bg-[#0197F6]/10 ring-1 ring-[#0197F6]/40' : 'border-border hover:border-[#0197F6]/50'}`}><span className="block text-sm font-semibold">{item.label}</span><span className="mt-1 block text-xs text-muted-foreground">{item.detail}</span></button>)}
+                            </div>
+                            {(userAction === 'restrict' || userAction === 'profile_restrict') && <div className="grid gap-3 sm:grid-cols-[1fr_160px]"><label className="block space-y-1.5 text-sm font-medium">{userAction === 'profile_restrict' ? 'Picture restriction duration (blank = until restored)' : 'Restriction duration'}<input type="number" min="1" value={restrictionDays} onChange={(e) => setRestrictionDays(e.target.value)} className="w-full rounded-xl border border-input bg-background px-3 py-2.5"/></label><label className="block space-y-1.5 text-sm font-medium">Unit<select value={restrictionUnit} onChange={e=>setRestrictionUnit(e.target.value as typeof restrictionUnit)} className="w-full rounded-xl border border-input bg-background px-3 py-2.5"><option value="seconds">Seconds</option><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days</option></select></label></div>}
+                            <label className="block space-y-1.5 text-sm font-medium">Reason <span className="text-red-500">*</span><textarea value={userReason} onChange={(e) => {setUserReason(e.target.value); setUserActionError('');}} rows={3} maxLength={1000} placeholder="Explain the guideline or issue involved (minimum 5 characters)." className="w-full resize-y rounded-xl border border-input bg-background px-3 py-2.5 font-normal"/><span className="text-xs font-normal text-muted-foreground">{userReason.length}/1000 characters</span></label>
+                            {userActionError && <p role="alert" className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-300">{userActionError}</p>}
+                            <footer className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end"><button type="button" disabled={userActionBusy} onClick={() => setUserActionTarget(null)} className="rounded-xl border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">Cancel</button><button type="button" disabled={userActionBusy} onClick={submitUserModeration} className="rounded-xl bg-[#0197F6] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#087bc2] disabled:opacity-50">{userActionBusy ? 'Applying…' : 'Confirm moderation action'}</button></footer>
                         </div>
                     </section>
                 </div>

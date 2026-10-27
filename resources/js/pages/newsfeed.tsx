@@ -1,4 +1,5 @@
-import { Head, Link, usePage, usePoll } from '@inertiajs/react';
+import { Head, Link, router, usePage, usePoll } from '@inertiajs/react';
+import { useState } from 'react';
 import { Lock, HardHat, Shield, Trash2, MoreHorizontal } from 'lucide-react';
 import BarangayBanner from '@/components/barangay-banner';
 import AnnouncementCard from '@/components/feed/announcement-card';
@@ -57,6 +58,7 @@ export default function Dashboard({
     statuses,
 }: Props) {
     const { auth } = usePage().props as any;
+    const [appealText, setAppealText] = useState('');
     const { t } = useLocale();
     usePoll(15000, {
         only: [
@@ -152,9 +154,36 @@ export default function Dashboard({
                         </p>
                         <p className="mt-1">
                             Your profile picture has been replaced with the
-                            anonymous placeholder. Reason:{' '}
+                            anonymous placeholder and can't be changed{' '}
+                            {auth.user.profile_restriction_expires_at
+                                ? `until ${new Date(auth.user.profile_restriction_expires_at).toLocaleString()}`
+                                : 'until an administrator lifts the restriction'}
+                            . You can still post, comment and react. Reason:{' '}
                             {auth.user.profile_restriction_message}
                         </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <input
+                                value={appealText}
+                                onChange={(e) => setAppealText(e.target.value)}
+                                placeholder="Appeal this decision (min. 20 characters)"
+                                maxLength={1000}
+                                className="min-w-48 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-xs"
+                            />
+                            <button
+                                type="button"
+                                disabled={appealText.trim().length < 20}
+                                onClick={() =>
+                                    router.post(
+                                        '/account-status/appeal',
+                                        { appeal_type: 'profile', message: appealText },
+                                        { preserveScroll: true, onSuccess: () => setAppealText('') },
+                                    )
+                                }
+                                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                            >
+                                Submit appeal
+                            </button>
+                        </div>
                     </div>
                 )}
                 {/* ── Centre feed ── */}

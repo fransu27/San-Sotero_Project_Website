@@ -1,21 +1,22 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Ban,
     Megaphone,
     ChartNoAxesCombined,
     CheckCircle2,
     ClipboardCheck,
     ClipboardList,
     Clock,
-    Eye,
     Home,
+    Eye,
+    Ban,
     Loader,
     Menu,
     Settings,
     XCircle,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { router } from '@inertiajs/react';
 import AssistantChat from '@/components/assistant-chat';
 import BrandMark from '@/components/brand-mark';
 import { Avatar } from '@/components/feed/avatar';
@@ -92,6 +93,14 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
     const page = usePage();
     const { t } = useLocale();
     const { auth, filters, counts, statuses } = page.props as any;
+    const [appealMessage, setAppealMessage] = useState('');
+    const [appealBusy, setAppealBusy] = useState(false);
+    const [appealError, setAppealError] = useState('');
+    const [appealSubmitted, setAppealSubmitted] = useState(false);
+    const accountRestricted = auth.user?.role !== 'admin' && auth.user?.effective_moderation_status === 'restricted';
+    const profileRestricted = auth.user?.role !== 'admin' && Boolean(auth.user?.profile_restricted);
+    // Only an ACCOUNT restriction blocks the page. A profile restriction only affects the picture (see the banner on the Newsfeed).
+    const showModerationNotice = accountRestricted;
     const isAdmin = auth.user.role === 'admin'; // display only; the server enforces every admin action
     const onSettings = page.url.startsWith('/settings');
     const onSubs = page.url.startsWith('/my-submissions');
@@ -106,7 +115,9 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
     const onDashboard =
         page.url === '/dashboard' || page.url.startsWith('/dashboard?');
     const onNewsfeed = page.url.startsWith('/newsfeed');
-    const showTimeColumn = !onNewsfeed && !onSettings && !onSubs;
+    const onResidentDirectory = page.url.startsWith('/admin/residents');
+    const onResidentProfile = page.component === 'resident-profile';
+    const showTimeColumn = !onNewsfeed && !onSettings && !onSubs && !onResidentDirectory && !onResidentProfile;
     const activeStatuses = asList(f.status);
     const activeCategories = asList(f.category);
     // Status links keep the active category / search / sort, so "Pending" + "Under Review" + "Peace and Order" can be combined.
@@ -180,7 +191,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
 
     if (isAdmin) {
         navItems.push({
-            label: 'Walk-in intake',
+            label: 'Walk-In Complaint',
             href: '/admin/walk-in-complaints/create',
             icon: ClipboardList,
             active: page.url.startsWith('/admin/walk-in-complaints'),
@@ -203,7 +214,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
         <div className="min-h-screen bg-[#F0F2F5] dark:bg-background">
             {/* ── Top bar ── */}
             <header className="sticky top-0 z-40 border-b border-border bg-card">
-                <div className="mx-auto flex h-16 max-w-[1320px] items-center gap-4 px-4 sm:px-5">
+                <div className="mx-auto flex h-16 max-w-[1560px] items-center gap-4 px-4 sm:px-5">
                     <Link
                         href="/"
                         className="flex items-center gap-2.5 font-semibold"
@@ -266,7 +277,7 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
             {/* Mobile-first navigation: keep the header compact and reveal links in a familiar
                 Laravel-style drawer instead of forcing a second horizontal navigation row. */}
             <div className="sticky top-16 z-30 border-b border-border bg-card/95 px-4 py-2.5 shadow-sm backdrop-blur lg:hidden">
-                <div className="mx-auto flex max-w-[1320px] items-center gap-3">
+                <div className="mx-auto flex max-w-[1560px] items-center gap-3">
                     <Sheet>
                         <SheetTrigger asChild>
                             <button
@@ -330,11 +341,11 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                 inside its own filter column. */}
             <div
                 className={cn(
-                    'mx-auto grid max-w-[1320px] gap-5 px-4 py-5 sm:px-5',
+                    'mx-auto grid max-w-[1560px] gap-4 px-4 py-4 sm:px-5',
                     onNewsfeed
                         ? 'xl:grid-cols-[auto_minmax(0,1fr)]'
                         : showTimeColumn
-                          ? 'lg:grid-cols-[272px_minmax(0,1fr)]'
+                          ? 'lg:grid-cols-[240px_minmax(0,1fr)]'
                           : 'grid-cols-1',
                 )}
             >
@@ -390,6 +401,24 @@ export default function FeedLayout({ children }: { children: ReactNode }) {
                     )}
                 </main>
             </div>
+            {showModerationNotice && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="account-restriction-title">
+                    <section className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl border border-amber-500/25 bg-card p-6 text-card-foreground shadow-2xl sm:p-8">
+                        <div className="mb-4 flex size-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600"><Clock size={24}/></div>
+                        <p className="text-xs font-bold uppercase tracking-[.16em] text-amber-700 dark:text-amber-300">{profileRestricted && !accountRestricted ? 'Profile restriction' : 'Account restriction'}</p>
+                        <h2 id="account-restriction-title" className="mt-2 text-2xl font-bold">{profileRestricted && !accountRestricted ? 'Your profile has been restricted' : 'Your account is temporarily restricted'}</h2>
+                        <p className="mt-3 text-sm leading-6 text-muted-foreground">{profileRestricted && !accountRestricted ? 'Your profile picture and profile details have been hidden. You can appeal this decision below.' : 'You cannot create posts, comment, react, or otherwise participate while this restriction is active. The restriction is enforced by the server, so opening another page will not bypass it.'}</p>
+                        <div className="mt-4 rounded-xl border border-border bg-muted/40 p-3"><p className="text-xs font-semibold">Reason</p><p className="mt-1 text-sm">{profileRestricted && !accountRestricted ? (auth.user.profile_restriction_message || 'Contact the barangay office for details.') : (auth.user.moderation_message || auth.user.restriction_reason || 'Contact the barangay office for details.')}</p>{accountRestricted && auth.user.restriction_expires_at && <p className="mt-2 text-xs text-muted-foreground">Expires {new Date(auth.user.restriction_expires_at).toLocaleString()}</p>}</div>
+                        <label className="mt-5 block text-sm font-semibold" htmlFor="restriction-appeal">Appeal this decision</label>
+                        <textarea id="restriction-appeal" value={appealMessage} onChange={e=>setAppealMessage(e.target.value)} rows={4} maxLength={2000} className="mt-2 w-full rounded-xl border border-input bg-background p-3 text-sm" placeholder="Explain why you believe this restriction should be reviewed (at least 20 characters)." />
+                        {appealSubmitted && <p role="status" className="mt-2 rounded-lg bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:text-emerald-300">Your appeal has been submitted for administrator review.</p>}
+                        {appealError && <p role="alert" className="mt-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{appealError}</p>}
+                        <button type="button" disabled={appealBusy || appealMessage.trim().length < 20} onClick={()=>{setAppealBusy(true);setAppealError('');setAppealSubmitted(false);router.post('/account-status/appeal',{appeal_type:profileRestricted && !accountRestricted ? 'profile' : 'account',message:appealMessage},{preserveScroll:true,onSuccess:()=>{setAppealMessage('');setAppealSubmitted(true);},onError:(errors)=>setAppealError((errors.appeal as string) || (errors.message as string) || 'Unable to submit the appeal. Please try again.'),onFinish:()=>setAppealBusy(false)});}} className="mt-3 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">{appealBusy?'Submitting appeal…':'Submit appeal'}</button>
+                        <button type="button" onClick={()=>router.post('/logout')} className="mt-3 w-full rounded-xl border border-border px-4 py-2.5 text-sm font-medium">Log out</button>
+                        <p className="mt-3 text-center text-xs text-muted-foreground">This notice remains visible until the restriction expires or an administrator changes your account status.</p>
+                    </section>
+                </div>
+            )}
             <AssistantChat />
         </div>
     );

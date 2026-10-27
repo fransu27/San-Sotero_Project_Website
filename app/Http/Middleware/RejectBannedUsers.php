@@ -11,12 +11,11 @@ class RejectBannedUsers
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if ($user && $user->banned_at && ! $user->isAdmin()) {
-            auth()->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('login')->withErrors(['email' => 'This account has been suspended. Reason: '.($user->ban_reason ?: 'Contact the barangay office.')]);
+        if ($user && ! $user->isAdmin()) {
+            $status = $user->effectiveModerationStatus();
+            if ($status === 'banned' && ! in_array($request->route()?->getName(), ['account.status', 'account.appeals.store', 'logout'], true)) {
+                return redirect()->route('account.status');
+            }
         }
 
         return $next($request);

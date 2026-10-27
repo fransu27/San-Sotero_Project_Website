@@ -124,18 +124,29 @@ export default function BarangaySettings() {
                     <Label htmlFor="b-name">{t('brgy.name')}</Label>
                     <Input
                         id="b-name"
+                        aria-invalid={Boolean(form.errors.name)}
+                        aria-describedby={
+                            form.errors.name ? 'b-name-error' : undefined
+                        }
                         maxLength={80}
                         value={form.data.name}
                         onChange={(e) => form.setData('name', e.target.value)}
                         placeholder="Santotero"
                     />
-                    <InputError message={form.errors.name} />
+                    <InputError
+                        id="b-name-error"
+                        message={form.errors.name}
+                    />
                 </div>
 
                 <div className="grid gap-2">
                     <Label htmlFor="b-caption">{t('brgy.caption')}</Label>
                     <Input
                         id="b-caption"
+                        aria-invalid={Boolean(form.errors.caption)}
+                        aria-describedby={
+                            form.errors.caption ? 'b-caption-error' : undefined
+                        }
                         maxLength={160}
                         value={form.data.caption}
                         onChange={(e) =>
@@ -143,7 +154,10 @@ export default function BarangaySettings() {
                         }
                         placeholder={t('brgy.captionPh')}
                     />
-                    <InputError message={form.errors.caption} />
+                    <InputError
+                        id="b-caption-error"
+                        message={form.errors.caption}
+                    />
                 </div>
 
                 <div className="grid gap-2">
@@ -160,6 +174,10 @@ export default function BarangaySettings() {
                                 <input
                                     id="b-logo"
                                     type="file"
+                                    aria-invalid={Boolean(form.errors.logo)}
+                                    aria-describedby={
+                                        form.errors.logo ? 'b-logo-error' : undefined
+                                    }
                                     accept="image/jpeg,image/png,image/webp"
                                     className="sr-only"
                                     onChange={(e) => {
@@ -204,11 +222,14 @@ export default function BarangaySettings() {
                         PNG, JPG or WebP, up to 2 MB. Updates the logo across
                         the site.
                     </p>
-                    <InputError message={form.errors.logo} />
+                    <InputError
+                        id="b-logo-error"
+                        message={form.errors.logo}
+                    />
                 </div>
 
                 <div className="grid gap-2">
-                    <Label>{t('brgy.photo')}</Label>
+                    <Label htmlFor="b-banner">{t('brgy.photo')}</Label>
                     {shown && (
                         <img
                             src={shown}
@@ -221,7 +242,14 @@ export default function BarangaySettings() {
                             <ImagePlus size={16} />{' '}
                             {shown ? t('brgy.change') : t('brgy.choose')}
                             <input
+                                id="b-banner"
                                 type="file"
+                                aria-invalid={Boolean(localError ?? form.errors.image)}
+                                aria-describedby={
+                                    localError ?? form.errors.image
+                                        ? 'b-banner-error'
+                                        : undefined
+                                }
                                 accept="image/jpeg,image/png,image/webp"
                                 className="sr-only"
                                 onChange={(e) => {
@@ -249,7 +277,10 @@ export default function BarangaySettings() {
                     <p className="text-xs text-muted-foreground">
                         {t('brgy.hint')}
                     </p>
-                    <InputError message={localError ?? form.errors.image} />
+                    <InputError
+                        id="b-banner-error"
+                        message={localError ?? form.errors.image}
+                    />
                 </div>
 
                 <Button type="submit" disabled={form.processing}>

@@ -24,6 +24,9 @@ class SubmissionController extends Controller
             abort(401);
         }
 
+        // Submissions are a resident-only space; administrators use moderation tools.
+        abort_if($user->isAdmin(), 403);
+
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:100'],
             'ticket' => ['nullable', 'string', 'max:40'],

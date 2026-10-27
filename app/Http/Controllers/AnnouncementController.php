@@ -6,6 +6,7 @@ use App\Http\Requests\AnnouncementRequest;
 use App\Models\Announcement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 /** All actions here are admin-only: the routes are wrapped in EnsureAdmin (and AnnouncementRequest re-checks). */
 class AnnouncementController extends Controller
@@ -67,8 +68,13 @@ class AnnouncementController extends Controller
     /** Delete the announcement AND its photo, so no orphan files pile up on disk. */
     public function destroy(Announcement $announcement): RedirectResponse
     {
-        $this->deletePhoto($announcement);
-        $announcement->delete();
+        $photoPath = $announcement->image_path;
+        DB::transaction(static function () use ($announcement): void {
+            $announcement->delete();
+        });
+        if ($photoPath) {
+            Storage::disk('public')->delete($photoPath);
+        }
 
         return back();
     }

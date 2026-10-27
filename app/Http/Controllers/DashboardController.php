@@ -7,6 +7,7 @@ use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -30,9 +31,9 @@ class DashboardController extends Controller
     {
         /** @var Collection<int, array<string, mixed>> */
         return Announcement::with([
-            'user:id,name,avatar_path',
+            'user:id,name,avatar_path,profile_restricted,profile_restriction_expires_at',
             'attachments',
-            'comments.user:id,name,role,avatar_path',
+            'comments.user:id,name,role,avatar_path,profile_restricted,profile_restriction_expires_at',
             'reactions' => fn ($q) => $q
                 ->where('user_id', $viewer->id)
                 ->select('id', 'announcement_id', 'type'),
@@ -76,12 +77,23 @@ class DashboardController extends Controller
     /**
      * Role-scoped analytics dashboard, separate from the newsfeed.
      */
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
 
         if ($user === null) {
             abort(401);
+        }
+
+        $dashboardSection = $user->isAdmin()
+            ? ($request->validate([
+                'section' => ['nullable', Rule::in(['website', 'residents'])],
+            ])['section'] ?? null)
+            : null;
+
+        // Resident activity is now part of the main dashboard; retire the old dedicated section URL.
+        if ($dashboardSection === 'residents') {
+            return redirect()->route('dashboard');
         }
 
         $scope = Complaint::query();
@@ -266,13 +278,30 @@ class DashboardController extends Controller
                 'pageViews' => (int) DB::table('site_visits')->count(),
                 'uniqueVisitors' => (int) DB::table('site_visits')->distinct('visitor_key')->count('visitor_key'),
                 'visitorsToday' => (int) DB::table('site_visits')->where('visited_at', '>=', now()->startOfDay())->distinct('visitor_key')->count('visitor_key'),
-                'onlineUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+                'onlineUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes((int) config('moderation.online_window_minutes', 5)))->count(),
+                'recentlyActiveUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subDay())->count(),
                 'registeredUsers' => (int) User::where('role', '!=', 'admin')->count(),
+                'offlineUsers' => max(0, (int) User::where('role', '!=', 'admin')->count() - (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes((int) config('moderation.online_window_minutes', 5)))->count()),
+                'pendingComplaints' => (int) Complaint::where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at')->count(),
+                'pendingPostReports' => (int) \App\Models\ComplaintReport::where('status', 'pending')->count(),
+                'autoHeldComplaints' => (int) Complaint::where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at')->whereHas('events', fn ($q) => $q->where('note', 'like', '%configured resident-report threshold%'))->count(),
+                'restrictedAccounts' => (int) User::where('role', '!=', 'admin')->where('moderation_status', 'restricted')->where(fn ($q) => $q->whereNull('restriction_expires_at')->orWhere('restriction_expires_at', '>', now()))->count(),
+                'bannedAccounts' => (int) User::where('role', '!=', 'admin')->where(fn ($q) => $q->where('moderation_status', 'banned')->orWhereNotNull('banned_at'))->count(),
+                'residentPresence' => User::where('role', '!=', 'admin')->orderByRaw('last_seen_at IS NULL')->orderByDesc('last_seen_at')->limit(100)->get(['id', 'name', 'last_seen_at', 'avatar_path', 'anonymous_default', 'profile_visibility', 'profile_restricted', 'profile_restriction_expires_at'])->map(fn (User $resident) => [
+                    'id' => $resident->id,
+                    'name' => $resident->name,
+                    'avatar' => $resident->avatarUrl(),
+                    'anonymous' => (bool) $resident->anonymous_default,
+                    'private' => ($resident->profile_visibility ?? 'public') === 'private',
+                    'lastSeenAt' => $resident->last_seen_at?->toIso8601String(),
+                    'online' => $resident->last_seen_at !== null && $resident->last_seen_at->gte(now()->subMinutes((int) config('moderation.online_window_minutes', 5))),
+                ])->values(),
             ];
         }
 
         return Inertia::render('dashboard', [
             'isAdmin' => $user->isAdmin(),
+            'dashboardSection' => $dashboardSection,
             'siteMetrics' => $siteMetrics,
             'analytics' => $analytics,
             'statusCounts' => $statusCounts,
@@ -303,8 +332,8 @@ class DashboardController extends Controller
     {
         $query
             ->with([
-                'user:id,name,avatar_path',
-                'comments.user:id,name,role,avatar_path',
+                'user:id,name,avatar_path,profile_restricted,profile_restriction_expires_at',
+                'comments.user:id,name,role,avatar_path,profile_restricted,profile_restriction_expires_at',
                 'events.user:id,role',
                 'attachments',
             ])

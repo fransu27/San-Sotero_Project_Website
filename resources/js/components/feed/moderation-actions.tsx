@@ -1,13 +1,14 @@
 import { router } from '@inertiajs/react';
-import { Copy, Flag, Share2 } from 'lucide-react';
+import { Flag } from 'lucide-react';
 import { useState } from 'react';
 
 const reasons = [
-    ['misinformation', 'Misinformation'],
-    ['inappropriate_content', 'Inappropriate content'],
-    ['spam', 'Spam'],
-    ['harassment', 'Harassment'],
-    ['false_complaint', 'False complaint'],
+    ['Misinformation', 'Misinformation'],
+    ['Harassment or hate', 'Harassment or hate'],
+    ['Inappropriate content', 'Inappropriate content'],
+    ['Spam or scam', 'Spam or scam'],
+    ['Privacy concern', 'Privacy concern'],
+    ['Other', 'Other'],
 ] as const;
 
 /** Add to the action row of an approved, public Complaint card. The server remains authoritative. */
@@ -20,20 +21,10 @@ export function ModerationActions({
 }) {
     const [open, setOpen] = useState(false);
     const [reason, setReason] = useState<(typeof reasons)[number][0]>(
-        'inappropriate_content',
+        'Inappropriate content',
     );
     const [details, setDetails] = useState('');
     const [message, setMessage] = useState('');
-    const url = `${window.location.origin}/community#complaint-${complaintId}`;
-
-    async function copyLink() {
-        try {
-            await navigator.clipboard.writeText(url);
-            setMessage('Link copied');
-        } catch {
-            setMessage(url);
-        }
-    }
 
     function submitReport() {
         router.post(
@@ -54,22 +45,10 @@ export function ModerationActions({
         );
     }
 
+    if (!canReport) return null;
+
     return (
         <div className="flex flex-wrap items-center gap-2">
-            <button
-                type="button"
-                onClick={copyLink}
-                className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-            >
-                <Share2 size={15} /> Share post
-            </button>
-            <button
-                type="button"
-                onClick={copyLink}
-                className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm hover:bg-muted"
-            >
-                <Copy size={15} /> Copy link
-            </button>
             {canReport && (
                 <button
                     type="button"
