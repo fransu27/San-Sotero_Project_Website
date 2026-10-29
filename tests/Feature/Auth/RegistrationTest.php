@@ -33,8 +33,19 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'Password123',
             'phone' => '09171234567',
             'birthdate' => '1990-01-01',
+            'terms_accepted' => '1',
         ]);
 
+        // TEMPORARY DEBUGGING: inspect the registration response.
+        $response->dumpSession();
+
+        dump([
+            'status' => $response->status(),
+            'redirect' => $response->headers->get('Location'),
+            'errors' => session('errors')?->getBag('default')->toArray() ?? [],
+        ]);
+
+        // Original assertions.
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }
@@ -64,6 +75,7 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'Password123',
             'phone' => '09171234567',
             'birthdate' => now()->subYears(18)->toDateString(),
+            'terms_accepted' => '1',
         ]);
 
         $this->assertAuthenticated();

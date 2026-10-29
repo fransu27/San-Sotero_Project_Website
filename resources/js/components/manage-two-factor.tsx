@@ -54,9 +54,11 @@ export default function ManageTwoFactor(props: Props) {
             {twoFactorEnabled ? (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        You will be prompted for a secure, random pin during
-                        login, which you can retrieve from the TOTP-supported
-                        application on your phone.
+                        Two-factor authentication is active. When you log in,
+                        enter the current six-digit code from Google
+                        Authenticator or another TOTP-compatible authenticator
+                        app. Keep your recovery codes somewhere private and
+                        separate from this device.
                     </p>
 
                     <div className="relative inline">
@@ -82,10 +84,10 @@ export default function ManageTwoFactor(props: Props) {
             ) : (
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        When you enable two-factor authentication, you will be
-                        prompted for a secure pin during login. This pin can be
-                        retrieved from a TOTP-supported application on your
-                        phone.
+                        Protect your account with a six-digit code from Google
+                        Authenticator or another TOTP-compatible authenticator
+                        app. You must scan the QR code (or enter the setup key)
+                        and confirm a valid code before 2FA becomes active.
                     </p>
 
                     <div>

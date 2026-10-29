@@ -68,6 +68,13 @@ export default function TrackComplaint({ result }: { result: Result }) {
                         <label className="block space-y-1.5 text-sm font-medium">
                             Tracking reference
                             <input
+                                id="tracking-reference"
+                                aria-invalid={Boolean(errors.ticket_code)}
+                                aria-describedby={
+                                    errors.ticket_code
+                                        ? 'tracking-reference-error'
+                                        : undefined
+                                }
                                 required
                                 autoComplete="off"
                                 className={inputClass}
@@ -81,7 +88,11 @@ export default function TrackComplaint({ result }: { result: Result }) {
                                 }
                             />
                             {errors.ticket_code && (
-                                <span className="text-red-600">
+                                <span
+                                    id="tracking-reference-error"
+                                    role="alert"
+                                    className="text-red-600"
+                                >
                                     {errors.ticket_code}
                                 </span>
                             )}
@@ -89,6 +100,13 @@ export default function TrackComplaint({ result }: { result: Result }) {
                         <label className="block space-y-1.5 text-sm font-medium">
                             Private 6-digit PIN
                             <input
+                                id="tracking-pin"
+                                aria-invalid={Boolean(errors.pin)}
+                                aria-describedby={
+                                    errors.pin
+                                        ? 'tracking-pin-error'
+                                        : undefined
+                                }
                                 required
                                 inputMode="numeric"
                                 pattern="[0-9]{6}"
@@ -107,7 +125,11 @@ export default function TrackComplaint({ result }: { result: Result }) {
                                 }
                             />
                             {errors.pin && (
-                                <span className="text-red-600">
+                                <span
+                                    id="tracking-pin-error"
+                                    role="alert"
+                                    className="text-red-600"
+                                >
                                     {errors.pin}
                                 </span>
                             )}

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
@@ -43,6 +43,7 @@ use Laravel\Passkeys\Passkey;
  * @property string|null $ban_reason
  * @property bool $profile_restricted
  * @property string|null $profile_restriction_reason
+ * @property Carbon|null $profile_restriction_expires_at
  * @property Carbon|null $last_seen_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -74,9 +75,9 @@ use Laravel\Passkeys\Passkey;
  *
  * @mixin \Eloquent
  */
-#[Fillable(['name', 'email', 'phone', 'birthdate', 'password', 'locale', 'anonymous_default'])]
+#[Fillable(['name', 'email', 'phone', 'birthdate', 'password', 'locale', 'anonymous_default', 'terms_accepted_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'avatar_path'])]
-class User extends Authenticatable implements PasskeyUser
+class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
@@ -93,6 +94,10 @@ class User extends Authenticatable implements PasskeyUser
             'birthdate' => 'date',
             'anonymous_default' => 'boolean',
             'profile_restricted' => 'boolean',
+            'profile_restriction_expires_at' => 'datetime',
+            'profile_visibility' => 'string',
+            'terms_accepted_at' => 'datetime',
+            'is_primary_admin' => 'boolean',
             'restriction_expires_at' => 'datetime',
             'restricted_at' => 'datetime',
             'banned_at' => 'datetime',
@@ -107,9 +112,23 @@ class User extends Authenticatable implements PasskeyUser
     /** URL of the profile picture (served by MediaController), or null to show the initials badge. */
     public function avatarUrl(): ?string
     {
-        return ($this->profile_restricted ?? false)
+        return $this->isProfileRestricted()
             ? '/images/anonymous-avatar.svg'
             : ($this->avatar_path ? '/media/'.$this->avatar_path : null);
+    }
+
+    /**
+     * A profile restriction ONLY affects the profile picture: it shows the anonymous placeholder and the picture
+     * cannot be changed until the restriction ends. It never blocks posting, commenting or reacting.
+     * An optional expiry lets it lift itself automatically; no expiry means it lasts until an admin restores it.
+     */
+    public function isProfileRestricted(): bool
+    {
+        if (! ($this->profile_restricted ?? false)) {
+            return false;
+        }
+
+        return $this->profile_restriction_expires_at === null || $this->profile_restriction_expires_at->isFuture();
     }
 
     /** True for the barangay admin. `role` is not fillable, so it can't be set from a form. */
@@ -118,8 +137,18 @@ class User extends Authenticatable implements PasskeyUser
         return $this->role === 'admin';
     }
 
+    /** The original site owner has immutable administrator status. */
+    public function isPrimaryAdmin(): bool
+    {
+        return $this->isAdmin() && (bool) $this->is_primary_admin;
+    }
+
     public function effectiveModerationStatus(): string
     {
+        if ($this->banned_at !== null || $this->moderation_status === 'banned') {
+            return 'banned';
+        }
+
         if (
             $this->moderation_status === 'restricted'
             && $this->restriction_expires_at

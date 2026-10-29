@@ -67,4 +67,15 @@ class AnnouncementInteractionController extends Controller
 
         return back();
     }
+
+    /** A comment author or administrator may remove an announcement comment. */
+    public function destroyComment(Request $request, AnnouncementComment $comment): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null && ((int) $comment->user_id === (int) $user->id || $user->isAdmin()), 403, 'You can only remove your own comments.');
+
+        $comment->delete();
+
+        return back()->with('success', 'Comment removed.');
+    }
 }

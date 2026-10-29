@@ -30,6 +30,14 @@ import { ZoomableImage } from '@/components/feed/image-lightbox';
 import PostModal from '@/components/feed/post-modal';
 import { StarRating } from '@/components/feed/star-rating';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -49,6 +57,7 @@ type Comment = {
     author: string | null;
     avatar: string | null;
     staff: boolean;
+    mine?: boolean;
 };
 type TimelineEvent = {
     id: number;
@@ -63,6 +72,7 @@ type TimelineEvent = {
     note: string | null;
     ts: number;
     staff: boolean;
+    mine?: boolean;
 };
 export type Complaint = {
     id: number;
@@ -163,6 +173,14 @@ export default function PostCard({
     const [rejecting, setRejecting] = useState(false);
     const [reason, setReason] = useState('');
     const [reasonError, setReasonError] = useState<string | null>(null);
+    const [reportDialogOpen, setReportDialogOpen] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [reportDetails, setReportDetails] = useState('');
+    const [reportError, setReportError] = useState<string | null>(null);
+    const [reportSubmitting, setReportSubmitting] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
     // admin status change (pick -> optional note -> confirm)
     const [nextStatus, setNextStatus] = useState<Status | null>(null);
@@ -478,6 +496,49 @@ export default function PostCard({
         </div>
     );
 
+    const submitPostReport = () => {
+        if (!reportReason) {
+            setReportError('Choose a reason before submitting the report.');
+
+            return;
+        }
+
+        setReportSubmitting(true);
+        setReportError(null);
+        router.post(
+            `/complaints/${c.id}/report`,
+            { reason: reportReason, details: reportDetails.trim() },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setReportDialogOpen(false);
+                    setReportReason('');
+                    setReportDetails('');
+                },
+                onError: (next) =>
+                    setReportError(
+                        Object.values(next).filter(Boolean).join(' ') ||
+                            'The report could not be submitted. Please try again.',
+                    ),
+                onFinish: () => setReportSubmitting(false),
+            },
+        );
+    };
+
+    const deletePost = () => {
+        setDeleteSubmitting(true);
+        setDeleteError(null);
+        router.delete(`/complaints/${c.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setDeleteDialogOpen(false),
+            onError: () =>
+                setDeleteError(
+                    'The post could not be deleted. Please try again.',
+                ),
+            onFinish: () => setDeleteSubmitting(false),
+        });
+    };
+
     return (
         <article
             className={cn(
@@ -665,34 +726,8 @@ export default function PostCard({
                         {!c.mine && !isAdmin && (
                             <DropdownMenuItem
                                 onSelect={() => {
-                                    const choices = [
-                                        'Misinformation',
-                                        'Harassment or hate',
-                                        'Inappropriate content',
-                                        'Spam or scam',
-                                        'Privacy concern',
-                                        'Other',
-                                    ];
-                                    const selection = window.prompt(
-                                        `Choose a report reason by number:\n${choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\nEnter 1–6:`,
-                                    );
-                                    const reason = selection
-                                        ? choices[Number(selection.trim()) - 1]
-                                        : undefined;
-
-                                    if (!reason) {
-                                        return;
-                                    }
-
-                                    const details =
-                                        window.prompt(
-                                            'Optional details to help the admin review this report (max 1000 characters):',
-                                        ) || '';
-                                    router.post(
-                                        `/complaints/${c.id}/report`,
-                                        { reason: reason.trim(), details },
-                                        { preserveScroll: true },
-                                    );
+                                    setReportError(null);
+                                    setReportDialogOpen(true);
                                 }}
                             >
                                 <Shield className="mr-2" size={15} /> Report
@@ -708,12 +743,10 @@ export default function PostCard({
                         {c.mine && (
                             <DropdownMenuItem
                                 className="text-[#D7263D] focus:text-[#D7263D]"
-                                onSelect={() =>
-                                    confirm(t('post.deleteConfirm')) &&
-                                    router.delete(`/complaints/${c.id}`, {
-                                        preserveScroll: true,
-                                    })
-                                }
+                                onSelect={() => {
+                                    setDeleteError(null);
+                                    setDeleteDialogOpen(true);
+                                }}
                             >
                                 <Trash2 className="mr-2" size={15} />{' '}
                                 {t('post.delete')}
@@ -1184,6 +1217,128 @@ export default function PostCard({
                     {actionBar}
                 </PostModal>
             )}
+
+            <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Report this post</DialogTitle>
+                        <DialogDescription>
+                            Choose the reason that best describes the concern.
+                            Reports are reviewed by barangay moderators;
+                            reporting does not automatically remove a post.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                        <label
+                            htmlFor={`report-reason-${c.id}`}
+                            className="text-sm font-medium"
+                        >
+                            Report reason
+                        </label>
+                        <select
+                            id={`report-reason-${c.id}`}
+                            value={reportReason}
+                            onChange={(event) =>
+                                setReportReason(event.target.value)
+                            }
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                            required
+                        >
+                            <option value="">Select a reason</option>
+                            {[
+                                'Misinformation',
+                                'Harassment or hate',
+                                'Inappropriate content',
+                                'Spam or scam',
+                                'Privacy concern',
+                                'Other',
+                            ].map((choice) => (
+                                <option key={choice} value={choice}>
+                                    {choice}
+                                </option>
+                            ))}
+                        </select>
+                        <label
+                            htmlFor={`report-details-${c.id}`}
+                            className="text-sm font-medium"
+                        >
+                            Additional details (optional)
+                        </label>
+                        <textarea
+                            id={`report-details-${c.id}`}
+                            value={reportDetails}
+                            onChange={(event) =>
+                                setReportDetails(event.target.value)
+                            }
+                            maxLength={1000}
+                            rows={4}
+                            placeholder="Add context for the moderator (up to 1000 characters)"
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                        />
+                        {reportError && (
+                            <p
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {reportError}
+                            </p>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <button
+                            type="button"
+                            onClick={() => setReportDialogOpen(false)}
+                            disabled={reportSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={submitPostReport}
+                            disabled={reportSubmitting}
+                            className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                        >
+                            {reportSubmitting ? 'Submitting…' : 'Submit report'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete this post?</DialogTitle>
+                        <DialogDescription>
+                            This action removes your post from the community
+                            feed. Continue only if you want to delete it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {deleteError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {deleteError}
+                        </p>
+                    )}
+                    <DialogFooter>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteDialogOpen(false)}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={deletePost}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-60"
+                        >
+                            {deleteSubmitting ? 'Deleting…' : 'Delete post'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </article>
     );
 }

@@ -28,7 +28,6 @@ import type { Attachment } from '@/components/feed/attachments';
 import { ZoomableImage } from '@/components/feed/image-lightbox';
 import { statusColor } from '@/components/feed/post-card';
 import TicketCode from '@/components/feed/ticket-code';
-import TimeWidget from '@/components/feed/time-widget';
 import { useLocale } from '@/hooks/use-locale';
 import { DATE_LOCALE, timeAgo } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -181,13 +180,12 @@ export default function Submissions({
     return (
         <>
             <Head title={t('sub.title')} />
-            {/* Same three-column shape as the Newsfeed: filters + time on the left, the list in the middle, the numbers on the right. */}
+            {/* Submissions keeps its status filters on the left; the clock is exclusive to the Newsfeed. */}
             <div className="grid gap-4 lg:grid-cols-[272px_minmax(0,1fr)] xl:grid-cols-[272px_minmax(0,720px)_280px] xl:justify-center">
                 <aside
                     aria-label={t('sub.title')}
                     className="sticky top-[84px] hidden h-fit max-h-[calc(100vh-100px)] space-y-4 self-start overflow-y-auto rounded-2xl border border-border bg-card p-4 shadow-sm lg:block"
                 >
-                    <TimeWidget />
                     <div className="space-y-2.5">
                         <p className="px-1 text-xs font-bold tracking-wider text-muted-foreground uppercase">
                             {t('sub.title')}

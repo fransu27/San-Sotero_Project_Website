@@ -60,6 +60,15 @@ class DashboardTest extends TestCase
         );
     }
 
+    public function test_legacy_resident_activity_section_redirects_to_the_main_dashboard(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get('/dashboard?section=residents')
+            ->assertRedirect(route('dashboard'));
+    }
+
     public function test_authenticated_users_can_visit_the_dashboard()
     {
         $user = User::factory()->create();

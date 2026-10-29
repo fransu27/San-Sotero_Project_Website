@@ -1,4 +1,4 @@
-﻿import type { FormDataConvertible } from '@inertiajs/core';
+import type { FormDataConvertible } from '@inertiajs/core';
 import { router } from '@inertiajs/react';
 import {
     Megaphone,
@@ -20,6 +20,14 @@ import { Avatar } from '@/components/feed/avatar';
 import { fieldClass, PhotoEditor } from '@/components/feed/edit-fields';
 import { ZoomableImage } from '@/components/feed/image-lightbox';
 import PostModal from '@/components/feed/post-modal';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { useLocale } from '@/hooks/use-locale';
 import { LOCALE_NAMES, localizeAnnouncement, timeAgo } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n';
@@ -49,6 +57,8 @@ export type Notice = {
         staff: boolean;
         author: string;
         avatar: string | null;
+        mine?: boolean;
+        delete_url?: string;
     }[];
 };
 
@@ -73,6 +83,9 @@ export default function AnnouncementCard({
 
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const initial = () => {
         const d: Record<string, string> = { title: a.title, body: a.body };
@@ -140,11 +153,12 @@ export default function AnnouncementCard({
         });
     };
 
-    const iconBtn = 'rounded-full p-2 hover:bg-muted';
+    const iconBtn =
+        'inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground';
     const set = (k: string) => (e: { target: { value: string } }) =>
         setDraft({ ...draft, [k]: e.target.value });
 
-    // Like Â· dislike Â· comment row (shared by the card and its pop-out)
+    // Like · dislike · comment row (shared by the card and its pop-out)
     const actionBar = (
         <div className="flex border-t border-border px-3 py-1.5">
             <button
@@ -216,7 +230,7 @@ export default function AnnouncementCard({
                     </p>
                     <p className="text-xs leading-5 text-muted-foreground">
                         {timeAgo(a.ts, locale)}
-                        {a.edited && ` â€¢ ${t('post.edited')}`}
+                        {a.edited && ` • ${t('post.edited')}`}
                     </p>
                 </div>
             </div>
@@ -251,22 +265,41 @@ export default function AnnouncementCard({
         </div>
     );
 
+    const deleteAnnouncement = () => {
+        setDeleteSubmitting(true);
+        setDeleteError(null);
+        router.delete(`/announcements/${a.id}`, {
+            preserveScroll: true,
+            onSuccess: () => setDeleteDialogOpen(false),
+            onError: () =>
+                setDeleteError(
+                    'The announcement could not be deleted. Please try again.',
+                ),
+            onFinish: () => setDeleteSubmitting(false),
+        });
+    };
+
     return (
         <article
-            className={`overflow-hidden rounded-xl border bg-card shadow-sm ${a.pinned ? 'border-[#D7263D]/40' : 'border-border'}`}
+            className={cn(
+                'ss-card overflow-hidden rounded-2xl border bg-card',
+                a.pinned
+                    ? 'border-[#D7263D]/45 shadow-[0_12px_34px_-18px_rgb(215_38_61/0.55)]'
+                    : 'border-border',
+            )}
         >
             {a.pinned && (
-                <div className="flex items-center gap-1.5 bg-[#D7263D] px-4 py-1.5 text-xs font-medium text-white">
-                    <Pin size={12} /> {t('post.pinned')}
+                <div className="flex items-center gap-2 bg-gradient-to-r from-[#D7263D] to-[#b81d32] px-4 py-2 text-xs font-semibold tracking-wide text-white">
+                    <Pin size={13} className="rotate-45" /> {t('post.pinned')}
                 </div>
             )}
 
             <div className="flex items-center gap-3 px-4 pt-4 pb-3">
                 <Avatar name={a.author} src={a.author_avatar} staff />
                 <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1.5 text-sm leading-5 font-semibold">
+                    <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm leading-5 font-semibold">
                         <span className="truncate">{a.author}</span>
-                        <span className="rounded bg-[#0197F6] px-1.5 py-0.5 text-[10px] leading-none font-medium text-white">
+                        <span className="shrink-0 rounded-full bg-[#0197F6]/15 px-2 py-0.5 text-[10px] leading-none font-semibold tracking-wide text-[#0a74c4] uppercase dark:bg-[#0197F6]/25 dark:text-[#7cc9fb]">
                             {t('post.barangay')}
                         </span>
                     </p>
@@ -274,7 +307,7 @@ export default function AnnouncementCard({
                         <span>{timeAgo(a.ts, locale)}</span>
                         {a.edited && (
                             <>
-                                <span aria-hidden>â€¢</span>
+                                <span aria-hidden>•</span>
                                 <span className="italic">
                                     {t('post.edited')}
                                 </span>
@@ -283,7 +316,7 @@ export default function AnnouncementCard({
                     </p>
                 </div>
                 {isAdmin && !editing && (
-                    <div className="-mr-2 flex gap-0.5">
+                    <div className="-mr-1 flex shrink-0 gap-0.5">
                         <button
                             title={t('post.editAnn')}
                             aria-label={t('post.editAnn')}
@@ -314,12 +347,10 @@ export default function AnnouncementCard({
                             title={t('post.deleteAnn')}
                             aria-label={t('post.deleteAnn')}
                             className={iconBtn}
-                            onClick={() =>
-                                confirm(t('post.deleteAnnConfirm')) &&
-                                router.delete(`/announcements/${a.id}`, {
-                                    preserveScroll: true,
-                                })
-                            }
+                            onClick={() => {
+                                setDeleteError(null);
+                                setDeleteDialogOpen(true);
+                            }}
                         >
                             <Trash2 size={16} color="#D7263D" />
                         </button>
@@ -445,12 +476,10 @@ export default function AnnouncementCard({
             ) : (
                 <>
                     <div className="px-4 pb-3">
-                        <h3 className="flex items-start gap-2 text-base leading-6 font-semibold">
-                            <Megaphone
-                                size={16}
-                                color="#0197F6"
-                                className="mt-1 shrink-0"
-                            />
+                        <h3 className="flex items-start gap-2.5 text-base leading-6 font-semibold">
+                            <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-[#0197F6]/12 text-[#0197F6]">
+                                <Megaphone size={14} />
+                            </span>
                             <span>{shown.title}</span>
                         </h3>
                         <p className="mt-1 text-sm leading-6 whitespace-pre-line">
@@ -482,14 +511,14 @@ export default function AnnouncementCard({
                 </>
             )}
 
-            {/* Like Â· dislike Â· comment (icons + counts only). Comment opens the pop-out. */}
+            {/* Like · dislike · comment (icons + counts only). Comment opens the pop-out. */}
             {!editing && actionBar}
 
             {!editing && (
                 <PostModal
                     open={showComments}
                     onOpenChange={setShowComments}
-                    title={`${a.author} Â· ${t('post.barangay')}`}
+                    title={`${a.author} · ${t('post.barangay')}`}
                     comments={comments}
                     onSend={send}
                 >
@@ -497,6 +526,42 @@ export default function AnnouncementCard({
                     {actionBar}
                 </PostModal>
             )}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete this announcement?</DialogTitle>
+                        <DialogDescription>
+                            Residents will no longer see this announcement in
+                            the feed. Continue only if you intend to delete it.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {deleteError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {deleteError}
+                        </p>
+                    )}
+                    <DialogFooter>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteDialogOpen(false)}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={deleteAnnouncement}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-60"
+                        >
+                            {deleteSubmitting
+                                ? 'Deleting…'
+                                : 'Delete announcement'}
+                        </button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </article>
     );
 }

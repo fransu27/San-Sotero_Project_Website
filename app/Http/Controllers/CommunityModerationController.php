@@ -12,7 +12,6 @@ use App\Services\ModerationAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -69,21 +68,16 @@ class CommunityModerationController extends Controller
         abort_if($user->isAdmin(), 422, 'Administrator accounts cannot be restricted through this action.');
         $data = $request->validate(['reason' => ['required', 'string', 'min:5', 'max:1000']]);
         DB::transaction(function () use ($user, $data, $request, $audit) {
+            // Profile restriction only swaps the picture for the anonymous placeholder and freezes it; the original file and
+            // other profile data stay intact (restored when the restriction ends) and posting is unaffected.
             $user->forceFill([
-                'restricted_at' => now(), 'restriction_reason' => $data['reason'],
-                'avatar_path' => null, 'anonymous_default' => true,
+                'profile_restricted' => true, 'profile_restriction_reason' => $data['reason'], 'profile_restriction_expires_at' => null,
             ])->save();
-            // Clear optional profile fields only when present in this schema.
-            $columns = Schema::getColumnListing('users');
-            $clear = array_values(array_intersect(['bio', 'profile_bio', 'profile_preferences'], $columns));
-            if ($clear) {
-                DB::table('users')->where('id', $user->id)->update(array_fill_keys($clear, null));
-            }
             $audit->record($request, 'user.profile_restricted', $user, ['reason' => $data['reason']]);
         });
         $user->notify(new ProfileRestrictedNotification($data['reason']));
 
-        return back()->with('success', 'Profile restricted and resident notified.');
+        return back()->with('success', 'Profile picture restricted and resident notified.');
     }
 
     public function banUser(Request $request, User $user, ModerationAudit $audit): RedirectResponse

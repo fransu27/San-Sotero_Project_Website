@@ -1,6 +1,6 @@
 # San Sotero — Complete UI/UX Overhaul, Responsive Redesign & Security Hardening
 
-# Current progress tracker — updated 2026-10-13
+# Current progress tracker — updated 2026-10-24
 
 **Current stage: Stage 5 — Remaining UI and accessibility (IN PROGRESS).**  
 **Overall: Work is progressing incrementally; do not treat the project as release-ready yet.**
@@ -12,7 +12,7 @@
 | Stage 2 — Navigation and responsive layout | 🟡 PARTIAL | Targeted Newsfeed presentation work is done; full mobile/tablet/desktop browser verification remains outstanding. |
 | Stage 3 — Welcome page and Newsfeed | 🟡 PARTIAL | Newsfeed presentation/search work is implemented in patches; welcome-page accessibility/footer work is now updated. Runtime/browser checks remain pending. |
 | Stage 4 — Registration and security | 🟡 PARTIAL | Security-related regression tests were added in previous sessions; the Laravel test suite has not run in this environment. |
-| **Stage 5 — Remaining UI and accessibility** | **➡️ IN PROGRESS** | Welcome-page and authenticated-navigation accessibility improvements plus live form-error announcements are implemented; full screen-by-screen review and runtime checks remain. |
+| **Stage 5 — Remaining UI and accessibility** | **➡️ IN PROGRESS** | Welcome-page and authenticated-navigation accessibility improvements, live form-error announcements, and targeted password-recovery/security-form error associations are implemented; full screen-by-screen review and runtime checks remain. |
 | Stage 6 — Verification | ⬜ NOT COMPLETE | Dependency-backed formatting, lint, TypeScript, build, PHP/Laravel tests, and browser checks still need to be run in the working project. |
 | Stage 7 — Delivery | 🟡 ONGOING | Each session produces a minimal patch and updates this progress log; final merge/review/commit is not complete. |
 
@@ -1540,3 +1540,126 @@ San Sotero must not assume every resident owns a smartphone, has mobile data, or
 - Moved the full desktop report summary/category column to extra-wide screens. At narrower desktop and tablet widths, the centre feed can use the available width instead of squeezing post cards between sidebars.
 - Aligned the guest community page's rail breakpoint with its grid breakpoint to avoid an empty narrow column.
 - Verification note: run the project locally and check phone, tablet, laptop, and wide desktop widths; browser visual verification was not available in this environment.
+
+
+## Implementation session — 2026-10-24 (Form error associations and status contrast)
+
+### Completed in this pass
+- [x] Audited the shared `InputError`/`AlertError` components and common authentication/password-management forms for input-error associations.
+- [x] Added conditional `aria-invalid` and `aria-describedby` relationships for the email field on Forgot Password, email/password/password-confirmation fields on Reset Password, the password field on Confirm Password, and all three password fields on Settings > Security.
+- [x] Added stable matching IDs to the corresponding `InputError` elements. Error descriptions are referenced only while an error exists, avoiding empty descriptions in the normal state.
+- [x] Improved online-resident status text contrast in the administrator dashboard by using a darker emerald tone in light mode and a lighter emerald tone in dark mode. The explicit “online/offline” text remains present, so status is not conveyed by color alone.
+- [x] Kept existing form submissions, validation rules, field names, and backend behavior unchanged.
+
+### Files changed in this pass
+1. `resources/js/pages/auth/forgot-password.tsx`
+2. `resources/js/pages/auth/reset-password.tsx`
+3. `resources/js/pages/auth/confirm-password.tsx`
+4. `resources/js/pages/settings/security.tsx`
+5. `resources/js/pages/dashboard.tsx`
+
+### Verification
+- [x] Source assertions: each modified form input references the expected matching error ID and exposes `aria-invalid` from the existing server error bag.
+- [x] Dashboard status-class assertion: online count and resident status label use theme-specific emerald text classes.
+- [x] Minimal patch ZIP created and archive file paths checked.
+- [ ] Prettier, ESLint, TypeScript, and Vite production build remain unrun because `node_modules/` is absent from the supplied project archive.
+- [ ] Laravel tests remain unrun because `vendor/` is absent; no backend code was changed in this pass.
+- [ ] Runtime keyboard/screen-reader and light/dark visual checks remain pending. Source assertions do not prove real assistive-technology announcements or rendered contrast ratios.
+
+### Audit findings / remaining work
+- The form-error association audit is targeted, not yet exhaustive. Other settings, profile, barangay, upload, two-factor, and walk-in forms still need review for field-level `aria-invalid`/`aria-describedby` relationships.
+- The shared badge component uses theme tokens for default/secondary/outline variants; status-specific colors elsewhere still need a complete contrast review in both themes.
+- Loading and empty states are present in several key screens, but their behavior and announcements need runtime review; source inspection alone is insufficient.
+- Stage 5 remains **IN PROGRESS**. Stage 6 remains **NOT COMPLETE** until dependency-backed checks and browser verification have actually passed.
+
+### Next action
+Continue the remaining field-error association audit on profile, barangay settings, uploads, and walk-in intake; review status-specific badge contrast and loading/error/empty states. Then run project NPM checks and Laravel tests in the dependency-installed environment and record exact results without marking unrun checks as passed.
+
+## Implementation session — 2026-10-24 (Profile, barangay settings, and walk-in form errors)
+
+### Completed in this pass
+- [x] Connected profile Name, Email, Date of birth, and Mobile number fields to their corresponding validation messages using conditional `aria-invalid` and `aria-describedby` attributes.
+- [x] Connected Barangay Settings name, caption, logo upload, and banner upload controls to their existing validation messages.
+- [x] Added accessible field-error relationships to walk-in complaint reporter name/contact, concern title/description, and location inputs.
+- [x] Added a focused validation summary to the walk-in intake form so backend errors that were not previously rendered inline (for example, category/date/custom category) are visible and announced after an unsuccessful submission.
+- [x] Kept all validation and submission behavior server-authoritative; no backend validation, authorization, routes, or database behavior was changed.
+- [x] Applied the previously prepared October 24 authentication/security/dashboard accessibility patch to the working source before making this follow-up, so the delivery patch represents the combined source changes against the supplied project archive.
+
+### Exact application files changed in this session's delivery
+1. `resources/js/pages/auth/forgot-password.tsx`
+2. `resources/js/pages/auth/reset-password.tsx`
+3. `resources/js/pages/auth/confirm-password.tsx`
+4. `resources/js/pages/settings/security.tsx`
+5. `resources/js/pages/settings/profile.tsx`
+6. `resources/js/pages/settings/barangay.tsx`
+7. `resources/js/pages/admin/walk-in-complaint.tsx`
+8. `resources/js/pages/dashboard.tsx`
+
+### Verification record
+- [x] Source-level assertions run for error IDs, conditional `aria-invalid`/`aria-describedby`, walk-in error summary, and dashboard status classes.
+- [x] TSX syntax transpilation checked with the globally installed TypeScript transpiler (syntax only; this is not a full project type check).
+- [x] Minimal patch archive contents checked against the supplied project ZIP; only the eight modified application files and this updated progress document are included.
+- [ ] `npm run format:check`, `npm run lint:check`, `npm run types:check`, and `npm run build` remain unverified. An `npm ci --ignore-scripts --no-audit --no-fund` attempt did not finish within the available execution window, and the resulting `node_modules` directory is incomplete; it must not be treated as a successful install.
+- [ ] Laravel tests were not run because `vendor/` is absent and no backend code changed in this pass.
+- [ ] Browser keyboard, screen-reader, mobile layout, and light/dark contrast checks remain pending.
+
+### Remaining work / current stage
+- Stage 5 remains **IN PROGRESS**. This was a targeted form-error pass, not a complete audit of every form, badge, empty state, or failure state.
+- Stage 6 remains **NOT COMPLETE** until the full dependency-backed checks and browser tests run in a properly installed environment.
+- Stage 7 remains **ONGOING** until the patch is integrated into the user's actual Git working tree, the diff is reviewed, and the relevant workflows are tested.
+- The supplied ZIP has no `.git/`, `vendor/`, or complete `node_modules/`; therefore this workspace cannot prove the user's working-tree state, run the full application, or certify release readiness.
+
+### Next action
+1. Apply the minimal patch ZIP to the project working tree.
+2. Install dependencies in a clean working copy with Composer and NPM, then run the four package scripts that are actually defined in `package.json` plus the Laravel test suite.
+3. Continue the same field-error audit for two-factor authentication, registration, complaint submission, tracking, uploads, and moderation dialogs.
+4. Perform browser checks at phone, tablet, laptop, and wide desktop sizes in both themes; verify keyboard focus, modal dismissal/focus return, and real screen-reader announcements.
+5. Review the complete Git diff and run `git diff --check` in the user's existing repository before merging or committing.
+
+## Follow-up session — 2026-10-24 (Two-factor and complaint tracking errors)
+
+### Completed
+- [x] Connected the two-factor recovery-code field and OTP input to their server validation errors, including an accessible name for the OTP input.
+- [x] Connected complaint tracking reference and private PIN inputs to their respective validation errors with conditional `aria-invalid`/`aria-describedby` attributes.
+- [x] Marked tracking validation messages for assistive-technology announcement while preserving the existing reference-plus-PIN privacy boundary.
+
+### Additional files included in the current minimal patch
+9. `resources/js/pages/auth/two-factor-challenge.tsx`
+10. `resources/js/pages/track-complaint.tsx`
+
+### Verification update
+- [x] Global TypeScript `transpileModule` syntax check passed for all ten changed TSX files.
+- [x] Targeted source assertions passed for profile, barangay, walk-in summary, two-factor, complaint tracking, and dashboard status classes.
+- [ ] Full type checking, linting, formatting, production build, Laravel tests, and live browser/screen-reader checks are still pending. The dependency installation attempt timed out, so the incomplete local `node_modules/` directory was removed before preparing the patch.
+
+### Next action
+Continue the audit for field associations and error/empty/loading states in complaint submission, moderation dialogs, and upload flows. Then rerun all package-defined checks and Laravel tests in a dependency-installed working copy. Stage 5 and Stage 6 must remain incomplete until broader source review and runtime checks pass.
+
+
+## Critical workflow follow-up — 2026-10-24 (Replace browser-native moderation prompts)
+
+### Completed
+- [x] Replaced the post-report `window.prompt()` flow with a themed in-page dialog containing a reason selector, optional details, a 1,000-character limit, submission state, and server-error feedback.
+- [x] Replaced the resident's post-deletion browser `confirm()` with a themed confirmation dialog, disabled repeated submission while processing, and surfaced a server failure message.
+- [x] Replaced announcement deletion's browser `confirm()` with a themed confirmation dialog and processing/error states.
+- [x] Confirmed report reasons match the server's existing allow-list in `UserModerationController`; no backend rules or authorization were changed.
+- [x] Searched `resources/js` and `app` for native `alert()`, `confirm()`, and `prompt()` calls; no remaining matches were found after these changes.
+
+### Additional files included in the current minimal patch
+11. `resources/js/components/feed/post-card.tsx`
+12. `resources/js/components/feed/announcement-card.tsx`
+
+### Verification update
+- [x] PHP syntax sweep passed for all 106 PHP files under `app`, `routes`, `tests`, and `database`.
+- [x] Targeted TSX syntax transpilation and source assertions passed for the current changed frontend files.
+- [x] Confirmed the report-reason choices match the existing Laravel validation allow-list.
+- [ ] Full project typecheck, lint, formatting, Vite build, Laravel feature tests, and browser testing remain pending because NPM dependency installation timed out and Composer dependencies are absent.
+
+### Remaining scope
+This follow-up removes the identified native browser prompts in the post and announcement cards, but it does not complete the entire UI/UX overhaul. Continue reviewing moderation actions, all remaining forms, status-badge contrast, empty/loading/failure states, responsive layouts, and keyboard/screen-reader behavior. Stage 5 and Stage 6 remain incomplete until the source audit and runtime verification are finished.
+
+## 2026-10-24 — Blank pages / Inertia SSR fix
+
+- Fixed missing `Eye` and `Ban` imports in `resources/js/layouts/feed-layout.tsx`. The layout referenced both icons in the status icon map (and `Ban` in the navigation/status UI) without importing them, causing a `ReferenceError: Eye is not defined` during Vite/Inertia server-side rendering.
+- This explains the repeated SSR failure on `/` in the provided console log.
+- Verification still required locally: restart `composer run dev`, reload `/`, and confirm no further SSR errors. If Vite still shows a stale error, stop the process with Ctrl+C and start it again.

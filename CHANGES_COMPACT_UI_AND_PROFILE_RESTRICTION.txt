@@ -1,0 +1,20 @@
+HOW TO APPLY
+1. Unzip over your project root (it only contains changed/new files; same folder structure).
+2. php artisan migrate        (adds users.profile_restriction_expires_at)
+3. npm run build              (or npm run dev)
+
+WHAT CHANGED
+Compact UI
+- resources/css/app.css: on desktop (>=1024px) the base size is 13px, so 100% zoom looks like the old 75% view
+  (text, padding, gaps, cards all scale). Phones/tablets keep 16px. Dashboard max-width cap removed.
+- resources/js/layouts/feed-layout.tsx, pages/public-newsfeed.tsx: wider content container (1560px), slimmer left column.
+- resources/js/pages/dashboard.tsx: the two top cards no longer stretch to equal height (that was the huge empty gap);
+  "Resident activity" rows are one compact line each with a short last-seen date; tighter cards/heading.
+
+Profile restriction = profile picture only
+- Restricted resident's picture becomes /images/anonymous-avatar.svg everywhere (feed, comments, directory, dashboard, profile).
+- The picture cannot be uploaded/changed/removed until the restriction ends (server-enforced + UI notice in Settings).
+- Posting, commenting, reacting are NOT affected. The full-screen blocking popup no longer appears for profile
+  restrictions (only for real account restrictions); a small banner with an appeal box is shown on the Newsfeed instead.
+- Admin can set an optional duration (blank = until restored); it lifts itself automatically when the time is over.
+- The original uploaded picture is kept and returns after the restriction.

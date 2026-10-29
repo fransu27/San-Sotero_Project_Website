@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
 /* @chisel-email-verification */
 import { Link } from '@inertiajs/react';
 /* @end-chisel-email-verification */
@@ -10,6 +10,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLocale } from '@/hooks/use-locale';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { Auth } from '@/types';
@@ -28,30 +29,39 @@ export default function Profile(
         phone,
         birthdate,
         avatarUrl,
+        avatarLocked,
+        avatarLockedUntil,
+        avatarLockedReason,
+        profileVisibility,
     }: {
         mustVerifyEmail: boolean;
         status?: string;
         phone: string | null;
         birthdate: string | null;
         avatarUrl: string | null;
+        avatarLocked?: boolean;
+        avatarLockedUntil?: string | null;
+        avatarLockedReason?: string | null;
+        profileVisibility: 'public' | 'private';
     },
     /* @end-chisel-email-verification */
 ) {
+    const { t } = useLocale();
     const { auth, errors } = usePage<
         PageProps & { errors: Record<string, string> }
     >().props;
 
     return (
         <>
-            <Head title="Profile settings" />
+            <Head title={t('page.profileSettings')} />
 
-            <h1 className="sr-only">Profile settings</h1>
+            <h1 className="sr-only">{t('page.profileSettings')}</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Profile"
-                    description="Update your picture, name, email, mobile number and date of birth"
+                    title={t('profile.title')}
+                    description={t('profile.desc')}
                 />
 
                 <AvatarUploader
@@ -59,6 +69,9 @@ export default function Profile(
                     url={avatarUrl}
                     staff={auth.user.role === 'admin'}
                     error={errors.avatar}
+                    locked={avatarLocked}
+                    lockedUntil={avatarLockedUntil}
+                    lockedReason={avatarLockedReason}
                 />
 
                 <Form
@@ -71,7 +84,9 @@ export default function Profile(
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
+                                <Label htmlFor="name">
+                                    {t('profile.name')}
+                                </Label>
 
                                 <Input
                                     id="name"
@@ -79,18 +94,25 @@ export default function Profile(
                                     defaultValue={auth.user.name}
                                     name="name"
                                     required
+                                    aria-invalid={Boolean(errors.name)}
+                                    aria-describedby={
+                                        errors.name ? 'name-error' : undefined
+                                    }
                                     autoComplete="name"
-                                    placeholder="Full name"
+                                    placeholder={t('profile.fullName')}
                                 />
 
                                 <InputError
                                     className="mt-2"
+                                    id="name-error"
                                     message={errors.name}
                                 />
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">
+                                    {t('profile.email')}
+                                </Label>
 
                                 <Input
                                     id="email"
@@ -99,12 +121,17 @@ export default function Profile(
                                     defaultValue={auth.user.email}
                                     name="email"
                                     required
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
                                     autoComplete="username"
                                     placeholder="Email address"
                                 />
 
                                 <InputError
                                     className="mt-2"
+                                    id="email-error"
                                     message={errors.email}
                                 />
                             </div>
@@ -112,13 +139,19 @@ export default function Profile(
                             <div className="grid gap-5 sm:grid-cols-2">
                                 <div className="grid gap-2">
                                     <Label htmlFor="birthdate">
-                                        Date of birth
+                                        {t('profile.birthdate')}
                                     </Label>
                                     <Input
                                         id="birthdate"
                                         name="birthdate"
                                         type="date"
                                         required
+                                        aria-invalid={Boolean(errors.birthdate)}
+                                        aria-describedby={
+                                            errors.birthdate
+                                                ? 'birthdate-error'
+                                                : undefined
+                                        }
                                         min="1900-01-02"
                                         max={new Date()
                                             .toISOString()
@@ -127,17 +160,28 @@ export default function Profile(
                                         autoComplete="bday"
                                         className="block [color-scheme:dark]"
                                     />
-                                    <InputError message={errors.birthdate} />
+                                    <InputError
+                                        id="birthdate-error"
+                                        message={errors.birthdate}
+                                    />
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="phone">Mobile number</Label>
+                                    <Label htmlFor="phone">
+                                        {t('profile.mobile')}
+                                    </Label>
                                     <Input
                                         id="phone"
                                         name="phone"
                                         type="tel"
                                         inputMode="numeric"
                                         required
+                                        aria-invalid={Boolean(errors.phone)}
+                                        aria-describedby={
+                                            errors.phone
+                                                ? 'phone-error'
+                                                : undefined
+                                        }
                                         defaultValue={phone ?? ''}
                                         autoComplete="tel"
                                         placeholder="09171234567"
@@ -145,7 +189,10 @@ export default function Profile(
                                         pattern="(09[0-9]{9}|\+639[0-9]{9})"
                                         title="Example: 09171234567"
                                     />
-                                    <InputError message={errors.phone} />
+                                    <InputError
+                                        id="phone-error"
+                                        message={errors.phone}
+                                    />
                                 </div>
                             </div>
 
@@ -181,12 +228,59 @@ export default function Profile(
                                     disabled={processing}
                                     data-test="update-profile-button"
                                 >
-                                    Save
+                                    {t('profile.save')}
                                 </Button>
                             </div>
                         </>
                     )}
                 </Form>
+                <section className="space-y-3 rounded-2xl border border-border p-4 sm:p-5">
+                    <div>
+                        <h2 className="font-semibold">
+                            {t('profile.privacy')}
+                        </h2>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            {t('profile.privacyDesc')}
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/40 p-3">
+                        <div>
+                            <p className="text-sm font-medium">
+                                {profileVisibility === 'private'
+                                    ? t('profile.private')
+                                    : t('profile.public')}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                {profileVisibility === 'private'
+                                    ? t('profile.privateDesc')
+                                    : t('profile.publicDesc')}
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                router.patch(
+                                    '/settings/profile/privacy',
+                                    {
+                                        profile_visibility:
+                                            profileVisibility === 'private'
+                                                ? 'public'
+                                                : 'private',
+                                    },
+                                    { preserveScroll: true },
+                                )
+                            }
+                            className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted"
+                        >
+                            {profileVisibility === 'private'
+                                ? t('profile.makePublic')
+                                : t('profile.makePrivate')}
+                        </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        {t('profile.anonymousNote')}
+                    </p>
+                </section>
             </div>
 
             <DeleteUser />

@@ -15,13 +15,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Forgot password" />
 
             {status && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
+                <div className="mb-4 rounded-xl border border-[#448FA3]/25 bg-[#448FA3]/10 p-3.5 text-center text-sm font-medium text-chart-3">
                     {status}
                 </div>
             )}
 
             <div className="space-y-6">
-                <Form {...email.form()}>
+                <Form {...email.form()} className="auth-form">
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
@@ -30,17 +30,24 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     id="email"
                                     type="email"
                                     name="email"
-                                    autoComplete="off"
+                                    aria-invalid={Boolean(errors.email)}
+                                    aria-describedby={
+                                        errors.email ? 'email-error' : undefined
+                                    }
+                                    autoComplete="email"
                                     autoFocus
                                     placeholder="email@example.com"
                                 />
 
-                                <InputError message={errors.email} />
+                                <InputError
+                                    id="email-error"
+                                    message={errors.email}
+                                />
                             </div>
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className="h-11 w-full rounded-xl bg-[#0197F6] font-semibold text-white shadow-lg shadow-[#0197F6]/20 hover:bg-[#087fd0]"
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >

@@ -40,8 +40,9 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
+                'notifications' => fn () => $request->user() ? $request->user()->notifications()->latest()->limit(8)->get(['id', 'type', 'data', 'read_at', 'created_at'])->map(fn ($n) => ['id' => $n->id, 'type' => class_basename($n->type), 'title' => $n->data['title'] ?? $n->data['action'] ?? 'Activity update', 'message' => $n->data['message'] ?? $n->data['reason'] ?? 'There is an update to your account or community activity.', 'url' => $n->data['url'] ?? null, 'read' => $n->read_at !== null, 'created_at' => $n->created_at?->toIso8601String()])->values() : [],
                 // `avatar` = profile picture URL (null -> the UI shows an initials badge)
-                'user' => ($user = $request->user()) ? [...$user->toArray(), 'avatar' => $user->avatarUrl(), 'effective_moderation_status' => $user->effectiveModerationStatus(), 'moderation_message' => $user->moderation_reason, 'profile_restriction_message' => $user->profile_restricted ? $user->profile_restriction_reason : null] : null,
+                'user' => ($user = $request->user()) ? [...$user->toArray(), 'avatar' => $user->avatarUrl(), 'effective_moderation_status' => $user->effectiveModerationStatus(), 'moderation_message' => $user->moderation_reason, 'profile_restricted' => $user->isProfileRestricted(), 'profile_restriction_expires_at' => $user->isProfileRestricted() ? $user->profile_restriction_expires_at?->toIso8601String() : null, 'profile_restriction_message' => $user->isProfileRestricted() ? $user->profile_restriction_reason : null] : null,
             ],
             // Branding editable by an admin in Settings → Barangay. Shared to every page (cached; see SiteSetting).
             'barangay' => fn () => [

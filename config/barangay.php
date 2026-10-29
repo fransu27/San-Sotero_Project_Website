@@ -7,4 +7,5 @@
 return [
     'admin_email' => env('ADMIN_EMAIL', 'admin@barangay.test'),
     'admin_password' => env('ADMIN_PASSWORD'),
+    'support_email' => env('SUPPORT_EMAIL', env('MAIL_FROM_ADDRESS', 'support@example.com')),
 ];

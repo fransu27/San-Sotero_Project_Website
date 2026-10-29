@@ -65,13 +65,24 @@ export default function TwoFactorChallenge() {
                             {showRecoveryInput ? (
                                 <>
                                     <Input
+                                        className="auth-form h-12 text-center font-mono tracking-widest"
+                                        id="recovery-code"
                                         name="recovery_code"
                                         type="text"
+                                        aria-invalid={Boolean(
+                                            errors.recovery_code,
+                                        )}
+                                        aria-describedby={
+                                            errors.recovery_code
+                                                ? 'recovery-code-error'
+                                                : undefined
+                                        }
                                         placeholder="Enter recovery code"
                                         autoFocus={showRecoveryInput}
                                         required
                                     />
                                     <InputError
+                                        id="recovery-code-error"
                                         message={errors.recovery_code}
                                     />
                                 </>
@@ -79,11 +90,17 @@ export default function TwoFactorChallenge() {
                                 <div className="flex flex-col items-center justify-center space-y-3 text-center">
                                     <div className="flex w-full items-center justify-center">
                                         <InputOTP
-                                            name="code"
                                             maxLength={OTP_MAX_LENGTH}
                                             value={code}
                                             onChange={(value) => setCode(value)}
                                             disabled={processing}
+                                            aria-label="Authentication code"
+                                            aria-invalid={Boolean(errors.code)}
+                                            aria-describedby={
+                                                errors.code
+                                                    ? 'auth-code-error'
+                                                    : undefined
+                                            }
                                             pattern={REGEXP_ONLY_DIGITS}
                                             autoFocus
                                         >
@@ -100,13 +117,21 @@ export default function TwoFactorChallenge() {
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
-                                    <InputError message={errors.code} />
+                                    <input
+                                        type="hidden"
+                                        name="code"
+                                        value={code}
+                                    />
+                                    <InputError
+                                        id="auth-code-error"
+                                        message={errors.code}
+                                    />
                                 </div>
                             )}
 
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className="h-11 w-full rounded-xl bg-[#0197F6] font-semibold text-white shadow-lg shadow-[#0197F6]/20 hover:bg-[#087fd0]"
                                 disabled={processing}
                             >
                                 Continue

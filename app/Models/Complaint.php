@@ -175,6 +175,9 @@ class Complaint extends Model
             ->where('user_id', $user->id)
             ->orWhere(fn (Builder $p) => $p
                 ->where('visibility', 'public')
+                ->whereHas('user', fn (Builder $u) => $u->where(function (Builder $privacy) {
+                    $privacy->whereNull('profile_visibility')->orWhere('profile_visibility', 'public');
+                }))
                 ->where('approval_status', self::APPROVAL_APPROVED)
                 ->whereNull('removed_at')));
     }

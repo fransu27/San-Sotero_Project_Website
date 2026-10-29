@@ -176,8 +176,8 @@ function TwoFactorVerificationStep({
                         <div className="flex w-full flex-col items-center space-y-3 py-2">
                             <InputOTP
                                 id="otp"
-                                name="code"
                                 maxLength={OTP_MAX_LENGTH}
+                                value={code}
                                 onChange={setCode}
                                 disabled={processing}
                                 pattern={REGEXP_ONLY_DIGITS}
@@ -195,6 +195,7 @@ function TwoFactorVerificationStep({
                                     )}
                                 </InputOTPGroup>
                             </InputOTP>
+                            <input type="hidden" name="code" value={code} />
                             <InputError
                                 message={
                                     errors?.confirmTwoFactorAuthentication?.code

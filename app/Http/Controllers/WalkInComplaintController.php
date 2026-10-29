@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,6 +42,12 @@ class WalkInComplaintController extends Controller
             'files.*' => ['file', 'mimes:pdf,doc,docx,odt,txt', 'max:10240'],
         ]);
 
+        $files = $request->file('files', []);
+        $totalBytes = collect($files)->sum(fn ($file) => $file?->getSize() ?? 0) + ($request->file('image')?->getSize() ?? 0);
+        if ($totalBytes > 10 * 1024 * 1024) {
+            throw ValidationException::withMessages(['files' => 'The combined size of all evidence, including the photo, must not exceed 10 MB.']);
+        }
+
         $pin = (string) random_int(100000, 999999);
         $complaint = DB::transaction(function () use ($user, $data, $pin, $request): Complaint {
             $complaint = new Complaint([
@@ -63,7 +70,10 @@ class WalkInComplaintController extends Controller
             $complaint->entered_by_user_id = $user->id;
             $complaint->tracking_pin_hash = Hash::make($pin);
             $imagePath = $request->file('image')?->store('complaints', 'public');
-            $complaint->image_path = $imagePath ?: null;
+            if ($request->hasFile('image') && (! is_string($imagePath) || $imagePath === '')) {
+                throw ValidationException::withMessages(['image' => 'The photo could not be saved. Please try again.']);
+            }
+            $complaint->image_path = is_string($imagePath) ? $imagePath : null;
             $complaint->save();
             $complaint->log('submitted', $user, 'Pending', 'Received in person at the barangay desk.');
             $complaint->syncAttachments($request->file('files', []), [], $user->id);

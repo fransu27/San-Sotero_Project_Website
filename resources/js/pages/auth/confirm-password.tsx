@@ -36,10 +36,19 @@ export default function ConfirmPassword() {
                                 name="password"
                                 placeholder="Password"
                                 autoComplete="current-password"
+                                aria-invalid={Boolean(errors.password)}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'password-error'
+                                        : undefined
+                                }
                                 autoFocus
                             />
 
-                            <InputError message={errors.password} />
+                            <InputError
+                                id="password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="flex items-center">

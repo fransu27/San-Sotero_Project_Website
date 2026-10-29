@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -55,6 +56,26 @@ class AssistedWalkInIntakeTest extends TestCase
         $this->assertSame('approved', $complaint->approval_status);
         $this->assertNotNull($complaint->tracking_pin_hash);
         $this->assertDatabaseHas('complaint_events', ['complaint_id' => $complaint->id, 'type' => 'submitted']);
+    }
+
+    public function test_walk_in_evidence_combined_size_is_limited_to_ten_megabytes(): void
+    {
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->post(route('admin.walk-in.store'), [
+            'reporter_name' => 'Sample Resident',
+            'title' => 'Large evidence test',
+            'description' => 'A test concern with evidence over the combined limit.',
+            'location' => 'Purok 2',
+            'category' => 'Infrastructure',
+            'incident_date' => now()->toDateString(),
+            'files' => [
+                UploadedFile::fake()->create('first.pdf', 6000, 'application/pdf'),
+                UploadedFile::fake()->create('second.pdf', 6000, 'application/pdf'),
+            ],
+        ])->assertSessionHasErrors('files');
+
+        $this->assertDatabaseCount('complaints', 0);
     }
 
     public function test_tracking_requires_reference_and_pin_and_returns_only_minimal_status_data(): void

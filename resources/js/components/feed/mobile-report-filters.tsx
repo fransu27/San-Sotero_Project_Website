@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useState } from 'react';
+import { statusColor } from '@/components/feed/post-card';
 import { useLocale } from '@/hooks/use-locale';
 import { asList, feedHref } from '@/lib/feed-filters';
 import type { FilterValue } from '@/lib/feed-filters';
@@ -90,7 +91,7 @@ export default function MobileReportFilters() {
 
     const box = (active: boolean, expanded: boolean) =>
         cn(
-            'flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 rounded-2xl border bg-card px-3 py-2 text-left shadow-sm transition-[border-color,box-shadow,transform] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:outline-none active:scale-[0.97]',
+            'ss-card flex min-h-14 min-w-0 flex-1 items-center justify-between gap-2 rounded-2xl border bg-card px-3.5 py-2 text-left transition-[border-color,box-shadow,transform] duration-300 ease-[var(--ease-spring)] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#0197F6] focus-visible:outline-none active:scale-[0.97]',
             active || expanded
                 ? 'border-[#0197F6] ring-1 ring-[#0197F6]/25'
                 : 'border-border hover:border-[#0197F6]/50',
@@ -157,7 +158,7 @@ export default function MobileReportFilters() {
 
             {open === 'status' && (
                 <nav
-                    className="grid animate-[ss-pop-in_300ms_var(--ease-spring)_both] grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 shadow-sm sm:grid-cols-3"
+                    className="ss-card grid animate-[ss-pop-in_300ms_var(--ease-spring)_both] grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 sm:grid-cols-3"
                     aria-label="Report status filters"
                 >
                     {statusLinks.map((l: (typeof statusLinks)[number]) => (
@@ -171,7 +172,16 @@ export default function MobileReportFilters() {
                                 l.active && 'is-active',
                             )}
                         >
-                            <l.icon size={16} className="shrink-0" />
+                            <span
+                                aria-hidden
+                                className="size-2 shrink-0 rounded-full"
+                                style={{
+                                    backgroundColor:
+                                        statusColor[
+                                            l.key as keyof typeof statusColor
+                                        ] ?? '#8A94A0',
+                                }}
+                            />
                             <span className="min-w-0 flex-1 truncate">
                                 {l.label}
                             </span>
@@ -185,7 +195,7 @@ export default function MobileReportFilters() {
 
             {open === 'category' && (
                 <nav
-                    className="grid animate-[ss-pop-in_300ms_var(--ease-spring)_both] grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3 shadow-sm"
+                    className="ss-card grid animate-[ss-pop-in_300ms_var(--ease-spring)_both] grid-cols-2 gap-2 rounded-2xl border border-border bg-card p-3"
                     aria-label="Report categories"
                 >
                     {CATEGORIES.map(({ label, icon: Icon }) => (

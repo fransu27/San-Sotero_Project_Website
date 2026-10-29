@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,9 +19,6 @@ class TrackSiteActivity
                 $request->session()->put('site_visitor_key', $key);
             }
             $user = $request->user();
-            if ($user) {
-                User::whereKey($user->id)->update(['last_seen_at' => now()]);
-            }
             // Store page visits; dashboard aggregates unique visitor keys and recent activity.
             DB::table('site_visits')->insert([
                 'visitor_key' => hash('sha256', $key),

@@ -221,7 +221,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                     {/* Phones / tablets: the page links live in a collapsible drawer (top-left button), the same as the
                         signed-in pages, instead of a second row of buttons in the header. */}
                     <div className="border-t border-border/70 px-4 py-2.5 sm:px-6 xl:hidden">
-                        <div className="mx-auto flex max-w-[1320px] items-center gap-3">
+                        <div className="mx-auto flex max-w-[1560px] items-center gap-3">
                             <Sheet>
                                 <SheetTrigger asChild>
                                     <button
@@ -273,7 +273,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                     </div>
                 </header>
 
-                <div className="mx-auto grid max-w-[1320px] gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[272px_minmax(0,1fr)]">
+                <div className="mx-auto grid max-w-[1560px] gap-5 px-4 py-5 sm:px-6 xl:grid-cols-[272px_minmax(0,1fr)]">
                     <ReportRail
                         ariaLabel={t('nav.filters')}
                         links={railLinks}
@@ -454,6 +454,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                                         <div className="space-y-4">
                                             {complaints.map((complaint) => (
                                                 <article
+                                                    id={`complaint-${complaint.id}`}
                                                     key={complaint.id}
                                                     className="rounded-2xl border border-border/80 bg-card p-4 shadow-sm transition duration-300 hover:border-[#0197F6]/35 hover:shadow-lg sm:p-5"
                                                 >
@@ -599,7 +600,7 @@ export default function PublicNewsfeed({ announcements, complaints }: Props) {
                 </div>
 
                 <footer className="mt-12 border-t border-border/70">
-                    <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:px-6 lg:px-8">
+                    <div className="mx-auto flex max-w-[1560px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-muted-foreground sm:px-6 lg:px-8">
                         <span>San Sotero — Report Concerns</span>
                         <span>
                             © {new Date().getFullYear()} San Sotero. All rights
