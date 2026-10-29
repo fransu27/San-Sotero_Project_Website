@@ -30,6 +30,14 @@ import { ZoomableImage } from '@/components/feed/image-lightbox';
 import PostModal from '@/components/feed/post-modal';
 import { StarRating } from '@/components/feed/star-rating';
 import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -38,14 +46,6 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useLocale } from '@/hooks/use-locale';
 import { DATE_LOCALE, timeAgo } from '@/lib/i18n';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 export type Status =
@@ -57,6 +57,7 @@ type Comment = {
     author: string | null;
     avatar: string | null;
     staff: boolean;
+    mine?: boolean;
 };
 type TimelineEvent = {
     id: number;
@@ -71,6 +72,7 @@ type TimelineEvent = {
     note: string | null;
     ts: number;
     staff: boolean;
+    mine?: boolean;
 };
 export type Complaint = {
     id: number;
@@ -497,6 +499,7 @@ export default function PostCard({
     const submitPostReport = () => {
         if (!reportReason) {
             setReportError('Choose a reason before submitting the report.');
+
             return;
         }
 
@@ -529,7 +532,9 @@ export default function PostCard({
             preserveScroll: true,
             onSuccess: () => setDeleteDialogOpen(false),
             onError: () =>
-                setDeleteError('The post could not be deleted. Please try again.'),
+                setDeleteError(
+                    'The post could not be deleted. Please try again.',
+                ),
             onFinish: () => setDeleteSubmitting(false),
         });
     };
@@ -1218,42 +1223,84 @@ export default function PostCard({
                     <DialogHeader>
                         <DialogTitle>Report this post</DialogTitle>
                         <DialogDescription>
-                            Choose the reason that best describes the concern. Reports are reviewed by barangay moderators; reporting does not automatically remove a post.
+                            Choose the reason that best describes the concern.
+                            Reports are reviewed by barangay moderators;
+                            reporting does not automatically remove a post.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-3">
-                        <label htmlFor={`report-reason-${c.id}`} className="text-sm font-medium">
+                        <label
+                            htmlFor={`report-reason-${c.id}`}
+                            className="text-sm font-medium"
+                        >
                             Report reason
                         </label>
                         <select
                             id={`report-reason-${c.id}`}
                             value={reportReason}
-                            onChange={(event) => setReportReason(event.target.value)}
+                            onChange={(event) =>
+                                setReportReason(event.target.value)
+                            }
                             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             required
                         >
                             <option value="">Select a reason</option>
-                            {['Misinformation', 'Harassment or hate', 'Inappropriate content', 'Spam or scam', 'Privacy concern', 'Other'].map((choice) => (
-                                <option key={choice} value={choice}>{choice}</option>
+                            {[
+                                'Misinformation',
+                                'Harassment or hate',
+                                'Inappropriate content',
+                                'Spam or scam',
+                                'Privacy concern',
+                                'Other',
+                            ].map((choice) => (
+                                <option key={choice} value={choice}>
+                                    {choice}
+                                </option>
                             ))}
                         </select>
-                        <label htmlFor={`report-details-${c.id}`} className="text-sm font-medium">
+                        <label
+                            htmlFor={`report-details-${c.id}`}
+                            className="text-sm font-medium"
+                        >
                             Additional details (optional)
                         </label>
                         <textarea
                             id={`report-details-${c.id}`}
                             value={reportDetails}
-                            onChange={(event) => setReportDetails(event.target.value)}
+                            onChange={(event) =>
+                                setReportDetails(event.target.value)
+                            }
                             maxLength={1000}
                             rows={4}
                             placeholder="Add context for the moderator (up to 1000 characters)"
                             className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         />
-                        {reportError && <p role="alert" className="text-sm text-destructive">{reportError}</p>}
+                        {reportError && (
+                            <p
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {reportError}
+                            </p>
+                        )}
                     </div>
                     <DialogFooter>
-                        <button type="button" onClick={() => setReportDialogOpen(false)} disabled={reportSubmitting} className="rounded-lg border px-4 py-2 text-sm">Cancel</button>
-                        <button type="button" onClick={submitPostReport} disabled={reportSubmitting} className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white disabled:opacity-60">{reportSubmitting ? 'Submitting…' : 'Submit report'}</button>
+                        <button
+                            type="button"
+                            onClick={() => setReportDialogOpen(false)}
+                            disabled={reportSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={submitPostReport}
+                            disabled={reportSubmitting}
+                            className="rounded-lg bg-[#0197F6] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                        >
+                            {reportSubmitting ? 'Submitting…' : 'Submit report'}
+                        </button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -1263,13 +1310,32 @@ export default function PostCard({
                     <DialogHeader>
                         <DialogTitle>Delete this post?</DialogTitle>
                         <DialogDescription>
-                            This action removes your post from the community feed. Continue only if you want to delete it.
+                            This action removes your post from the community
+                            feed. Continue only if you want to delete it.
                         </DialogDescription>
                     </DialogHeader>
-                    {deleteError && <p role="alert" className="text-sm text-destructive">{deleteError}</p>}
+                    {deleteError && (
+                        <p role="alert" className="text-sm text-destructive">
+                            {deleteError}
+                        </p>
+                    )}
                     <DialogFooter>
-                        <button type="button" onClick={() => setDeleteDialogOpen(false)} disabled={deleteSubmitting} className="rounded-lg border px-4 py-2 text-sm">Cancel</button>
-                        <button type="button" onClick={deletePost} disabled={deleteSubmitting} className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-60">{deleteSubmitting ? 'Deleting…' : 'Delete post'}</button>
+                        <button
+                            type="button"
+                            onClick={() => setDeleteDialogOpen(false)}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg border px-4 py-2 text-sm"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            onClick={deletePost}
+                            disabled={deleteSubmitting}
+                            className="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground disabled:opacity-60"
+                        >
+                            {deleteSubmitting ? 'Deleting…' : 'Delete post'}
+                        </button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

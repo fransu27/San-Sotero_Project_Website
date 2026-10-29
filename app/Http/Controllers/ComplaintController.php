@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\Complaint;
 use App\Models\Rating;
 use App\Models\Reaction;
+use App\Notifications\CommunityActivityNotification;
 use App\Services\ModerationAudit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -195,6 +196,7 @@ class ComplaintController extends Controller
         }
 
         if ($data['status'] !== $complaint->status) {
+            $previousStatusForNotification = $complaint->status;
             DB::transaction(function () use ($complaint, $data, $request, $audit): void {
                 $previousStatus = $complaint->status;
                 $complaint->forceFill(['status' => $data['status']])->save();
@@ -202,6 +204,10 @@ class ComplaintController extends Controller
                 $complaint->log('status', $request->user(), $data['status'], $note);
                 $audit->record($request, 'complaint.status_changed', $complaint, ['reason' => $note, 'previous_status' => $previousStatus, 'new_status' => $data['status']]);
             });
+            $complaint->loadMissing('user');
+            if ($complaint->user && (int) $complaint->user_id !== (int) $request->user()?->id) {
+                $complaint->user->notify(new CommunityActivityNotification('Complaint status updated', 'Your report “'.$complaint->title.'” changed from '.$previousStatusForNotification.' to '.$data['status'].'.', '/my-submissions'));
+            }
         }
 
         return back();
@@ -303,8 +309,20 @@ class ComplaintController extends Controller
             'user_id' => (int) $request->user()?->id,
             'body' => trim(strip_tags($validated['body'])),
         ]);
+        if ($complaint->user && (int) $complaint->user_id !== (int) $request->user()?->id) {
+            $complaint->user->notify(new CommunityActivityNotification('Someone commented on your complaint', 'A resident commented on “'.$complaint->title.'”.', '/newsfeed'));
+        }
 
         return back();
+    }
+
+    /** A comment author may remove their own comment; other users cannot delete it. */
+    public function destroyComment(Request $request, Comment $comment): RedirectResponse
+    {
+        abort_unless((int) $comment->user_id === (int) $request->user()?->id, 403, 'You can only remove your own comments.');
+        $comment->delete();
+
+        return back()->with('success', 'Comment removed.');
     }
 
     /**

@@ -2,9 +2,9 @@
 
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RejectBannedUsers;
 use App\Http\Middleware\TrackSiteActivity;
 use App\Http\Middleware\TrackUserActivity;
-use App\Http\Middleware\RejectBannedUsers;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;

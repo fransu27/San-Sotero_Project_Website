@@ -1,5 +1,7 @@
+import * as auth from '@/lang/auth';
 import * as common from '@/lang/common';
 import * as composer from '@/lang/composer';
+import * as pages from '@/lang/pages';
 import * as post from '@/lang/post';
 import * as shell from '@/lang/shell';
 import * as submissions from '@/lang/submissions';
@@ -33,6 +35,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...composer.en,
         ...post.en,
         ...submissions.en,
+        ...pages.en,
+        ...auth.en,
     },
     tl: {
         ...common.tl,
@@ -41,6 +45,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...composer.tl,
         ...post.tl,
         ...submissions.tl,
+        ...pages.tl,
+        ...auth.tl,
     },
     ceb: {
         ...common.ceb,
@@ -49,6 +55,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...composer.ceb,
         ...post.ceb,
         ...submissions.ceb,
+        ...pages.ceb,
+        ...auth.ceb,
     },
     war: {
         ...common.war,
@@ -57,6 +65,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
         ...composer.war,
         ...post.war,
         ...submissions.war,
+        ...pages.war,
+        ...auth.war,
     },
 };
 

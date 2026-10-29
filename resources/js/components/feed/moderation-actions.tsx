@@ -45,7 +45,9 @@ export function ModerationActions({
         );
     }
 
-    if (!canReport) return null;
+    if (!canReport) {
+        return null;
+    }
 
     return (
         <div className="flex flex-wrap items-center gap-2">

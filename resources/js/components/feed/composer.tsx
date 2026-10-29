@@ -285,7 +285,7 @@ export default function Composer({
         <form
             ref={formRef}
             onSubmit={submit}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm"
+            className="ss-card rounded-2xl border border-border bg-card p-3.5 sm:p-4"
         >
             {ticket && !isNote && (
                 <div
@@ -337,7 +337,7 @@ export default function Composer({
                 <Avatar name={userName} src={userAvatar} staff={isNote} />
                 <div className="min-w-0 flex-1 space-y-3">
                     <input
-                        className={`${field} rounded-full bg-[#F0F2F5] dark:bg-muted`}
+                        className={`${field} ss-pill-input rounded-full bg-[#F0F2F5] dark:bg-muted`}
                         maxLength={isNote ? 120 : 150}
                         onFocus={() => setOpen(true)}
                         placeholder={
@@ -673,8 +673,8 @@ export default function Composer({
                     )}
 
                     <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-                        <div className="flex items-center gap-1">
-                            <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#0197F6] focus-within:ring-2 focus-within:ring-[#0197F6] hover:bg-muted">
+                        <div className="flex min-w-0 items-center gap-0.5">
+                            <label className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-2 text-sm font-medium whitespace-nowrap text-[#0197F6] focus-within:ring-2 focus-within:ring-[#0197F6] hover:bg-muted sm:px-3">
                                 <ImageIcon size={18} /> {t('comp.photo')}
                                 <input
                                     type="file"
@@ -688,9 +688,10 @@ export default function Composer({
                                 />
                             </label>
                             {isNote && (
-                                <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted">
+                                <label className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-2 text-sm leading-tight font-medium hover:bg-muted sm:px-3 sm:whitespace-nowrap">
                                     <input
                                         type="checkbox"
+                                        className="size-4 accent-[#D7263D]"
                                         checked={form.data.pinned}
                                         onChange={(e) =>
                                             form.setData(
@@ -704,7 +705,10 @@ export default function Composer({
                                 </label>
                             )}
                         </div>
-                        <Button disabled={form.processing || !canPost}>
+                        <Button
+                            className="ss-post-btn ml-auto shrink-0 rounded-xl px-3.5"
+                            disabled={form.processing || !canPost}
+                        >
                             {isNote && <Megaphone />}{' '}
                             {form.processing
                                 ? t('comp.posting')

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AnnouncementRequest;
 use App\Models\Announcement;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 /** All actions here are admin-only: the routes are wrapped in EnsureAdmin (and AnnouncementRequest re-checks). */
 class AnnouncementController extends Controller

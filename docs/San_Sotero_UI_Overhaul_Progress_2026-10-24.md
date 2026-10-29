@@ -1823,3 +1823,19 @@ Run `php artisan migrate` after backing up `database/database.sqlite`. This adds
 - Accepted account appeals restore account status automatically; declining an appeal stores a fixed explanatory response. A richer admin response editor can be added later.
 - Profile privacy prevents opening private profiles and excludes their public posts from shared feeds, but public announcement content remains public by design.
 - Source syntax and PHP lint are not equivalent to a successful app build or end-to-end security test. Do not mark runtime verification complete until the migration, dependencies, and browser workflows have been tested locally.
+
+
+## Moderation, notifications, and dashboard follow-up — 2026-10-29
+- Preserved profile-picture restrictions as avatar-only restrictions; account posting restrictions continue to block community participation actions while leaving browsing available.
+- Fixed shared moderation expiry handling for Carbon/CarbonImmutable compatibility.
+- Added a theme-aware notification dropdown in the app header with unread indicator, mark-read and mark-all-read actions, backed by the user's latest database notifications.
+- Added resident-owned comment deletion for complaint comments, with server-side ownership enforcement.
+- Reworked dashboard primary metrics to show Pending complaints, Reported posts, Page views, and Unique visitors; removed online/offline and restricted/banned cards from the overview metrics and improved responsive grid sizing.
+- Validation still requires running the Laravel feature tests and a production frontend build in the project environment.
+
+
+## Follow-up fix — 2026-10-29 (Profile restriction must not block website access)
+
+- [x] Changed the shared feed layout so the blocking moderation dialog is triggered only by an account-level restriction. A profile-picture restriction no longer displays the full-screen modal or forces the resident to appeal/log out.
+- [x] Kept profile-restriction messaging as a non-blocking notice on the Newsfeed; profile picture restrictions remain separate from account interaction restrictions.
+- [ ] Verify in browser with a profile-restricted resident and confirm the account restriction modal still appears for temporary account restrictions/bans.

@@ -68,7 +68,7 @@ export default function ReportRail({
         >
             <div
                 className={cn(
-                    'rounded-2xl border border-border bg-card shadow-sm',
+                    'rounded-2xl border border-border/80 bg-card/95 shadow-lg ring-1 shadow-black/[0.04] ring-black/[0.02] dark:shadow-black/20',
                     collapsed
                         ? 'flex flex-col items-center gap-3 px-3 py-4'
                         : 'space-y-4 p-4',
@@ -177,9 +177,10 @@ export default function ReportRail({
                                 aria-label={collapsed ? l.label : undefined}
                                 aria-current={l.active ? 'page' : undefined}
                                 className={cn(
-                                    'nav-fill-link rounded-xl text-sm font-medium',
+                                    'nav-fill-link rounded-xl text-sm font-medium transition-all duration-200',
                                     collapsed ? iconBox : row,
-                                    l.active && 'is-active',
+                                    l.active &&
+                                        'is-active shadow-sm ring-1 ring-[#0197F6]/15',
                                 )}
                             >
                                 <l.icon size={18} className="shrink-0" />

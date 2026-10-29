@@ -109,7 +109,8 @@ export default function AvatarUploader({
                 <div className="max-w-md space-y-1 text-sm" role="status">
                     <p className="font-semibold">Profile picture restricted</p>
                     <p className="text-xs text-muted-foreground">
-                        Your picture shows the anonymous placeholder and can't be changed
+                        Your picture shows the anonymous placeholder and can't
+                        be changed
                         {lockedUntil
                             ? ` until ${new Date(lockedUntil).toLocaleString()}`
                             : ' until an administrator lifts the restriction'}

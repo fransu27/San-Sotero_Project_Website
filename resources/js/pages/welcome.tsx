@@ -730,10 +730,28 @@ export default function Welcome({
                     >
                         <span>{t('w.footer1')}</span>
                         <span>{t('w.footer2')}</span>
-                        <nav aria-label="Legal and support" className="flex flex-wrap gap-x-4 gap-y-2">
-                            <Link href="/terms" className="underline underline-offset-2">Terms of Service</Link>
-                            <Link href="/privacy-policy" className="underline underline-offset-2">Privacy Policy</Link>
-                            <Link href="/contact" className="underline underline-offset-2">Contact / Support</Link>
+                        <nav
+                            aria-label="Legal and support"
+                            className="flex flex-wrap gap-x-4 gap-y-2"
+                        >
+                            <Link
+                                href="/terms"
+                                className="underline underline-offset-2"
+                            >
+                                Terms of Service
+                            </Link>
+                            <Link
+                                href="/privacy-policy"
+                                className="underline underline-offset-2"
+                            >
+                                Privacy Policy
+                            </Link>
+                            <Link
+                                href="/contact"
+                                className="underline underline-offset-2"
+                            >
+                                Contact / Support
+                            </Link>
                         </nav>
                         <span className="w-full pt-2 sm:w-auto sm:pt-0">
                             © {new Date().getFullYear()} San Sotero — Report

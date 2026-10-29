@@ -36,6 +36,16 @@ class RegistrationTest extends TestCase
             'terms_accepted' => '1',
         ]);
 
+        // TEMPORARY DEBUGGING: inspect the registration response.
+        $response->dumpSession();
+
+        dump([
+            'status' => $response->status(),
+            'redirect' => $response->headers->get('Location'),
+            'errors' => session('errors')?->getBag('default')->toArray() ?? [],
+        ]);
+
+        // Original assertions.
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
     }

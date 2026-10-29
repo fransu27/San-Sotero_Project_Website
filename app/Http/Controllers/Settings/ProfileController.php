@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\AvatarUpdateRequest;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,6 +61,7 @@ class ProfileController extends Controller
         $data = $request->validate(['profile_visibility' => ['required', 'in:public,private']]);
         $request->user()->forceFill(['profile_visibility' => $data['profile_visibility']])->save();
         Inertia::flash('toast', ['type' => 'success', 'message' => $data['profile_visibility'] === 'private' ? 'Your profile is now private.' : 'Your profile is now public.']);
+
         return back();
     }
 
@@ -93,7 +95,7 @@ class ProfileController extends Controller
     }
 
     /** A restricted profile cannot upload, replace or remove its picture until the restriction is over. */
-    private function ensureAvatarNotLocked(\App\Models\User $user): void
+    private function ensureAvatarNotLocked(User $user): void
     {
         if ($user->isProfileRestricted()) {
             throw ValidationException::withMessages([

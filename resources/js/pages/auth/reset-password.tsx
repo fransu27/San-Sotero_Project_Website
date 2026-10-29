@@ -32,7 +32,9 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 type="email"
                                 name="email"
                                 aria-invalid={Boolean(errors.email)}
-                                aria-describedby={errors.email ? 'email-error' : undefined}
+                                aria-describedby={
+                                    errors.email ? 'email-error' : undefined
+                                }
                                 autoComplete="email"
                                 value={email}
                                 className="mt-1 block w-full"
@@ -52,13 +54,20 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 name="password"
                                 autoComplete="new-password"
                                 aria-invalid={Boolean(errors.password)}
-                                aria-describedby={errors.password ? 'password-error' : undefined}
+                                aria-describedby={
+                                    errors.password
+                                        ? 'password-error'
+                                        : undefined
+                                }
                                 className="mt-1 block w-full"
                                 autoFocus
                                 placeholder="Password"
                                 passwordrules={passwordRules}
                             />
-                            <InputError id="password-error" message={errors.password} />
+                            <InputError
+                                id="password-error"
+                                message={errors.password}
+                            />
                         </div>
 
                         <div className="grid gap-2">
@@ -69,8 +78,14 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                aria-invalid={Boolean(errors.password_confirmation)}
-                                aria-describedby={errors.password_confirmation ? 'password-confirmation-error' : undefined}
+                                aria-invalid={Boolean(
+                                    errors.password_confirmation,
+                                )}
+                                aria-describedby={
+                                    errors.password_confirmation
+                                        ? 'password-confirmation-error'
+                                        : undefined
+                                }
                                 className="mt-1 block w-full"
                                 placeholder="Confirm password"
                                 passwordrules={passwordRules}

@@ -65,10 +65,13 @@ export default function TwoFactorChallenge() {
                             {showRecoveryInput ? (
                                 <>
                                     <Input
+                                        className="auth-form h-12 text-center font-mono tracking-widest"
                                         id="recovery-code"
                                         name="recovery_code"
                                         type="text"
-                                        aria-invalid={Boolean(errors.recovery_code)}
+                                        aria-invalid={Boolean(
+                                            errors.recovery_code,
+                                        )}
                                         aria-describedby={
                                             errors.recovery_code
                                                 ? 'recovery-code-error'
@@ -94,7 +97,9 @@ export default function TwoFactorChallenge() {
                                             aria-label="Authentication code"
                                             aria-invalid={Boolean(errors.code)}
                                             aria-describedby={
-                                                errors.code ? 'auth-code-error' : undefined
+                                                errors.code
+                                                    ? 'auth-code-error'
+                                                    : undefined
                                             }
                                             pattern={REGEXP_ONLY_DIGITS}
                                             autoFocus
@@ -112,7 +117,11 @@ export default function TwoFactorChallenge() {
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
-                                    <input type="hidden" name="code" value={code} />
+                                    <input
+                                        type="hidden"
+                                        name="code"
+                                        value={code}
+                                    />
                                     <InputError
                                         id="auth-code-error"
                                         message={errors.code}
@@ -122,7 +131,7 @@ export default function TwoFactorChallenge() {
 
                             <Button
                                 type="submit"
-                                className="w-full"
+                                className="h-11 w-full rounded-xl bg-[#0197F6] font-semibold text-white shadow-lg shadow-[#0197F6]/20 hover:bg-[#087fd0]"
                                 disabled={processing}
                             >
                                 Continue

@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Announcement;
 use App\Models\Complaint;
+use App\Models\ComplaintReport;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -45,7 +46,7 @@ class DashboardController extends Controller
             ->latest()
             ->limit($limit)
             ->get()
-            ->map(function (Announcement $a): array {
+            ->map(function (Announcement $a) use ($viewer): array {
                 /** @var Announcement&object{likes_count?: int, dislikes_count?: int} $a */
                 return [
                     'id' => $a->id,
@@ -67,6 +68,8 @@ class DashboardController extends Controller
                         'id' => $m->id,
                         'body' => $m->body,
                         'staff' => $m->user->isAdmin(),
+                        'mine' => (int) $m->user_id === (int) $viewer->id || $viewer->isAdmin(),
+                        'delete_url' => route('announcements.comments.destroy', ['comment' => $m->id], false),
                         'author' => $m->user->name,
                         'avatar' => $m->user->avatarUrl(),
                     ])->values()->all(),
@@ -274,16 +277,23 @@ class DashboardController extends Controller
 
         $siteMetrics = null;
         if ($user->isAdmin()) {
+            // Reuse the same resident scope and online cutoff instead of issuing
+            // the same COUNT query repeatedly for the online/offline cards.
+            $residentScope = User::query()->where('role', '!=', 'admin');
+            $onlineCutoff = now()->subMinutes(max(1, (int) config('moderation.online_window_minutes', 5)));
+            $registeredUsers = (clone $residentScope)->count();
+            $onlineUsers = (clone $residentScope)->where('last_seen_at', '>=', $onlineCutoff)->count();
+
             $siteMetrics = [
                 'pageViews' => (int) DB::table('site_visits')->count(),
                 'uniqueVisitors' => (int) DB::table('site_visits')->distinct('visitor_key')->count('visitor_key'),
                 'visitorsToday' => (int) DB::table('site_visits')->where('visited_at', '>=', now()->startOfDay())->distinct('visitor_key')->count('visitor_key'),
-                'onlineUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes((int) config('moderation.online_window_minutes', 5)))->count(),
+                'onlineUsers' => (int) $onlineUsers,
                 'recentlyActiveUsers' => (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subDay())->count(),
-                'registeredUsers' => (int) User::where('role', '!=', 'admin')->count(),
-                'offlineUsers' => max(0, (int) User::where('role', '!=', 'admin')->count() - (int) User::where('role', '!=', 'admin')->where('last_seen_at', '>=', now()->subMinutes((int) config('moderation.online_window_minutes', 5)))->count()),
+                'registeredUsers' => (int) $registeredUsers,
+                'offlineUsers' => max(0, (int) $registeredUsers - (int) $onlineUsers),
                 'pendingComplaints' => (int) Complaint::where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at')->count(),
-                'pendingPostReports' => (int) \App\Models\ComplaintReport::where('status', 'pending')->count(),
+                'pendingPostReports' => (int) ComplaintReport::where('status', 'pending')->count(),
                 'autoHeldComplaints' => (int) Complaint::where('approval_status', Complaint::APPROVAL_PENDING)->whereNull('removed_at')->whereHas('events', fn ($q) => $q->where('note', 'like', '%configured resident-report threshold%'))->count(),
                 'restrictedAccounts' => (int) User::where('role', '!=', 'admin')->where('moderation_status', 'restricted')->where(fn ($q) => $q->whereNull('restriction_expires_at')->orWhere('restriction_expires_at', '>', now()))->count(),
                 'bannedAccounts' => (int) User::where('role', '!=', 'admin')->where(fn ($q) => $q->where('moderation_status', 'banned')->orWhereNotNull('banned_at'))->count(),
@@ -294,7 +304,7 @@ class DashboardController extends Controller
                     'anonymous' => (bool) $resident->anonymous_default,
                     'private' => ($resident->profile_visibility ?? 'public') === 'private',
                     'lastSeenAt' => $resident->last_seen_at?->toIso8601String(),
-                    'online' => $resident->last_seen_at !== null && $resident->last_seen_at->gte(now()->subMinutes((int) config('moderation.online_window_minutes', 5))),
+                    'online' => $resident->last_seen_at !== null && $resident->last_seen_at->gte($onlineCutoff),
                 ])->values(),
             ];
         }
@@ -589,6 +599,7 @@ class DashboardController extends Controller
             'author_avatar' => $maskAuthor ? null : $c->user->avatarUrl(),
             'comments' => $hide ? [] : $c->comments->map(fn ($m) => [
                 'id' => $m->id,
+                'mine' => (int) $m->user_id === (int) auth()->id(),
                 'body' => $m->body,
                 'staff' => $m->user->isAdmin(),
                 'author' => ($maskAuthor && $m->user_id === $c->user_id) ? null : $m->user->name,

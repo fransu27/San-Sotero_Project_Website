@@ -36,7 +36,11 @@ const mainNavItems: NavItem[] = [
 export function AppSidebar() {
     const page = usePage();
     const role = (page.props as any).auth?.user?.role;
-    const navItems = role === 'admin' ? mainNavItems.filter((item) => item.title !== 'My Submissions') : mainNavItems;
+    const navItems =
+        role === 'admin'
+            ? mainNavItems.filter((item) => item.title !== 'My Submissions')
+            : mainNavItems;
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

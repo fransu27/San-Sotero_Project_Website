@@ -1,6 +1,14 @@
-import { Head, Link, router, usePage, usePoll } from '@inertiajs/react';
-import { useState } from 'react';
-import { Lock, HardHat, Shield, Trash2, MoreHorizontal } from 'lucide-react';
+import { Head, Link, usePage, usePoll } from '@inertiajs/react';
+import {
+    Flame,
+    HardHat,
+    Lock,
+    MoreHorizontal,
+    Shield,
+    Sparkles,
+    Star,
+    Trash2,
+} from 'lucide-react';
 import BarangayBanner from '@/components/barangay-banner';
 import AnnouncementCard from '@/components/feed/announcement-card';
 import type { Notice } from '@/components/feed/announcement-card';
@@ -58,7 +66,6 @@ export default function Dashboard({
     statuses,
 }: Props) {
     const { auth } = usePage().props as any;
-    const [appealText, setAppealText] = useState('');
     const { t } = useLocale();
     usePoll(15000, {
         only: [
@@ -154,36 +161,9 @@ export default function Dashboard({
                         </p>
                         <p className="mt-1">
                             Your profile picture has been replaced with the
-                            anonymous placeholder and can't be changed{' '}
-                            {auth.user.profile_restriction_expires_at
-                                ? `until ${new Date(auth.user.profile_restriction_expires_at).toLocaleString()}`
-                                : 'until an administrator lifts the restriction'}
-                            . You can still post, comment and react. Reason:{' '}
+                            anonymous placeholder. Reason:{' '}
                             {auth.user.profile_restriction_message}
                         </p>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <input
-                                value={appealText}
-                                onChange={(e) => setAppealText(e.target.value)}
-                                placeholder="Appeal this decision (min. 20 characters)"
-                                maxLength={1000}
-                                className="min-w-48 flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-xs"
-                            />
-                            <button
-                                type="button"
-                                disabled={appealText.trim().length < 20}
-                                onClick={() =>
-                                    router.post(
-                                        '/account-status/appeal',
-                                        { appeal_type: 'profile', message: appealText },
-                                        { preserveScroll: true, onSuccess: () => setAppealText('') },
-                                    )
-                                }
-                                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:opacity-50"
-                            >
-                                Submit appeal
-                            </button>
-                        </div>
                     </div>
                 )}
                 {/* ── Centre feed ── */}
@@ -191,7 +171,7 @@ export default function Dashboard({
                     {/* 0. Barangay location photo (set by an admin in Settings → Barangay; placeholder until then) */}
                     <BarangayBanner />
 
-                    <div className="sticky top-[130px] z-20 rounded-2xl border border-border/70 bg-background p-2 shadow-sm lg:top-[68px]">
+                    <div className="z-20 lg:sticky lg:top-[76px]">
                         <Composer
                             mode={isAdmin ? 'announcement' : 'complaint'}
                             userName={auth.user.name}
@@ -204,34 +184,39 @@ export default function Dashboard({
                     <MobileReportFilters />
 
                     <div
-                        className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/80 bg-card p-4 shadow-sm"
+                        className="ss-card flex items-center gap-3 rounded-2xl border border-border/80 bg-card p-3 sm:p-3.5"
                         aria-label="Newsfeed sort"
                     >
-                        <span className="mr-1 text-sm text-muted-foreground">
+                        <span className="pl-1 text-sm text-muted-foreground">
                             Show:
                         </span>
-                        {[
-                            { value: 'new', label: 'New' },
-                            { value: 'best', label: 'Best' },
-                            { value: 'hot', label: 'Hot' },
-                        ].map((option) => (
-                            <Link
-                                key={option.value}
-                                href={feedHref(filters, {
-                                    sort: option.value,
-                                })}
-                                preserveScroll
-                                aria-current={
-                                    sort === option.value ? 'page' : undefined
-                                }
-                                className={cn(
-                                    'nav-fill-link rounded-full px-4 py-2 text-sm font-medium',
-                                    sort === option.value && 'is-active',
-                                )}
-                            >
-                                {option.label}
-                            </Link>
-                        ))}
+                        <div className="ss-seg flex flex-1 gap-1.5 sm:flex-none">
+                            {[
+                                { value: 'new', label: 'New', icon: Sparkles },
+                                { value: 'best', label: 'Best', icon: Star },
+                                { value: 'hot', label: 'Hot', icon: Flame },
+                            ].map((option) => (
+                                <Link
+                                    key={option.value}
+                                    href={feedHref(filters, {
+                                        sort: option.value,
+                                    })}
+                                    preserveScroll
+                                    aria-current={
+                                        sort === option.value
+                                            ? 'page'
+                                            : undefined
+                                    }
+                                    className={cn(
+                                        'nav-fill-link flex-1 justify-center rounded-full px-4 py-2 text-sm font-medium sm:flex-none',
+                                        sort === option.value && 'is-active',
+                                    )}
+                                >
+                                    <option.icon size={14} />
+                                    {option.label}
+                                </Link>
+                            ))}
+                        </div>
                     </div>
 
                     {/* 1. Pinned admin announcements sit above everything */}
@@ -239,10 +224,10 @@ export default function Dashboard({
                         id="announcements"
                         className="scroll-mt-20 space-y-3"
                     >
-                        <h2 className="flex items-center gap-2 px-1 text-sm font-bold tracking-[0.12em] text-[#0197F6] uppercase">
-                            <span className="h-px flex-1 bg-[#0197F6]/25" />
+                        <h2 className="flex items-center gap-3 px-1 text-xs font-bold tracking-[0.22em] text-[#0197F6] uppercase dark:text-[#5cc0fa]">
+                            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-[#0197F6]/40" />
                             Announcements
-                            <span className="h-px flex-1 bg-[#0197F6]/25" />
+                            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-[#0197F6]/40" />
                         </h2>
                         {[...pinned, ...otherAnnouncements].map((a) => (
                             <AnnouncementCard
@@ -252,7 +237,7 @@ export default function Dashboard({
                             />
                         ))}
                         {announcements.length === 0 && (
-                            <div className="rounded-xl border border-dashed border-border bg-card/70 px-4 py-3 text-sm text-muted-foreground">
+                            <div className="rounded-2xl border border-dashed border-border bg-card/70 px-4 py-4 text-center text-sm text-muted-foreground">
                                 No announcements have been posted yet.
                             </div>
                         )}

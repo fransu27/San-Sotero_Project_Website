@@ -1950,3 +1950,13 @@ Run `php artisan migrate` after backing up `database/database.sqlite`. This adds
 ### Defense preparation guide added — 2026-10-24
 - [x] Added `ISO_25010_DEFENSE_READINESS_GUIDE.md` with a demo sequence, a criterion-by-criterion test matrix for the user's six sections, evidence to retain, score-calculation notes, and a truthful defense explanation.
 - [ ] Panelist testing, actual performance measurements, full automated tests/build, and backup-restore demonstration remain to be completed locally.
+
+## Source review follow-up — 2026-10-29
+
+- [x] Dashboard report filtering now uses the server-generated bucket boundaries, avoiding browser-timezone drift between the Laravel analytics and the report preview list.
+- [x] Dashboard rendering is more defensive around missing analytics/series data and nullable report text/status values, reducing avoidable runtime exceptions on older or incomplete records.
+- [x] Admin online/offline metrics reuse a shared resident query and one online cutoff instead of repeating identical resident-count queries.
+- [x] Restyled the left report rail with a clearer surface, restrained depth, improved active-state contrast, and smoother interaction feedback while retaining the current theme colors.
+- [x] Polished Sonner toast notifications with close controls, more intentional typography, rounded surfaces, and semantic success/error/warning/info borders.
+- [x] Ran PHP syntax checks across `app`, `routes`, `database`, and `tests`; ran TypeScript transpilation syntax checks across `resources/js`.
+- [ ] Full Laravel feature tests, dependency-backed TypeScript type-check, production Vite build, and browser QA still need to be run in the full local environment because this archive does not include `vendor/` or `node_modules/`.

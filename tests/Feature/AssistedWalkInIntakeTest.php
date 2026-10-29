@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -69,8 +70,8 @@ class AssistedWalkInIntakeTest extends TestCase
             'category' => 'Infrastructure',
             'incident_date' => now()->toDateString(),
             'files' => [
-                \Illuminate\Http\UploadedFile::fake()->create('first.pdf', 6000, 'application/pdf'),
-                \Illuminate\Http\UploadedFile::fake()->create('second.pdf', 6000, 'application/pdf'),
+                UploadedFile::fake()->create('first.pdf', 6000, 'application/pdf'),
+                UploadedFile::fake()->create('second.pdf', 6000, 'application/pdf'),
             ],
         ])->assertSessionHasErrors('files');
 

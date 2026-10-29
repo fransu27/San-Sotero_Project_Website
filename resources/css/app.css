@@ -589,7 +589,7 @@ a {
     }
 }
 .dashboard-page {
-    max-width: none;
+    max-width: 1080px;
     font-size: 0.9rem;
 }
 .dashboard-page .dashboard-heading h1 {
@@ -820,7 +820,6 @@ article {
     box-shadow: 0 6px 16px -8px rgb(2 24 43 / 0.3);
 }
 
-
 /* Walk-In Complaint: print only the one-time resident receipt, never the intake form. */
 @page {
     size: A4 portrait;
@@ -828,7 +827,8 @@ article {
 }
 
 @media print {
-    html, body {
+    html,
+    body {
         width: 100% !important;
         min-width: 0 !important;
         margin: 0 !important;
@@ -870,10 +870,19 @@ article {
         font-size: 10pt !important;
     }
 
-    .walk-in-print-area .receipt-brand { border-bottom: 1px solid #777 !important; }
-    .walk-in-print-area img { max-width: 48px !important; max-height: 48px !important; }
-    .walk-in-print-area .bg-background { background: #fff !important; }
-    .walk-in-print-area .text-muted-foreground { color: #333 !important; }
+    .walk-in-print-area .receipt-brand {
+        border-bottom: 1px solid #777 !important;
+    }
+    .walk-in-print-area img {
+        max-width: 48px !important;
+        max-height: 48px !important;
+    }
+    .walk-in-print-area .bg-background {
+        background: #fff !important;
+    }
+    .walk-in-print-area .text-muted-foreground {
+        color: #333 !important;
+    }
 
     .walk-in-print-area p,
     .walk-in-print-area div {
@@ -891,12 +900,128 @@ article {
     }
 }
 
-/* ── Compact density ─────────────────────────────────────────────────────────────────────────────────────────────
-   On desktop, 100% browser zoom now looks like the previous 75% zoom: every rem-based size (text, padding, gaps,
-   cards, buttons) scales down together, so pages are no longer spread out. Phones/tablets keep the normal 16px size
-   so tap targets stay comfortable. */
-@media (min-width: 1024px) {
-    html {
-        font-size: 13px;
+/* ═════════════════════════════════════════════════════════════════════════
+ * Design layer v4 — refined surfaces for the Newsfeed and the sign-in screens.
+ * Purely visual: no behaviour, no layout contracts. Safe to delete this block to go back.
+ * ═════════════════════════════════════════════════════════════════════════ */
+
+/* App background: soft depth instead of a flat colour. */
+.ss-app-bg {
+    background-color: color-mix(in srgb, #68c5db 14%, #f4f7fa);
+    background-image:
+        radial-gradient(
+            60rem 28rem at 12% -8%,
+            rgb(1 151 246 / 0.07),
+            transparent 60%
+        ),
+        radial-gradient(
+            48rem 24rem at 100% 0%,
+            rgb(104 197 219 / 0.1),
+            transparent 55%
+        );
+}
+.dark .ss-app-bg {
+    background-color: #02182b;
+    background-image:
+        radial-gradient(
+            60rem 30rem at 10% -10%,
+            rgb(1 151 246 / 0.14),
+            transparent 60%
+        ),
+        radial-gradient(
+            44rem 26rem at 100% 4%,
+            rgb(68 143 163 / 0.12),
+            transparent 55%
+        );
+}
+
+/* Card surface: hairline border, inner top highlight, layered shadow. */
+.ss-card {
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.55),
+        0 1px 2px rgb(2 24 43 / 0.05),
+        0 10px 28px -14px rgb(2 24 43 / 0.14);
+}
+.dark .ss-card {
+    background-image: linear-gradient(
+        180deg,
+        rgb(255 255 255 / 0.035),
+        rgb(255 255 255 / 0)
+    );
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.06),
+        0 14px 34px -18px rgb(0 0 0 / 0.6);
+}
+
+/* Pill-shaped title box in the composer. */
+.ss-pill-input {
+    min-height: 2.75rem;
+    transition:
+        box-shadow 200ms ease,
+        border-color 200ms ease,
+        background-color 200ms ease;
+}
+.ss-pill-input:focus {
+    box-shadow: 0 0 0 4px rgb(1 151 246 / 0.14);
+}
+
+/* Post / Report button: confident crimson with a soft glow. */
+.ss-post-btn {
+    background-image: linear-gradient(180deg, #e23049, #c81f35);
+    box-shadow:
+        0 8px 18px -8px rgb(215 38 61 / 0.7),
+        inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+.ss-post-btn:hover:not(:disabled) {
+    filter: brightness(1.07);
+}
+.ss-post-btn:disabled {
+    background-image: none;
+    box-shadow: none;
+}
+
+/* ── Sign-in screens ───────────────────────────────────────────────────── */
+.auth-photo {
+    background-size: cover;
+    background-position: center;
+}
+.auth-card {
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.6),
+        0 30px 80px -30px rgb(2 24 43 / 0.28);
+}
+.dark .auth-card {
+    background-image: linear-gradient(
+        180deg,
+        rgb(255 255 255 / 0.05),
+        rgb(255 255 255 / 0.01)
+    );
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.07),
+        0 30px 80px -30px rgb(0 0 0 / 0.75);
+}
+.auth-form input:not([type='checkbox']):not([type='radio']) {
+    min-height: 2.9rem;
+    border-radius: 0.85rem;
+    background-color: color-mix(in srgb, var(--input) 12%, transparent);
+}
+.auth-form input:hover:not(:focus-visible) {
+    border-color: color-mix(in srgb, var(--ring) 55%, var(--input));
+}
+@keyframes ss-float {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+.auth-float {
+    animation: ss-float 7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .auth-float {
+        animation: none;
     }
 }

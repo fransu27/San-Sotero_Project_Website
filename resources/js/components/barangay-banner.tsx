@@ -38,7 +38,7 @@ export default function BarangayBanner({
         <section
             aria-label={name}
             className={cn(
-                'relative overflow-hidden rounded-xl border border-border bg-card shadow-sm',
+                'ss-card relative overflow-hidden rounded-2xl border border-border bg-card',
                 size === 'lg' ? 'h-40 sm:h-52' : 'h-28 sm:h-32',
             )}
         >
@@ -51,12 +51,12 @@ export default function BarangayBanner({
                         className="size-full object-cover"
                     />
                     {/* Dark gradient behind the text keeps it readable on any photo, in light or dark theme */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 px-5 py-4 text-white">
-                        <MapPin
-                            size={size === 'lg' ? 20 : 16}
-                            className="mb-1 shrink-0"
-                        />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#02182B]/85 via-[#02182B]/15 to-transparent" />
+                    <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-white/10 ring-inset" />
+                    <div className="absolute inset-x-0 bottom-0 flex items-end gap-2.5 px-5 py-4 text-white">
+                        <span className="mb-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25 backdrop-blur-sm">
+                            <MapPin size={size === 'lg' ? 16 : 14} />
+                        </span>
                         <div className="min-w-0">
                             <p
                                 className={cn(

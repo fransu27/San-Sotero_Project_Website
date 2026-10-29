@@ -37,7 +37,7 @@ class CreateNewUser implements CreatesNewUsers
             // Philippine mobile: 09XXXXXXXXX or +639XXXXXXXXX
             'phone' => ['required', 'string', 'regex:/^(09\d{9}|\+639\d{9})$/', 'unique:users,phone'],
             'birthdate' => ['required', 'date', 'before_or_equal:18 years ago', 'after:1900-01-01'],
-            'email' => ['required', 'string', 'email:rfc,dns', 'max:255', 'unique:users,email'],
+            'email' => ['required', 'string', 'email:rfc', 'max:255', 'unique:users,email'],
             'terms_accepted' => ['accepted'],
             'password' => $this->passwordRules(),
         ], [

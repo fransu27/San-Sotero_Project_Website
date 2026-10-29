@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Complaint;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class ModerationWorkflowTest extends TestCase
@@ -100,6 +101,87 @@ class ModerationWorkflowTest extends TestCase
             'status' => 'Rejected',
             'note' => 'Insufficient details to verify this concern.',
         ]);
+    }
+
+    public function test_admin_can_temporarily_restrict_a_user_and_record_expiry(): void
+    {
+        Notification::fake();
+        $admin = $this->admin();
+        $resident = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation', $resident), [
+                'action' => 'restrict',
+                'reason' => 'Repeated community guideline violations.',
+                'duration' => 7,
+                'unit' => 'days',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $resident->refresh();
+        $this->assertSame('restricted', $resident->moderation_status);
+        $this->assertNotNull($resident->restriction_expires_at);
+        $this->assertTrue($resident->restriction_expires_at->isFuture());
+        $this->assertDatabaseHas('user_moderation_events', [
+            'target_user_id' => $resident->id,
+            'action' => 'restrict',
+        ]);
+    }
+
+    public function test_admin_can_ban_and_activate_a_user_without_expiry_type_errors(): void
+    {
+        Notification::fake();
+        $admin = $this->admin();
+        $resident = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation', $resident), [
+                'action' => 'ban',
+                'reason' => 'Repeated severe community guideline violations.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $resident->refresh();
+        $this->assertSame('banned', $resident->moderation_status);
+        $this->assertNotNull($resident->banned_at);
+        $this->assertNull($resident->restriction_expires_at);
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation', $resident), [
+                'action' => 'activate',
+                'reason' => 'Review completed and account restored.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $resident->refresh();
+        $this->assertSame('active', $resident->moderation_status);
+        $this->assertNull($resident->banned_at);
+    }
+
+    public function test_admin_can_restrict_a_profile_picture_with_a_temporary_expiry(): void
+    {
+        Notification::fake();
+        $admin = $this->admin();
+        $resident = User::factory()->create();
+
+        $this->actingAs($admin)
+            ->patch(route('admin.users.moderation', $resident), [
+                'action' => 'profile_restrict',
+                'reason' => 'Profile picture violates community guidelines.',
+                'duration' => 7,
+                'unit' => 'days',
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $resident->refresh();
+        $this->assertTrue((bool) $resident->profile_restricted);
+        $this->assertNotNull($resident->profile_restriction_expires_at);
+        $this->assertTrue($resident->profile_restriction_expires_at->isFuture());
+        $this->assertSame('active', $resident->moderation_status);
     }
 
     public function test_rejection_requires_a_reason(): void

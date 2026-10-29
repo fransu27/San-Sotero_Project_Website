@@ -133,10 +133,7 @@ export default function BarangaySettings() {
                         onChange={(e) => form.setData('name', e.target.value)}
                         placeholder="Santotero"
                     />
-                    <InputError
-                        id="b-name-error"
-                        message={form.errors.name}
-                    />
+                    <InputError id="b-name-error" message={form.errors.name} />
                 </div>
 
                 <div className="grid gap-2">
@@ -176,7 +173,9 @@ export default function BarangaySettings() {
                                     type="file"
                                     aria-invalid={Boolean(form.errors.logo)}
                                     aria-describedby={
-                                        form.errors.logo ? 'b-logo-error' : undefined
+                                        form.errors.logo
+                                            ? 'b-logo-error'
+                                            : undefined
                                     }
                                     accept="image/jpeg,image/png,image/webp"
                                     className="sr-only"
@@ -222,10 +221,7 @@ export default function BarangaySettings() {
                         PNG, JPG or WebP, up to 2 MB. Updates the logo across
                         the site.
                     </p>
-                    <InputError
-                        id="b-logo-error"
-                        message={form.errors.logo}
-                    />
+                    <InputError id="b-logo-error" message={form.errors.logo} />
                 </div>
 
                 <div className="grid gap-2">
@@ -244,9 +240,11 @@ export default function BarangaySettings() {
                             <input
                                 id="b-banner"
                                 type="file"
-                                aria-invalid={Boolean(localError ?? form.errors.image)}
+                                aria-invalid={Boolean(
+                                    localError ?? form.errors.image,
+                                )}
                                 aria-describedby={
-                                    localError ?? form.errors.image
+                                    (localError ?? form.errors.image)
                                         ? 'b-banner-error'
                                         : undefined
                                 }

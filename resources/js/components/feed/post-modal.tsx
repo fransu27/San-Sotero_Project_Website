@@ -1,4 +1,5 @@
-import { Send } from 'lucide-react';
+import { router } from '@inertiajs/react';
+import { Send, Trash2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Avatar } from '@/components/feed/avatar';
@@ -24,6 +25,8 @@ export type ModalComment = {
     author: string | null;
     avatar: string | null;
     staff: boolean;
+    mine?: boolean;
+    delete_url?: string;
 };
 
 export default function PostModal({
@@ -112,9 +115,36 @@ export default function PostModal({
                                             {t('post.barangay')}
                                         </span>
                                     )}
-                                    <p className="break-words whitespace-pre-line">
-                                        {m.body}
-                                    </p>
+                                    <div className="flex items-start gap-2">
+                                        <p className="min-w-0 flex-1 break-words whitespace-pre-line">
+                                            {m.body}
+                                        </p>
+                                        {m.mine && (
+                                            <button
+                                                type="button"
+                                                aria-label="Delete my comment"
+                                                title="Delete comment"
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            'Delete this comment?',
+                                                        )
+                                                    ) {
+                                                        router.delete(
+                                                            m.delete_url ??
+                                                                `/comments/${m.id}`,
+                                                            {
+                                                                preserveScroll: true,
+                                                            },
+                                                        );
+                                                    }
+                                                }}
+                                                className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive"
+                                            >
+                                                <Trash2 size={13} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}

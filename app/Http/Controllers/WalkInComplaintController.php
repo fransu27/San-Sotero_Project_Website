@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,7 +45,7 @@ class WalkInComplaintController extends Controller
         $files = $request->file('files', []);
         $totalBytes = collect($files)->sum(fn ($file) => $file?->getSize() ?? 0) + ($request->file('image')?->getSize() ?? 0);
         if ($totalBytes > 10 * 1024 * 1024) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['files' => 'The combined size of all evidence, including the photo, must not exceed 10 MB.']);
+            throw ValidationException::withMessages(['files' => 'The combined size of all evidence, including the photo, must not exceed 10 MB.']);
         }
 
         $pin = (string) random_int(100000, 999999);
@@ -70,7 +71,7 @@ class WalkInComplaintController extends Controller
             $complaint->tracking_pin_hash = Hash::make($pin);
             $imagePath = $request->file('image')?->store('complaints', 'public');
             if ($request->hasFile('image') && (! is_string($imagePath) || $imagePath === '')) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['image' => 'The photo could not be saved. Please try again.']);
+                throw ValidationException::withMessages(['image' => 'The photo could not be saved. Please try again.']);
             }
             $complaint->image_path = is_string($imagePath) ? $imagePath : null;
             $complaint->save();

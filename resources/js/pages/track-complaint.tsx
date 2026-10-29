@@ -103,7 +103,9 @@ export default function TrackComplaint({ result }: { result: Result }) {
                                 id="tracking-pin"
                                 aria-invalid={Boolean(errors.pin)}
                                 aria-describedby={
-                                    errors.pin ? 'tracking-pin-error' : undefined
+                                    errors.pin
+                                        ? 'tracking-pin-error'
+                                        : undefined
                                 }
                                 required
                                 inputMode="numeric"

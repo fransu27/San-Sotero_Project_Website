@@ -55,9 +55,10 @@ export default function ManageTwoFactor(props: Props) {
                 <div className="flex flex-col items-start justify-start space-y-4">
                     <p className="text-sm text-muted-foreground">
                         Two-factor authentication is active. When you log in,
-                        enter the current six-digit code from Google Authenticator
-                        or another TOTP-compatible authenticator app. Keep your
-                        recovery codes somewhere private and separate from this device.
+                        enter the current six-digit code from Google
+                        Authenticator or another TOTP-compatible authenticator
+                        app. Keep your recovery codes somewhere private and
+                        separate from this device.
                     </p>
 
                     <div className="relative inline">

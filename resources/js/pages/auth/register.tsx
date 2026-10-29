@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { useLocale } from '@/hooks/use-locale';
 import { login } from '@/routes';
 import { store } from '@/routes/register';
 
@@ -39,13 +40,14 @@ const adultBirthdateLimit = () => {
 const latestEligibleBirthdate = adultBirthdateLimit();
 
 export default function Register({ passwordRules }: Props) {
+    const { t } = useLocale();
     const [pw, setPw] = useState('');
     const [confirm, setConfirm] = useState('');
     const { meetsAll, matches } = checkPassword(pw, confirm);
 
     return (
         <>
-            <Head title="Create account" />
+            <Head title={t('auth.registerTitle')} />
             <Form
                 {...store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -55,7 +57,7 @@ export default function Register({ passwordRules }: Props) {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="name">Full name</Label>
+                            <Label htmlFor="name">{t('auth.fullName')}</Label>
                             <Input
                                 id="name"
                                 name="name"
@@ -72,9 +74,11 @@ export default function Register({ passwordRules }: Props) {
                             <InputError id="name-error" message={errors.name} />
                         </div>
 
-                        <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="grid gap-5 sm:grid-cols-2 sm:items-start">
                             <div className="grid gap-2">
-                                <Label htmlFor="birthdate">Date of birth</Label>
+                                <Label htmlFor="birthdate">
+                                    {t('auth.birthdate')}
+                                </Label>
                                 <Input
                                     id="birthdate"
                                     name="birthdate"
@@ -96,8 +100,7 @@ export default function Register({ passwordRules }: Props) {
                                     id="birthdate-help"
                                     className="text-xs text-muted-foreground"
                                 >
-                                    You must be at least 18 years old to
-                                    register.
+                                    {t('auth.age18')}
                                 </p>
                                 <InputError
                                     id="birthdate-error"
@@ -105,7 +108,9 @@ export default function Register({ passwordRules }: Props) {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Mobile number</Label>
+                                <Label htmlFor="phone">
+                                    {t('auth.mobile')}
+                                </Label>
                                 <Input
                                     id="phone"
                                     name="phone"
@@ -131,7 +136,7 @@ export default function Register({ passwordRules }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="email">Email address</Label>
+                            <Label htmlFor="email">{t('auth.email')}</Label>
                             <Input
                                 id="email"
                                 name="email"
@@ -154,7 +159,9 @@ export default function Register({ passwordRules }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">
+                                {t('auth.password')}
+                            </Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
@@ -167,7 +174,7 @@ export default function Register({ passwordRules }: Props) {
                                 required
                                 tabIndex={5}
                                 autoComplete="new-password"
-                                placeholder="Create a password"
+                                placeholder={t('auth.password')}
                                 passwordrules={passwordRules}
                                 value={pw}
                                 onChange={(e) => setPw(e.target.value)}
@@ -181,7 +188,7 @@ export default function Register({ passwordRules }: Props) {
 
                         <div className="grid gap-2">
                             <Label htmlFor="password_confirmation">
-                                Confirm password
+                                {t('auth.confirmPassword')}
                             </Label>
                             <PasswordInput
                                 id="password_confirmation"
@@ -197,7 +204,7 @@ export default function Register({ passwordRules }: Props) {
                                 required
                                 tabIndex={6}
                                 autoComplete="new-password"
-                                placeholder="Type it again"
+                                placeholder={t('auth.confirmPassword')}
                                 passwordrules={passwordRules}
                                 value={confirm}
                                 onChange={(e) => setConfirm(e.target.value)}
@@ -208,10 +215,11 @@ export default function Register({ passwordRules }: Props) {
                                 >
                                     {matches ? (
                                         <>
-                                            <Check size={13} /> Passwords match
+                                            <Check size={13} />{' '}
+                                            {t('auth.passwordsMatch')}
                                         </>
                                     ) : (
-                                        'Passwords do not match yet'
+                                        t('auth.passwordsNoMatch')
                                     )}
                                 </p>
                             )}
@@ -222,11 +230,44 @@ export default function Register({ passwordRules }: Props) {
                         </div>
 
                         <div className="rounded-xl border border-border bg-muted/30 p-3 text-sm">
-                            <label htmlFor="terms_accepted" className="flex items-start gap-2.5">
-                                <input id="terms_accepted" name="terms_accepted" type="checkbox" value="1" required className="mt-1 size-4 accent-[#0197F6]" />
-                                <span>I have read and agree to the <a href="/terms" target="_blank" rel="noreferrer" className="font-semibold text-[#087fd0] underline">Terms of Service</a> and <a href="/privacy-policy" target="_blank" rel="noreferrer" className="font-semibold text-[#087fd0] underline">Privacy Policy</a>.</span>
+                            <label
+                                htmlFor="terms_accepted"
+                                className="flex items-start gap-2.5"
+                            >
+                                <input
+                                    id="terms_accepted"
+                                    name="terms_accepted"
+                                    type="checkbox"
+                                    value="1"
+                                    required
+                                    className="mt-1 size-4 accent-[#0197F6]"
+                                />
+                                <span>
+                                    {t('auth.agree')}{' '}
+                                    <a
+                                        href="/terms"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-semibold text-[#087fd0] underline"
+                                    >
+                                        {t('auth.terms')}
+                                    </a>{' '}
+                                    {t('auth.and')}{' '}
+                                    <a
+                                        href="/privacy-policy"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-semibold text-[#087fd0] underline"
+                                    >
+                                        {t('auth.privacy')}
+                                    </a>
+                                    .
+                                </span>
                             </label>
-                            <InputError id="terms_accepted-error" message={errors.terms_accepted} />
+                            <InputError
+                                id="terms_accepted-error"
+                                message={errors.terms_accepted}
+                            />
                         </div>
 
                         <Button
@@ -237,13 +278,14 @@ export default function Register({ passwordRules }: Props) {
                             disabled={!meetsAll || !matches || processing}
                             data-test="register-user-button"
                         >
-                            {processing && <Spinner />} Create account
+                            {processing && <Spinner />}{' '}
+                            {t('auth.createAccount')}
                         </Button>
 
                         <p className="text-center text-sm text-muted-foreground">
-                            Already have an account?{' '}
+                            {t('auth.haveAccount')}{' '}
                             <TextLink href={login()} tabIndex={8}>
-                                Log in
+                                {t('auth.login')}
                             </TextLink>
                         </p>
                     </>
